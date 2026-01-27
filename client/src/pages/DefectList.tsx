@@ -6,8 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useLocation } from "wouter";
-import { Search, Filter, Plus, RefreshCw, X, ChevronDown, MoreHorizontal } from "lucide-react";
+import { Search, Filter, Plus, RefreshCw, X, ChevronDown, MoreHorizontal, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 function getStatusBadge(status: string | null) {
   switch (status) {
@@ -49,7 +53,11 @@ export default function DefectList() {
     step: undefined as string | undefined,
     bucketAging: undefined as string | undefined,
     search: "",
+    dateFrom: undefined as string | undefined,
+    dateTo: undefined as string | undefined,
   });
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showFilters, setShowFilters] = useState(true);
 
   const { data: defects, isLoading, refetch } = trpc.defect.list.useQuery(
@@ -68,7 +76,21 @@ export default function DefectList() {
       step: undefined,
       bucketAging: undefined,
       search: "",
+      dateFrom: undefined,
+      dateTo: undefined,
     });
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
+
+  const handleDateFromChange = (date: Date | undefined) => {
+    setDateFrom(date);
+    setFilters({ ...filters, dateFrom: date ? format(date, "yyyy-MM-dd") : undefined });
+  };
+
+  const handleDateToChange = (date: Date | undefined) => {
+    setDateTo(date);
+    setFilters({ ...filters, dateTo: date ? format(date, "yyyy-MM-dd") : undefined });
   };
 
   const hasActiveFilters = Object.entries(filters).some(([key, value]) => 
@@ -208,6 +230,41 @@ export default function DefectList() {
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Date Range Filter */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-9 px-3 bg-white border rounded-full text-sm font-normal">
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  {dateFrom ? format(dateFrom, "dd/MM/yy", { locale: ptBR }) : "Data Inicial"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={handleDateFromChange}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-9 px-3 bg-white border rounded-full text-sm font-normal">
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  {dateTo ? format(dateTo, "dd/MM/yy", { locale: ptBR }) : "Data Final"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={handleDateToChange}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
 
             {hasActiveFilters && (
               <Button 

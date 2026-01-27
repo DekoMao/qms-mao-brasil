@@ -66,6 +66,8 @@ const defectRouter = router({
       step: z.string().optional(),
       bucketAging: z.string().optional(),
       search: z.string().optional(),
+      dateFrom: z.string().optional(),
+      dateTo: z.string().optional(),
     }).optional())
     .query(async ({ input }) => {
       return getDefects(input);

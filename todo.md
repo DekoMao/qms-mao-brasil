@@ -84,3 +84,10 @@
 - [x] Atualizar Detalhe do Defeito com timeline do workflow 8D
 - [x] Criar tela de Login com logo e estilo da referência
 - [x] Manter todas as funcionalidades existentes intactas
+
+
+## Configuração e Testes Finais
+- [x] Configurar SLAs para cada etapa do processo 8D
+- [x] Testar Portal do Fornecedor com código de acesso
+- [x] Adicionar filtro por data (período) na Lista de Defeitos
+- [x] Verificar e testar os 117 casos migrados com filtros

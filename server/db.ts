@@ -136,6 +136,8 @@ export interface DefectFilters {
   step?: string;
   bucketAging?: string;
   search?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export async function getDefects(filters?: DefectFilters) {
@@ -183,6 +185,22 @@ export async function getDefects(filters?: DefectFilters) {
       d.description?.toLowerCase().includes(searchLower) ||
       d.symptom?.toLowerCase().includes(searchLower)
     );
+  }
+  
+  // Date range filter
+  if (filters?.dateFrom) {
+    enrichedResults = enrichedResults.filter(d => {
+      if (!d.openDate) return false;
+      const defectDate = d.openDate.split('/').reverse().join('-'); // Convert DD.MM.YY to YYYY-MM-DD
+      return defectDate >= filters.dateFrom!;
+    });
+  }
+  if (filters?.dateTo) {
+    enrichedResults = enrichedResults.filter(d => {
+      if (!d.openDate) return false;
+      const defectDate = d.openDate.split('/').reverse().join('-'); // Convert DD.MM.YY to YYYY-MM-DD
+      return defectDate <= filters.dateTo!;
+    });
   }
 
   return enrichedResults;
