@@ -91,3 +91,10 @@
 - [x] Testar Portal do Fornecedor com código de acesso
 - [x] Adicionar filtro por data (período) na Lista de Defeitos
 - [x] Verificar e testar os 117 casos migrados com filtros
+
+
+## Upload de Anexos no Portal do Fornecedor
+- [x] Adicionar campo de upload de arquivos/imagens na seção de causa raiz
+- [x] Integrar com S3 para armazenamento dos arquivos
+- [x] Exibir lista de anexos já enviados
+- [x] Permitir visualização e download dos anexos

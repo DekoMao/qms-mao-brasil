@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,24 @@ import {
   LogIn, 
   FileText,
   Send,
-  Building2
+  Building2,
+  Upload,
+  Paperclip,
+  X,
+  Image,
+  File,
+  Trash2,
+  Download,
+  Eye
 } from "lucide-react";
+
+interface UploadedFile {
+  name: string;
+  url: string;
+  key: string;
+  mimeType: string;
+  size: number;
+}
 
 export default function SupplierPortal() {
   const [accessCode, setAccessCode] = useState("");
@@ -31,6 +47,9 @@ export default function SupplierPortal() {
     correctiveActions: "",
     supplyFeedback: "",
   });
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loginMutation = trpc.supplier.loginWithCode.useMutation({
     onSuccess: (data) => {
@@ -52,10 +71,27 @@ export default function SupplierPortal() {
       toast.success("Defeito atualizado com sucesso!");
       setSelectedDefect(null);
       setUpdateForm({ cause: "", correctiveActions: "", supplyFeedback: "" });
+      setUploadedFiles([]);
       refetch();
     },
     onError: (error) => {
       toast.error(`Erro ao atualizar: ${error.message}`);
+    },
+  });
+
+  const uploadFileMutation = trpc.supplier.uploadAttachment.useMutation({
+    onSuccess: (data: { id: number; fileName: string; fileUrl: string; fileKey: string; mimeType: string; fileSize: number }) => {
+      setUploadedFiles(prev => [...prev, {
+        name: data.fileName,
+        url: data.fileUrl,
+        key: data.fileKey,
+        mimeType: data.mimeType,
+        size: data.fileSize,
+      }]);
+      toast.success("Arquivo enviado com sucesso!");
+    },
+    onError: (error: { message: string }) => {
+      toast.error(`Erro ao enviar arquivo: ${error.message}`);
     },
   });
 
@@ -72,6 +108,67 @@ export default function SupplierPortal() {
     setAccessCode("");
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !selectedDefect || !supplierSession) return;
+
+    setIsUploading(true);
+    
+    for (const file of Array.from(files)) {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`Arquivo ${file.name} excede o limite de 10MB`);
+        continue;
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Tipo de arquivo não permitido: ${file.name}`);
+        continue;
+      }
+
+      try {
+        // Convert file to base64
+        const base64 = await fileToBase64(file);
+        
+        uploadFileMutation.mutate({
+          defectId: selectedDefect,
+          supplierName: supplierSession.supplier.name,
+          fileName: file.name,
+          fileData: base64,
+          mimeType: file.type,
+          fileSize: file.size,
+        });
+      } catch (error) {
+        toast.error(`Erro ao processar arquivo: ${file.name}`);
+      }
+    }
+
+    setIsUploading(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove data URL prefix (e.g., "data:image/png;base64,")
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const removeUploadedFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleUpdateDefect = () => {
     if (!selectedDefect || !supplierSession) return;
     
@@ -80,6 +177,19 @@ export default function SupplierPortal() {
       supplierName: supplierSession.supplier.name,
       ...updateForm,
     });
+  };
+
+  const getFileIcon = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) {
+      return <Image className="w-4 h-4 text-blue-500" />;
+    }
+    return <File className="w-4 h-4 text-gray-500" />;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const getStatusBadge = (status: string | null) => {
@@ -284,6 +394,7 @@ export default function SupplierPortal() {
                                 correctiveActions: defect.correctiveActions || "",
                                 supplyFeedback: defect.supplyFeedback || "",
                               });
+                              setUploadedFiles([]);
                             }}
                             disabled={defect.status === "CLOSED"}
                           >
@@ -291,7 +402,7 @@ export default function SupplierPortal() {
                             {defect.status === "CLOSED" ? "Fechado" : "Atualizar"}
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
+                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Atualizar Caso {defect.docNumber}</DialogTitle>
                             <DialogDescription>
@@ -326,6 +437,94 @@ export default function SupplierPortal() {
                                 rows={2}
                               />
                             </div>
+
+                            {/* File Upload Section */}
+                            <div className="space-y-3 border-t pt-4">
+                              <Label className="flex items-center gap-2">
+                                <Paperclip className="w-4 h-4" />
+                                Anexos e Evidências
+                              </Label>
+                              <p className="text-xs text-muted-foreground">
+                                Anexe fotos, documentos ou evidências relacionadas à causa raiz e ações corretivas.
+                                Formatos aceitos: JPG, PNG, GIF, PDF, DOC, DOCX (máx. 10MB por arquivo)
+                              </p>
+                              
+                              {/* Upload Button */}
+                              <div className="flex items-center gap-2">
+                                <input
+                                  ref={fileInputRef}
+                                  type="file"
+                                  multiple
+                                  accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                  onChange={handleFileSelect}
+                                  className="hidden"
+                                  id="file-upload"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => fileInputRef.current?.click()}
+                                  disabled={isUploading || uploadFileMutation.isPending}
+                                  className="w-full"
+                                >
+                                  <Upload className="w-4 h-4 mr-2" />
+                                  {isUploading || uploadFileMutation.isPending ? "Enviando..." : "Selecionar Arquivos"}
+                                </Button>
+                              </div>
+
+                              {/* Uploaded Files List */}
+                              {uploadedFiles.length > 0 && (
+                                <div className="space-y-2">
+                                  <p className="text-sm font-medium">Arquivos anexados:</p>
+                                  <div className="space-y-2">
+                                    {uploadedFiles.map((file, index) => (
+                                      <div
+                                        key={index}
+                                        className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border"
+                                      >
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          {getFileIcon(file.mimeType)}
+                                          <div className="min-w-0">
+                                            <p className="text-sm font-medium truncate">{file.name}</p>
+                                            <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          {file.mimeType.startsWith('image/') && (
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => window.open(file.url, '_blank')}
+                                            >
+                                              <Eye className="w-4 h-4" />
+                                            </Button>
+                                          )}
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => window.open(file.url, '_blank')}
+                                          >
+                                            <Download className="w-4 h-4" />
+                                          </Button>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => removeUploadedFile(index)}
+                                            className="text-red-500 hover:text-red-700"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
                             <Button 
                               className="w-full" 
                               onClick={handleUpdateDefect}

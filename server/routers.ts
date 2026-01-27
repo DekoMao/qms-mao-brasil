@@ -585,6 +585,70 @@ const supplierRouter = router({
 
       return updated;
     }),
+
+  // Supplier uploads attachment
+  uploadAttachment: publicProcedure
+    .input(z.object({
+      defectId: z.number(),
+      supplierName: z.string(),
+      fileName: z.string(),
+      fileData: z.string(), // base64 encoded
+      mimeType: z.string(),
+      fileSize: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const { defectId, supplierName, fileName, fileData, mimeType, fileSize } = input;
+      
+      // Verify supplier owns this defect
+      const defect = await getDefectById(defectId);
+      if (!defect || defect.supplier !== supplierName) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
+      }
+
+      // Import storage helper
+      const { storagePut } = await import("./storage");
+      
+      // Generate unique file key
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).substring(2, 8);
+      const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileKey = `defects/${defectId}/supplier-attachments/${timestamp}-${randomSuffix}-${sanitizedFileName}`;
+      
+      // Convert base64 to buffer
+      const fileBuffer = Buffer.from(fileData, 'base64');
+      
+      // Upload to S3
+      const { url } = await storagePut(fileKey, fileBuffer, mimeType);
+      
+      // Save attachment record to database
+      const attachmentId = await createAttachment({
+        defectId,
+        fileName,
+        fileUrl: url,
+        fileKey,
+        mimeType,
+        fileSize,
+        uploadedByName: `Supplier: ${supplierName}`,
+      });
+
+      // Create audit log
+      await createAuditLog({
+        defectId,
+        userName: `Supplier: ${supplierName}`,
+        action: "UPDATE",
+        fieldName: "attachment_upload",
+        newValue: fileName,
+      });
+
+      return {
+        id: attachmentId,
+        fileName,
+        fileUrl: url,
+        fileKey,
+        mimeType,
+        fileSize,
+      };
+    }),
 });
 
 // =====================================================
