@@ -61,3 +61,12 @@
 - [x] Gráfico de Pareto das causas mais frequentes
 - [x] Drill-down para ver casos por causa raiz
 - [x] Filtros por período, fornecedor e severidade
+
+
+## Migração de Dados e Independência do Excel
+- [x] Extrair todos os dados da planilha Excel (117 defeitos)
+- [x] Inserir dados no banco de dados do sistema
+- [x] Cadastrar fornecedores automaticamente a partir dos dados (15 fornecedores)
+- [x] Implementar formulário de criação de novos defeitos
+- [x] Remover dependência da função de importação para uso diário
+- [x] Validar que todos os dados foram migrados corretamente
