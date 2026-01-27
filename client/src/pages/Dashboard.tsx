@@ -1,14 +1,26 @@
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart, Area
 } from "recharts";
-import { AlertTriangle, CheckCircle, Clock, TrendingUp, Package, Users, Search } from "lucide-react";
+import { 
+  AlertTriangle, CheckCircle, Clock, TrendingUp, Package, 
+  MoreHorizontal, ArrowUpRight, RefreshCw 
+} from "lucide-react";
+import { useLocation } from "wouter";
 
-const COLORS = ["#22c55e", "#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6"];
+// Professional color palette
+const STATUS_COLORS = {
+  CLOSED: "#22c55e",
+  ONGOING: "#3b82f6", 
+  DELAYED: "#ef4444",
+  WAITING: "#f59e0b"
+};
+
 const BUCKET_COLORS = {
   "<=4": "#22c55e",
   "5-14": "#3b82f6", 
@@ -17,410 +29,440 @@ const BUCKET_COLORS = {
   ">60": "#ef4444"
 };
 
+const PIE_COLORS = ["#22c55e", "#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6"];
+
 export default function Dashboard() {
-  const { data: stats, isLoading } = trpc.defect.stats.useQuery();
+  const { data: stats, isLoading, refetch } = trpc.defect.stats.useQuery();
   const { data: rcaData, isLoading: rcaLoading } = trpc.rca.analysis.useQuery();
+  const [, setLocation] = useLocation();
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <Card key={i}>
-              <CardHeader className="pb-2">
-                <Skeleton className="h-4 w-24" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-16" />
-              </CardContent>
+            <Card key={i} className="kpi-card">
+              <Skeleton className="h-4 w-24 mb-3" />
+              <Skeleton className="h-10 w-20" />
             </Card>
           ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader><Skeleton className="h-6 w-32" /></CardHeader>
-            <CardContent><Skeleton className="h-64 w-full" /></CardContent>
-          </Card>
-          <Card>
-            <CardHeader><Skeleton className="h-6 w-32" /></CardHeader>
-            <CardContent><Skeleton className="h-64 w-full" /></CardContent>
-          </Card>
         </div>
       </div>
     );
   }
 
   if (!stats) {
-    return <div className="text-center py-8 text-muted-foreground">Nenhum dado disponível</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+        <Package className="h-12 w-12 mb-4 opacity-50" />
+        <p>Nenhum dado disponível</p>
+      </div>
+    );
   }
 
   // Prepare chart data
-  const statusData = Object.entries(stats.byStatus || {}).map(([name, value]) => ({ name, value }));
-  const bucketData = Object.entries(stats.byBucketAging || {}).map(([name, value]) => ({ name, value }));
-  const stepData = Object.entries(stats.byStep || {}).map(([name, value]) => ({ 
-    name: name.replace("Aguardando ", "").substring(0, 15), 
-    value 
+  const statusData = Object.entries(stats.byStatus || {}).map(([name, value]) => ({ 
+    name, 
+    value,
+    percentage: stats.total > 0 ? Math.round((value as number / stats.total) * 100) : 0
   }));
+  
+  const bucketData = Object.entries(stats.byBucketAging || {}).map(([name, value]) => ({ name, value }));
 
   return (
-    <div className="space-y-6">
-      {/* KPI Cards */}
+    <div className="space-y-6 animate-fade-in">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Lista de Defeitos</h1>
+          <p className="text-muted-foreground mt-1">Visão geral do sistema de qualidade</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+          <Button size="sm" onClick={() => setLocation("/defects/new")}>
+            Novo Defeito
+          </Button>
+        </div>
+      </div>
+
+      {/* KPI Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total de Casos</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">Registros no sistema</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Casos Fechados</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.byStatus?.CLOSED || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.total > 0 ? Math.round(((stats.byStatus?.CLOSED || 0) / stats.total) * 100) : 0}% do total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
-            <Clock className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.byStatus?.ONGOING || 0}</div>
-            <p className="text-xs text-muted-foreground">Casos ativos</p>
-          </CardContent>
-        </Card>
-
-        <Card className={stats.criticalCases > 0 ? "border-red-200 bg-red-50/50" : ""}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Casos Críticos</CardTitle>
-            <AlertTriangle className={`h-4 w-4 ${stats.criticalCases > 0 ? "text-red-500" : "text-muted-foreground"}`} />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${stats.criticalCases > 0 ? "text-red-600" : ""}`}>
-              {stats.criticalCases}
+        {/* Total */}
+        <Card className="kpi-card card-hover">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Total
+              </p>
+              <p className="kpi-card-value mt-2">{stats.total}</p>
             </div>
-            <p className="text-xs text-muted-foreground">DELAYED ou Aging &gt; 30 dias</p>
-          </CardContent>
+          </div>
+        </Card>
+
+        {/* Fechados */}
+        <Card className="kpi-card card-hover">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-emerald-500" />
+                Fechados
+              </p>
+              <p className="kpi-card-value mt-2 text-emerald-600">{stats.byStatus?.CLOSED || 0}</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Em Andamento */}
+        <Card className="kpi-card card-hover">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Clock className="h-4 w-4 text-sky-500" />
+                Em Andamento
+              </p>
+              <p className="kpi-card-value mt-2 text-sky-600">{stats.byStatus?.ONGOING || 0}</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Críticos */}
+        <Card className={`kpi-card card-hover ${stats.criticalCases > 0 ? "border-rose-200 bg-rose-50/50" : ""}`}>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <AlertTriangle className={`h-4 w-4 ${stats.criticalCases > 0 ? "text-rose-500" : ""}`} />
+                Críticos
+              </p>
+              <p className={`kpi-card-value mt-2 ${stats.criticalCases > 0 ? "text-rose-600" : ""}`}>
+                {stats.criticalCases}
+              </p>
+            </div>
+          </div>
         </Card>
       </div>
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Status Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribuição por Status</CardTitle>
-            <CardDescription>Visão geral dos casos por status atual</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
+        {/* Status Distribution - Pie Chart */}
+        <Card className="chart-container">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="chart-title">Distribuição de Status</h3>
+              <p className="text-sm text-muted-foreground">Visão geral por status</p>
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-6">
+            <ResponsiveContainer width="50%" height={200}>
               <PieChart>
                 <Pie
                   data={statusData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  innerRadius={50}
                   outerRadius={80}
-                  fill="#8884d8"
+                  paddingAngle={2}
                   dataKey="value"
                 >
-                  {statusData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {statusData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS] || PIE_COLORS[index % PIE_COLORS.length]} 
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          </CardContent>
+            <div className="flex-1 space-y-3">
+              {statusData.map((item, index) => (
+                <div key={item.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: STATUS_COLORS[item.name as keyof typeof STATUS_COLORS] || PIE_COLORS[index % PIE_COLORS.length] }}
+                    />
+                    <span className="text-sm">{item.name}</span>
+                  </div>
+                  <span className="text-sm font-medium">{item.percentage}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </Card>
 
-        {/* Aging Buckets */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribuição por Aging</CardTitle>
-            <CardDescription>Faixas de tempo de vida dos casos</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={bucketData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" name="Casos">
-                  {bucketData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={BUCKET_COLORS[entry.name as keyof typeof BUCKET_COLORS] || "#8884d8"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
+        {/* Aging por Faixa - Bar Chart */}
+        <Card className="chart-container">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="chart-title">Aging por Faixa</h3>
+              <p className="text-sm text-muted-foreground">Distribuição por tempo de vida</p>
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={bucketData} barCategoryGap="20%">
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false}
+                tick={{ fontSize: 12, fill: '#6b7280' }}
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false}
+                tick={{ fontSize: 12, fill: '#6b7280' }}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  borderRadius: '8px', 
+                  border: '1px solid #e5e7eb',
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+                }}
+              />
+              <Bar dataKey="value" name="Casos" radius={[4, 4, 0, 0]}>
+                {bucketData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={BUCKET_COLORS[entry.name as keyof typeof BUCKET_COLORS] || "#8884d8"} 
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </Card>
       </div>
 
-      {/* Charts Row 2 */}
+      {/* Charts Row 2 - Horizontal Bar Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Symptoms */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top 5 Sintomas</CardTitle>
-            <CardDescription>Sintomas mais frequentes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={stats.topSymptoms} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#3b82f6" name="Ocorrências" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
+        <Card className="chart-container">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="chart-title">Top Sintomas</h3>
+              <p className="text-sm text-muted-foreground">Sintomas mais frequentes</p>
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {(stats.topSymptoms || []).slice(0, 5).map((item: any, index: number) => {
+              const maxCount = Math.max(...(stats.topSymptoms || []).map((s: any) => s.count));
+              const percentage = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
+              return (
+                <div key={index} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium truncate max-w-[200px]">{item.name}</span>
+                    <span className="text-muted-foreground">{Math.round(percentage)}%</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-sky-500 rounded-full transition-all"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </Card>
 
         {/* Top Suppliers */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top 5 Fornecedores</CardTitle>
-            <CardDescription>Fornecedores com mais ocorrências</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={stats.topSuppliers} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#f59e0b" name="Ocorrências" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
+        <Card className="chart-container">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="chart-title">Top Fornecedores</h3>
+              <p className="text-sm text-muted-foreground">Fornecedores com mais ocorrências</p>
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {(stats.topSuppliers || []).slice(0, 5).map((item: any, index: number) => {
+              const maxCount = Math.max(...(stats.topSuppliers || []).map((s: any) => s.count));
+              const percentage = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
+              return (
+                <div key={index} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium truncate max-w-[200px]">{item.name}</span>
+                    <span className="text-muted-foreground">{Math.round(percentage)}%</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-amber-500 rounded-full transition-all"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </Card>
       </div>
 
-      {/* Weekly Trend */}
-      {stats.weeklyTrend && stats.weeklyTrend.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Tendência Semanal
-            </CardTitle>
-            <CardDescription>Evolução dos casos por semana</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={stats.weeklyTrend.slice(-12)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="weekKey" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="total" stroke="#8884d8" name="Total" strokeWidth={2} />
-                <Line type="monotone" dataKey="closed" stroke="#22c55e" name="Fechados" />
-                <Line type="monotone" dataKey="ongoing" stroke="#3b82f6" name="Em Andamento" />
-                <Line type="monotone" dataKey="delayed" stroke="#ef4444" name="Atrasados" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Critical Cases List */}
+      {/* Critical Cases Table */}
       {stats.criticalCasesList && stats.criticalCasesList.length > 0 && (
-        <Card className="border-red-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              Casos Críticos (Top 10)
-            </CardTitle>
-            <CardDescription>Casos que requerem atenção imediata</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Doc Number</th>
-                    <th>Fornecedor</th>
-                    <th>Sintoma</th>
-                    <th>Status</th>
-                    <th>Aging Total</th>
-                    <th>Dias Atrasado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.criticalCasesList.map((defect: any) => (
-                    <tr key={defect.id}>
-                      <td className="font-medium">{defect.docNumber}</td>
-                      <td>{defect.supplier || "-"}</td>
-                      <td className="max-w-[200px] truncate">{defect.symptom || "-"}</td>
-                      <td>
-                        <Badge variant={defect.status === "DELAYED" ? "destructive" : "secondary"}>
-                          {defect.status}
-                        </Badge>
-                      </td>
-                      <td className="font-medium">{defect.agingTotal} dias</td>
-                      <td className={defect.daysLate > 0 ? "text-red-600 font-medium" : ""}>
-                        {defect.daysLate > 0 ? `${defect.daysLate} dias` : "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <Card className="chart-container border-rose-200">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="chart-title flex items-center gap-2 text-rose-600">
+                <AlertTriangle className="h-5 w-5" />
+                Casos Críticos
+              </h3>
+              <p className="text-sm text-muted-foreground">Casos que requerem atenção imediata</p>
             </div>
-          </CardContent>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Série de Ocorrência</th>
+                  <th>Número</th>
+                  <th>Sintoma</th>
+                  <th>Status</th>
+                  <th>Aging</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.criticalCasesList.slice(0, 5).map((defect: any) => (
+                  <tr 
+                    key={defect.id} 
+                    className="cursor-pointer"
+                    onClick={() => setLocation(`/defects/${defect.id}`)}
+                  >
+                    <td className="font-medium">{defect.docNumber}</td>
+                    <td>{defect.supplier || "-"}</td>
+                    <td className="max-w-[200px] truncate">{defect.symptom || "-"}</td>
+                    <td>
+                      <Badge className={`
+                        ${defect.status === 'DELAYED' ? 'bg-rose-100 text-rose-700 border-rose-200' : ''}
+                        ${defect.status === 'ONGOING' ? 'bg-sky-100 text-sky-700 border-sky-200' : ''}
+                        ${defect.status === 'CLOSED' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : ''}
+                      `}>
+                        {defect.status}
+                      </Badge>
+                    </td>
+                    <td>
+                      <span className="days-late-badge">{defect.agingTotal || 0} Dias</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 
-      {/* Workflow Steps Distribution */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Distribuição por Etapa do Workflow</CardTitle>
-          <CardDescription>Casos em cada etapa do processo 8D</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={stepData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#8b5cf6" name="Casos" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Root Cause Analysis Section */}
-      <Card className="border-purple-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5 text-purple-600" />
-            Análise de Causa Raiz (RCA)
-          </CardTitle>
-          <CardDescription>
-            Pareto das causas raiz mais frequentes - {rcaData?.totalWithCause || 0} casos com causa identificada
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {rcaLoading ? (
-            <Skeleton className="h-[300px] w-full" />
-          ) : rcaData?.topCauses && rcaData.topCauses.length > 0 ? (
-            <div className="space-y-6">
-              {/* Pareto Chart */}
-              <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart data={rcaData.topCauses.slice(0, 8)}>
-                  <CartesianGrid strokeDasharray="3 3" />
+      {/* RCA Pareto Section */}
+      {rcaData && rcaData && rcaData.topCauses && rcaData.topCauses.length > 0 && (
+        <Card className="chart-container">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="chart-title">Pareto RCA</h3>
+              <p className="text-sm text-muted-foreground">Análise de causa raiz - Princípio 80/20</p>
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={rcaData.topCauses.slice(0, 8).map((item: any) => ({ category: item.cause, count: item.count, cumulativePercentage: parseFloat(item.cumulativePercentage) }))}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                   <XAxis 
-                    dataKey="cause" 
-                    tick={{ fontSize: 10 }} 
-                    interval={0}
-                    angle={-20}
-                    textAnchor="end"
-                    height={80}
+                    dataKey="category" 
+                    tick={{ fontSize: 10, fill: '#6b7280' }}
+                    axisLine={false}
+                    tickLine={false}
                   />
-                  <YAxis yAxisId="left" orientation="left" stroke="#8b5cf6" />
-                  <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" domain={[0, 100]} />
+                  <YAxis 
+                    yAxisId="left" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    domain={[0, 100]}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    tickFormatter={(value) => `${value}%`}
+                  />
                   <Tooltip 
-                    formatter={(value: any, name: string) => {
-                      if (name === "Ocorrências") return [value, name];
-                      return [`${value}%`, name];
+                    contentStyle={{ 
+                      borderRadius: '8px', 
+                      border: '1px solid #e5e7eb',
+                      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
                     }}
                   />
-                  <Legend />
-                  <Bar yAxisId="left" dataKey="count" fill="#8b5cf6" name="Ocorrências" />
+                  <Bar yAxisId="left" dataKey="count" fill="#3b82f6" name="Ocorrências" radius={[4, 4, 0, 0]} />
                   <Line 
                     yAxisId="right" 
                     type="monotone" 
                     dataKey="cumulativePercentage" 
                     stroke="#f59e0b" 
                     strokeWidth={2}
+                    dot={{ fill: '#f59e0b', strokeWidth: 2 }}
                     name="% Acumulado"
-                    dot={{ fill: "#f59e0b" }}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
-
-              {/* RCA Summary Table */}
-              <div className="overflow-x-auto">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Rank</th>
-                      <th>Categoria de Causa</th>
-                      <th>Ocorrências</th>
-                      <th>%</th>
-                      <th>% Acumulado</th>
-                      <th>Fornecedores Afetados</th>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm mb-3">Resumo</h4>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 font-medium">Sintoma</th>
+                    <th className="text-right py-2 font-medium">Qtd</th>
+                    <th className="text-right py-2 font-medium">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rcaData.topCauses.slice(0, 5).map((item: any, index: number) => (
+                    <tr key={index} className="border-b border-muted">
+                      <td className="py-2 flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          index === 0 ? 'bg-sky-500' : 
+                          index === 1 ? 'bg-amber-500' : 
+                          'bg-rose-500'
+                        }`} />
+                        <span className="truncate max-w-[100px]">{item.cause}</span>
+                      </td>
+                      <td className="text-right py-2">{item.count}</td>
+                      <td className="text-right py-2">{item.cumulativePercentage}%</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {rcaData.topCauses.slice(0, 10).map((item: any) => (
-                      <tr key={item.rank}>
-                        <td className="font-medium">{item.rank}</td>
-                        <td className="max-w-[200px]">
-                          <span className="truncate block" title={item.cause}>
-                            {item.cause}
-                          </span>
-                        </td>
-                        <td className="font-medium">{item.count}</td>
-                        <td>{item.percentage}%</td>
-                        <td>
-                          <Badge 
-                            variant="outline" 
-                            className={parseFloat(item.cumulativePercentage) <= 80 ? "bg-purple-50 text-purple-700" : ""}
-                          >
-                            {item.cumulativePercentage}%
-                          </Badge>
-                        </td>
-                        <td className="text-sm text-muted-foreground">
-                          {item.suppliers?.slice(0, 3).join(", ")}
-                          {item.suppliers?.length > 3 && ` +${item.suppliers.length - 3}`}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* 80/20 Insight */}
-              {rcaData.topCauses.length > 0 && (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <p className="text-sm text-purple-800">
-                    <strong>Insight 80/20:</strong>{" "}
-                    {(() => {
-                      const causes80 = rcaData.topCauses.filter(
-                        (c: any) => parseFloat(c.cumulativePercentage) <= 80
-                      );
-                      return `As ${causes80.length} principais categorias de causa representam aproximadamente 80% dos defeitos. Foque nas causas: ${causes80.map((c: any) => c.cause).slice(0, 3).join(", ")}.`;
-                    })()}
-                  </p>
-                </div>
-              )}
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhuma causa raiz registrada ainda.</p>
-              <p className="text-sm">As causas raiz serão exibidas aqui quando os casos forem atualizados.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

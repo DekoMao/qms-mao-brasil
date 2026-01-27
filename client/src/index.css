@@ -3,6 +3,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Google Fonts - Inter for modern UI */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -42,75 +45,110 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* QMS MAO Brasil - Professional Navy Blue Theme */
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  
+  /* Navy Blue Primary */
+  --primary: oklch(0.35 0.12 250);
+  --primary-foreground: oklch(0.98 0 0);
+  
+  /* Sidebar - Dark Navy */
+  --sidebar: oklch(0.22 0.08 250);
+  --sidebar-foreground: oklch(0.92 0 0);
+  --sidebar-primary: oklch(0.55 0.18 220);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.30 0.08 250);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.35 0.06 250);
+  --sidebar-ring: oklch(0.55 0.18 220);
+  
+  /* Light background for content */
+  --background: oklch(0.97 0.005 250);
+  --foreground: oklch(0.20 0.02 250);
+  
+  /* Cards */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
+  --card-foreground: oklch(0.20 0.02 250);
+  
+  /* Popover */
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --popover-foreground: oklch(0.20 0.02 250);
+  
+  /* Secondary */
+  --secondary: oklch(0.94 0.01 250);
+  --secondary-foreground: oklch(0.30 0.02 250);
+  
+  /* Muted */
+  --muted: oklch(0.94 0.01 250);
+  --muted-foreground: oklch(0.50 0.02 250);
+  
+  /* Accent */
+  --accent: oklch(0.55 0.18 220);
+  --accent-foreground: oklch(0.98 0 0);
+  
+  /* Destructive */
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  
+  /* Borders */
+  --border: oklch(0.88 0.01 250);
+  --input: oklch(0.88 0.01 250);
+  --ring: oklch(0.55 0.18 220);
+  
+  /* Charts - Vibrant colors */
+  --chart-1: oklch(0.55 0.18 220);
+  --chart-2: oklch(0.65 0.20 145);
+  --chart-3: oklch(0.70 0.18 55);
+  --chart-4: oklch(0.60 0.22 25);
+  --chart-5: oklch(0.55 0.20 300);
+  
+  --radius: 0.5rem;
 }
 
 .dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  --primary: oklch(0.55 0.18 220);
+  --primary-foreground: oklch(0.98 0 0);
+  
+  --sidebar: oklch(0.18 0.06 250);
+  --sidebar-foreground: oklch(0.90 0 0);
+  --sidebar-primary: oklch(0.55 0.18 220);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.25 0.06 250);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.30 0.04 250);
+  --sidebar-ring: oklch(0.55 0.18 220);
+  
+  --background: oklch(0.15 0.04 250);
+  --foreground: oklch(0.92 0 0);
+  
+  --card: oklch(0.20 0.04 250);
+  --card-foreground: oklch(0.92 0 0);
+  
+  --popover: oklch(0.20 0.04 250);
+  --popover-foreground: oklch(0.92 0 0);
+  
+  --secondary: oklch(0.25 0.04 250);
+  --secondary-foreground: oklch(0.85 0 0);
+  
+  --muted: oklch(0.25 0.04 250);
+  --muted-foreground: oklch(0.65 0.02 250);
+  
+  --accent: oklch(0.55 0.18 220);
+  --accent-foreground: oklch(0.98 0 0);
+  
+  --destructive: oklch(0.60 0.20 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  
+  --border: oklch(0.30 0.04 250);
+  --input: oklch(0.30 0.04 250);
+  --ring: oklch(0.55 0.18 220);
+  
+  --chart-1: oklch(0.60 0.18 220);
+  --chart-2: oklch(0.70 0.20 145);
+  --chart-3: oklch(0.75 0.18 55);
+  --chart-4: oklch(0.65 0.22 25);
+  --chart-5: oklch(0.60 0.20 300);
 }
 
 @layer base {
@@ -119,6 +157,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -134,24 +173,11 @@
 }
 
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
     padding-right: 1rem;
   }
 
@@ -162,95 +188,245 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
+      padding-left: 2rem;
       padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      max-width: 1280px;
     }
   }
 }
 
 /* =====================================================
-   QMS MAO Brasil - Custom Styles
+   QMS MAO Brasil - Professional Design System
    ===================================================== */
 
-/* Status badge colors */
+/* Status badge colors - Enhanced */
 .status-closed {
-  @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400;
+  @apply bg-emerald-100 text-emerald-700 border border-emerald-200;
 }
 .status-ongoing {
-  @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400;
+  @apply bg-sky-100 text-sky-700 border border-sky-200;
 }
 .status-delayed {
-  @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400;
+  @apply bg-rose-100 text-rose-700 border border-rose-200;
 }
 .status-waiting {
-  @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400;
+  @apply bg-amber-100 text-amber-700 border border-amber-200;
 }
 
-/* SLA indicator colors */
-.sla-green {
-  @apply bg-green-500;
-}
-.sla-yellow {
-  @apply bg-yellow-500;
-}
-.sla-red {
-  @apply bg-red-500;
-}
-
-/* Severity badge colors */
+/* Severity badge colors - MG Style */
 .severity-s {
-  @apply bg-red-600 text-white;
+  @apply bg-rose-600 text-white font-semibold;
 }
 .severity-a {
-  @apply bg-orange-500 text-white;
+  @apply bg-orange-500 text-white font-semibold;
 }
 .severity-b {
-  @apply bg-yellow-500 text-black;
+  @apply bg-amber-400 text-amber-900 font-semibold;
 }
 .severity-c {
-  @apply bg-green-500 text-white;
+  @apply bg-emerald-500 text-white font-semibold;
 }
 
-/* Kanban card styling */
-.kanban-card {
-  @apply bg-card rounded-lg border p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer;
+/* Aging bucket colors - Gradient style */
+.bucket-4 {
+  @apply bg-emerald-500 text-white;
+}
+.bucket-14 {
+  @apply bg-sky-500 text-white;
+}
+.bucket-29 {
+  @apply bg-amber-500 text-white;
+}
+.bucket-59 {
+  @apply bg-orange-500 text-white;
+}
+.bucket-60 {
+  @apply bg-rose-500 text-white;
 }
 
-/* Data table styling */
+/* KPI Cards */
+.kpi-card {
+  @apply bg-card rounded-xl border shadow-sm p-5 transition-all hover:shadow-md;
+}
+.kpi-card-value {
+  @apply text-3xl font-bold tracking-tight;
+}
+.kpi-card-label {
+  @apply text-sm text-muted-foreground mt-1;
+}
+
+/* Data table styling - Enhanced */
 .data-table {
   @apply w-full text-sm;
 }
+.data-table thead {
+  @apply bg-muted/50;
+}
 .data-table th {
-  @apply bg-muted/50 px-4 py-3 text-left font-medium text-muted-foreground;
+  @apply px-4 py-3 text-left font-semibold text-foreground text-xs uppercase tracking-wider;
 }
 .data-table td {
   @apply px-4 py-3 border-b border-border;
 }
-.data-table tr:hover td {
-  @apply bg-muted/30;
+.data-table tbody tr {
+  @apply transition-colors hover:bg-muted/30;
 }
 
-/* Aging bucket colors */
-.bucket-4 {
-  @apply bg-green-100 text-green-800;
+/* Kanban card styling */
+.kanban-card {
+  @apply bg-card rounded-lg border p-4 shadow-sm hover:shadow-md transition-all cursor-pointer;
 }
-.bucket-14 {
-  @apply bg-blue-100 text-blue-800;
+.kanban-column {
+  @apply bg-muted/30 rounded-xl p-3 min-h-[500px];
 }
-.bucket-29 {
-  @apply bg-yellow-100 text-yellow-800;
+.kanban-column-header {
+  @apply font-semibold text-sm mb-3 flex items-center justify-between;
 }
-.bucket-59 {
-  @apply bg-orange-100 text-orange-800;
+
+/* Workflow stepper */
+.workflow-step {
+  @apply flex items-center;
 }
-.bucket-60 {
-  @apply bg-red-100 text-red-800;
+.workflow-step-circle {
+  @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all;
+}
+.workflow-step-circle.active {
+  @apply bg-primary text-primary-foreground;
+}
+.workflow-step-circle.completed {
+  @apply bg-emerald-500 text-white;
+}
+.workflow-step-circle.pending {
+  @apply bg-muted text-muted-foreground;
+}
+.workflow-step-line {
+  @apply h-0.5 flex-1 mx-2;
+}
+.workflow-step-line.completed {
+  @apply bg-emerald-500;
+}
+.workflow-step-line.pending {
+  @apply bg-muted;
+}
+
+/* Sidebar menu item */
+.sidebar-menu-item {
+  @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all;
+}
+.sidebar-menu-item:hover {
+  @apply bg-sidebar-accent text-sidebar-accent-foreground;
+}
+.sidebar-menu-item.active {
+  @apply bg-sidebar-primary text-sidebar-primary-foreground;
+}
+
+/* Icon colors for sidebar */
+.icon-dashboard { @apply text-sky-400; }
+.icon-defects { @apply text-amber-400; }
+.icon-kanban { @apply text-violet-400; }
+.icon-import { @apply text-emerald-400; }
+.icon-reports { @apply text-rose-400; }
+.icon-suppliers { @apply text-orange-400; }
+.icon-sla { @apply text-cyan-400; }
+.icon-portal { @apply text-pink-400; }
+
+/* Chart container */
+.chart-container {
+  @apply bg-card rounded-xl border p-5 shadow-sm;
+}
+.chart-title {
+  @apply text-base font-semibold mb-1;
+}
+.chart-subtitle {
+  @apply text-sm text-muted-foreground mb-4;
+}
+
+/* Login page */
+.login-container {
+  @apply min-h-screen flex items-center justify-center;
+  background: linear-gradient(135deg, oklch(0.22 0.08 250) 0%, oklch(0.30 0.10 250) 100%);
+}
+.login-card {
+  @apply bg-card rounded-2xl shadow-2xl p-8 w-full max-w-md;
+}
+.login-logo {
+  @apply w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center;
+}
+
+/* Header bar */
+.header-bar {
+  @apply h-14 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between px-6;
+}
+
+/* Filter chips */
+.filter-chip {
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted hover:bg-muted/80 transition-colors;
+}
+.filter-chip.active {
+  @apply bg-primary text-primary-foreground;
+}
+
+/* Badge variants */
+.badge-success {
+  @apply bg-emerald-100 text-emerald-700 border-emerald-200;
+}
+.badge-warning {
+  @apply bg-amber-100 text-amber-700 border-amber-200;
+}
+.badge-danger {
+  @apply bg-rose-100 text-rose-700 border-rose-200;
+}
+.badge-info {
+  @apply bg-sky-100 text-sky-700 border-sky-200;
+}
+
+/* Days late highlight */
+.days-late {
+  @apply text-rose-600 font-semibold;
+}
+.days-late-badge {
+  @apply bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-xs font-medium;
+}
+
+/* Section divider */
+.section-divider {
+  @apply border-t border-border my-6;
+}
+
+/* Card hover effect */
+.card-hover {
+  @apply transition-all hover:shadow-lg hover:-translate-y-0.5;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-muted/30 rounded;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded hover:bg-muted-foreground/50;
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive table wrapper */
+.table-wrapper {
+  @apply overflow-x-auto rounded-xl border bg-card;
 }

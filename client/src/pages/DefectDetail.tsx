@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useRoute, useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,8 +12,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { 
   ArrowLeft, Save, ChevronRight, Clock, User, Calendar, 
-  FileText, MessageSquare, History, AlertTriangle 
+  FileText, MessageSquare, History, AlertTriangle, X, Pause
 } from "lucide-react";
+
+const WORKFLOW_STEPS = [
+  { id: 1, label: "Disposição", shortLabel: "Disp." },
+  { id: 2, label: "Análise Técnica", shortLabel: "Análise" },
+  { id: 3, label: "Causa Técnica", shortLabel: "Causa T." },
+  { id: 4, label: "Causa Raiz", shortLabel: "Causa R." },
+  { id: 5, label: "Ação Corretiva", shortLabel: "Ação C." },
+  { id: 6, label: "Verificação", shortLabel: "Verif." },
+  { id: 7, label: "Fechado", shortLabel: "Fechado" },
+  { id: 8, label: "Pausado", shortLabel: "Pausado" },
+];
 
 const STEPS = [
   "Aguardando Disposição",
@@ -34,6 +45,11 @@ function getNextStep(currentStep: string): typeof STEPS[number] | null {
     return STEPS[currentIndex + 1];
   }
   return null;
+}
+
+function getStepNumber(step: string): number {
+  const index = getStepIndex(step);
+  return index >= 0 ? index + 1 : 1;
 }
 
 export default function DefectDetail() {
@@ -135,7 +151,7 @@ export default function DefectDetail() {
 
   if (isLoading && !isNew) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 animate-fade-in">
         <Skeleton className="h-10 w-48" />
         <Skeleton className="h-96 w-full" />
       </div>
@@ -144,263 +160,297 @@ export default function DefectDetail() {
 
   const currentStepIndex = defect ? getStepIndex(defect.step) : 0;
   const nextStep = defect ? getNextStep(defect.step) : null;
+  const currentStepNumber = defect ? getStepNumber(defect.step) : 1;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setLocation("/defects")}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setLocation("/defects")}
+            className="h-9 w-9 rounded-lg"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">
-              {isNew ? "Novo Defeito" : `Defeito ${defect?.docNumber}`}
-            </h1>
-            {defect && (
-              <div className="flex items-center gap-2 mt-1">
-                <Badge className={defect.status === "CLOSED" ? "status-closed" : defect.status === "DELAYED" ? "status-delayed" : "status-ongoing"}>
-                  {defect.status}
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold tracking-tight">
+                {isNew ? "Novo Defeito" : `Defeito ${defect?.docNumber}`}
+              </h1>
+              {defect && defect.status === "DELAYED" && (
+                <Badge className="bg-rose-100 text-rose-700 border-rose-200 font-semibold">
+                  DELAYED
                 </Badge>
-                <span className="text-sm text-muted-foreground">
-                  Responsável: <strong>{defect.currentResponsible}</strong>
-                </span>
-              </div>
+              )}
+            </div>
+            {defect && (
+              <p className="text-muted-foreground mt-1">
+                Responsável: <span className="font-medium text-foreground">{defect.currentResponsible}</span>
+              </p>
             )}
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            onClick={handleSave} 
+            disabled={createMutation.isPending || updateMutation.isPending}
+            className="h-9"
+          >
             <Save className="h-4 w-4 mr-2" />
             Salvar
           </Button>
           {defect && nextStep && (
             <Button 
-              variant="default" 
-              className="bg-green-600 hover:bg-green-700"
               onClick={handleAdvanceStep}
               disabled={advanceStepMutation.isPending}
+              className="h-9 bg-primary"
             >
-              Avançar para {nextStep.replace("Aguardando ", "")}
+              Avançar etapa
               <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
           )}
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
+      {/* Aging Summary Cards */}
+      {defect && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="aging-card">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground mb-1">Aging Total</p>
+              <p className="text-3xl font-bold text-rose-600">{defect.agingTotal} <span className="text-lg font-normal">Dias</span></p>
+            </CardContent>
+          </Card>
+          <Card className="aging-card">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground mb-1">Aging na Etapa</p>
+              <p className="text-3xl font-bold text-sky-600">{defect.agingByStep} <span className="text-lg font-normal">Dias</span></p>
+            </CardContent>
+          </Card>
+          <Card className="aging-card">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground mb-1">Bucket</p>
+              <p className="text-3xl font-bold text-amber-600">{defect.bucketAging}</p>
+            </CardContent>
+          </Card>
+          <Card className="aging-card">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground mb-1">Dias em Atraso</p>
+              <p className={`text-3xl font-bold flex items-center gap-2 ${defect.daysLate > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                {defect.daysLate > 0 ? <AlertTriangle className="h-5 w-5" /> : null}
+                {defect.daysLate || 0} <span className="text-lg font-normal">Dias</span>
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Workflow Progress */}
       {defect && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Progresso do Workflow 8D</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between overflow-x-auto pb-2">
-              {STEPS.map((step, index) => (
-                <div key={step} className="flex items-center">
-                  <div className={`flex flex-col items-center ${index <= currentStepIndex ? "text-primary" : "text-muted-foreground"}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                      ${index < currentStepIndex ? "bg-green-500 text-white" : 
-                        index === currentStepIndex ? "bg-primary text-primary-foreground" : 
-                        "bg-muted"}`}>
-                      {index < currentStepIndex ? "✓" : index + 1}
+        <Card className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="workflow-progress">
+              {WORKFLOW_STEPS.slice(0, 7).map((step, index) => {
+                const isCompleted = index < currentStepNumber;
+                const isCurrent = index + 1 === currentStepNumber;
+                return (
+                  <div 
+                    key={step.id} 
+                    className={`workflow-step ${isCompleted ? "completed" : ""} ${isCurrent ? "current" : ""}`}
+                  >
+                    <div className={`workflow-step-number ${isCompleted ? "bg-emerald-500 text-white" : isCurrent ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>
+                      {index + 1}
                     </div>
-                    <span className="text-xs mt-1 max-w-[80px] text-center truncate">
-                      {step.replace("Aguardando ", "").substring(0, 12)}
-                    </span>
+                    <span className="workflow-step-label">{step.label}</span>
                   </div>
-                  {index < STEPS.length - 1 && (
-                    <div className={`w-12 h-0.5 mx-1 ${index < currentStepIndex ? "bg-green-500" : "bg-muted"}`} />
-                  )}
+                );
+              })}
+              <div className="workflow-step">
+                <div className="workflow-step-number bg-muted text-muted-foreground">
+                  <Pause className="h-3 w-3" />
                 </div>
-              ))}
+                <span className="workflow-step-label">Pausado</span>
+              </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Aging Summary */}
-      {defect && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold">{defect.agingTotal}</div>
-              <p className="text-xs text-muted-foreground">Aging Total (dias)</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold">{defect.agingByStep}</div>
-              <p className="text-xs text-muted-foreground">Aging na Etapa</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <Badge className={`bucket-${defect.bucketAging === "<=4" ? "4" : defect.bucketAging === "5-14" ? "14" : defect.bucketAging === "15-29" ? "29" : defect.bucketAging === "30-59" ? "59" : "60"}`}>
-                {defect.bucketAging}
-              </Badge>
-              <p className="text-xs text-muted-foreground mt-1">Bucket Aging</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className={`text-2xl font-bold ${defect.daysLate > 0 ? "text-red-600" : ""}`}>
-                {defect.daysLate || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Dias em Atraso</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-sm font-medium">{defect.weekKey}</div>
-              <p className="text-xs text-muted-foreground">Semana de Abertura</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       {/* Main Content Tabs */}
       <Tabs defaultValue="info" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="info"><FileText className="h-4 w-4 mr-2" />Informações</TabsTrigger>
-          <TabsTrigger value="8d"><Clock className="h-4 w-4 mr-2" />Processo 8D</TabsTrigger>
-          <TabsTrigger value="comments" disabled={isNew}><MessageSquare className="h-4 w-4 mr-2" />Comentários</TabsTrigger>
-          <TabsTrigger value="history" disabled={isNew}><History className="h-4 w-4 mr-2" />Histórico</TabsTrigger>
+        <TabsList className="bg-muted/50 p-1 rounded-xl">
+          <TabsTrigger value="info" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            Visão Geral
+          </TabsTrigger>
+          <TabsTrigger value="8d" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            8D
+          </TabsTrigger>
+          <TabsTrigger value="evidence" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            Evidências
+          </TabsTrigger>
+          <TabsTrigger value="comments" disabled={isNew} className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            Comentários
+          </TabsTrigger>
+          <TabsTrigger value="history" disabled={isNew} className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            Auditoria
+          </TabsTrigger>
         </TabsList>
 
         {/* Info Tab */}
         <TabsContent value="info" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Visão Geral</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-8">
+                <div>
+                  <p className="text-sm text-muted-foreground">Disposição</p>
+                  <p className="font-medium">{getValue("disposition") || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Fornecedor</p>
+                  <p className="font-medium">{getValue("supplier") || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">RCL</p>
+                  <p className="font-medium">{getValue("rcl") || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Bover 1163</p>
+                  <p className="font-medium">{getValue("bover1163") || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Modelo</p>
+                  <p className="font-medium">{getValue("model") || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Tomcedos</p>
+                  <p className="font-medium">{getValue("tomcedos") || "-"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Identification */}
             <Card>
-              <CardHeader>
-                <CardTitle>Identificação</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Identificação</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium">Doc Number *</label>
-                    <Input value={getValue("docNumber")} onChange={(e) => setValue("docNumber", e.target.value)} placeholder="XX.MM.AA" />
+                    <label className="text-sm font-medium mb-1 block">Doc Number</label>
+                    <Input
+                      value={getValue("docNumber")}
+                      onChange={(e) => setValue("docNumber", e.target.value)}
+                      disabled={!isNew}
+                      className="h-9"
+                    />
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Data de Abertura *</label>
-                    <Input type="date" value={getValue("openDate")} onChange={(e) => setValue("openDate", e.target.value)} />
+                    <label className="text-sm font-medium mb-1 block">Data Abertura</label>
+                    <Input
+                      type="date"
+                      value={getValue("openDate")}
+                      onChange={(e) => setValue("openDate", e.target.value)}
+                      className="h-9"
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium">Severidade (MG)</label>
-                    <Select value={getValue("mg") || "none"} onValueChange={(v) => setValue("mg", v === "none" ? null : v)}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <label className="text-sm font-medium mb-1 block">Fornecedor</label>
+                    <Input
+                      value={getValue("supplier")}
+                      onChange={(e) => setValue("supplier", e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Modelo</label>
+                    <Input
+                      value={getValue("model")}
+                      onChange={(e) => setValue("model", e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Part Number</label>
+                  <Input
+                    value={getValue("pn")}
+                    onChange={(e) => setValue("pn", e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Classification */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Classificação</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Status</label>
+                    <Select
+                      value={getValue("status") || "ONGOING"}
+                      onValueChange={(v) => setValue("status", v)}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">-</SelectItem>
-                        <SelectItem value="S">S - Safety</SelectItem>
-                        <SelectItem value="A">A - Blocking</SelectItem>
-                        <SelectItem value="B">B - Major</SelectItem>
-                        <SelectItem value="C">C - Minor</SelectItem>
+                        <SelectItem value="ONGOING">ONGOING</SelectItem>
+                        <SelectItem value="CLOSED">CLOSED</SelectItem>
+                        <SelectItem value="DELAYED">DELAYED</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Categoria</label>
-                    <Input value={getValue("category")} onChange={(e) => setValue("category", e.target.value)} />
+                    <label className="text-sm font-medium mb-1 block">Severidade (MG)</label>
+                    <Select
+                      value={getValue("mg") || "B"}
+                      onValueChange={(v) => setValue("mg", v)}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="S">S - Crítico</SelectItem>
+                        <SelectItem value="A">A - Alto</SelectItem>
+                        <SelectItem value="B">B - Médio</SelectItem>
+                        <SelectItem value="C">C - Baixo</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">QCR Number</label>
-                  <Input value={getValue("qcrNumber")} onChange={(e) => setValue("qcrNumber", e.target.value)} />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Product */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Produto / Material</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Modelo</label>
-                    <Input value={getValue("model")} onChange={(e) => setValue("model", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Cliente</label>
-                    <Input value={getValue("customer")} onChange={(e) => setValue("customer", e.target.value)} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Part Number (PN)</label>
-                    <Input value={getValue("pn")} onChange={(e) => setValue("pn", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Material</label>
-                    <Input value={getValue("material")} onChange={(e) => setValue("material", e.target.value)} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Defect Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações do Defeito</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Sintoma</label>
-                  <Input value={getValue("symptom")} onChange={(e) => setValue("symptom", e.target.value)} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Detecção</label>
-                    <Input value={getValue("detection")} onChange={(e) => setValue("detection", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Quantidade</label>
-                    <Input type="number" value={getValue("qty")} onChange={(e) => setValue("qty", parseInt(e.target.value) || null)} />
-                  </div>
+                  <label className="text-sm font-medium mb-1 block">Sintoma</label>
+                  <Input
+                    value={getValue("symptom")}
+                    onChange={(e) => setValue("symptom", e.target.value)}
+                    className="h-9"
+                  />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Descrição</label>
-                  <Textarea value={getValue("description")} onChange={(e) => setValue("description", e.target.value)} rows={3} />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Supplier */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Fornecedor</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Fornecedor</label>
-                  <Input value={getValue("supplier")} onChange={(e) => setValue("supplier", e.target.value)} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Owner</label>
-                    <Input value={getValue("owner")} onChange={(e) => setValue("owner", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Target Date</label>
-                    <Input type="date" value={getValue("targetDate")} onChange={(e) => setValue("targetDate", e.target.value)} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Status Feedback</label>
-                  <Select value={getValue("statusSupplyFB") || "none"} onValueChange={(v) => setValue("statusSupplyFB", v === "none" ? null : v)}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">-</SelectItem>
-                      <SelectItem value="On Time">On Time</SelectItem>
-                      <SelectItem value="Late Replay">Late Replay</SelectItem>
-                      <SelectItem value="DELAYED">DELAYED</SelectItem>
-                      <SelectItem value="ONGOING">ONGOING</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <label className="text-sm font-medium mb-1 block">Descrição</label>
+                  <Textarea
+                    value={getValue("description")}
+                    onChange={(e) => setValue("description", e.target.value)}
+                    rows={3}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -409,97 +459,175 @@ export default function DefectDetail() {
 
         {/* 8D Tab */}
         <TabsContent value="8d" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Datas do Processo 8D</CardTitle>
-                <CardDescription>Preencha as datas conforme o avanço do processo</CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">D3 - Ações de Contenção</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Disposição</label>
-                    <Input type="date" value={getValue("dateDisposition")} onChange={(e) => setValue("dateDisposition", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Análise Técnica</label>
-                    <Input type="date" value={getValue("dateTechAnalysis")} onChange={(e) => setValue("dateTechAnalysis", e.target.value)} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Causa Raiz</label>
-                    <Input type="date" value={getValue("dateRootCause")} onChange={(e) => setValue("dateRootCause", e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Ação Corretiva</label>
-                    <Input type="date" value={getValue("dateCorrectiveAction")} onChange={(e) => setValue("dateCorrectiveAction", e.target.value)} />
-                  </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Data Disposição</label>
+                  <Input
+                    type="date"
+                    value={getValue("dispositionDate")}
+                    onChange={(e) => setValue("dispositionDate", e.target.value)}
+                    className="h-9"
+                  />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Validação</label>
-                  <Input type="date" value={getValue("dateValidation")} onChange={(e) => setValue("dateValidation", e.target.value)} />
+                  <label className="text-sm font-medium mb-1 block">Disposição</label>
+                  <Textarea
+                    value={getValue("disposition")}
+                    onChange={(e) => setValue("disposition", e.target.value)}
+                    rows={3}
+                  />
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Análise e Ações</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">D4 - Análise de Causa Raiz</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Causa Raiz</label>
-                  <Textarea value={getValue("cause")} onChange={(e) => setValue("cause", e.target.value)} rows={3} placeholder="Descreva a causa raiz identificada..." />
+                  <label className="text-sm font-medium mb-1 block">Data Causa Raiz</label>
+                  <Input
+                    type="date"
+                    value={getValue("rootCauseDate")}
+                    onChange={(e) => setValue("rootCauseDate", e.target.value)}
+                    className="h-9"
+                  />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Ações Corretivas</label>
-                  <Textarea value={getValue("correctiveActions")} onChange={(e) => setValue("correctiveActions", e.target.value)} rows={3} placeholder="Descreva as ações corretivas implementadas..." />
+                  <label className="text-sm font-medium mb-1 block">Causa Raiz</label>
+                  <Textarea
+                    value={getValue("rootCause")}
+                    onChange={(e) => setValue("rootCause", e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">D5/D6 - Ações Corretivas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Data Ação Corretiva</label>
+                  <Input
+                    type="date"
+                    value={getValue("correctiveActionDate")}
+                    onChange={(e) => setValue("correctiveActionDate", e.target.value)}
+                    className="h-9"
+                  />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Feedback do Fornecedor</label>
-                  <Textarea value={getValue("supplyFeedback")} onChange={(e) => setValue("supplyFeedback", e.target.value)} rows={3} />
+                  <label className="text-sm font-medium mb-1 block">Ação Corretiva</label>
+                  <Textarea
+                    value={getValue("correctiveAction")}
+                    onChange={(e) => setValue("correctiveAction", e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">D7/D8 - Verificação e Fechamento</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Data Verificação</label>
+                  <Input
+                    type="date"
+                    value={getValue("verificationDate")}
+                    onChange={(e) => setValue("verificationDate", e.target.value)}
+                    className="h-9"
+                  />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Acompanhamento</label>
-                  <Textarea value={getValue("trackingProgress")} onChange={(e) => setValue("trackingProgress", e.target.value)} rows={3} />
+                  <label className="text-sm font-medium mb-1 block">Data Fechamento</label>
+                  <Input
+                    type="date"
+                    value={getValue("closeDate")}
+                    onChange={(e) => setValue("closeDate", e.target.value)}
+                    className="h-9"
+                  />
                 </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        {/* Comments Tab */}
-        <TabsContent value="comments">
+        {/* Evidence Tab */}
+        <TabsContent value="evidence">
           <Card>
-            <CardHeader>
-              <CardTitle>Comentários</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Evidências</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                <FileText className="h-12 w-12 mb-4 opacity-30" />
+                <p className="font-medium">Nenhuma evidência anexada</p>
+                <p className="text-sm mt-1">Arraste arquivos aqui ou clique para fazer upload</p>
+                <Button variant="outline" className="mt-4">
+                  Selecionar Arquivos
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Comments Tab */}
+        <TabsContent value="comments" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Comentários</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Textarea 
-                  value={newComment} 
-                  onChange={(e) => setNewComment(e.target.value)} 
+              <div className="flex gap-3">
+                <Textarea
                   placeholder="Adicione um comentário..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
                   rows={2}
                   className="flex-1"
                 />
-                <Button onClick={handleAddComment} disabled={!newComment.trim()}>Enviar</Button>
+                <Button 
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim() || addCommentMutation.isPending}
+                  className="self-end"
+                >
+                  Enviar
+                </Button>
               </div>
-              <div className="space-y-4 mt-4">
-                {comments?.map((comment) => (
-                  <div key={comment.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-medium">{comment.userName}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(comment.createdAt).toLocaleString("pt-BR")}
-                      </span>
+              
+              <div className="space-y-3 mt-4">
+                {comments && comments.length > 0 ? (
+                  comments.map((comment: any) => (
+                    <div key={comment.id} className="p-4 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{comment.authorName || "Usuário"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(comment.createdAt).toLocaleString("pt-BR")}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-sm">{comment.content}</p>
                     </div>
-                    <p className="text-sm">{comment.content}</p>
-                  </div>
-                ))}
-                {(!comments || comments.length === 0) && (
-                  <p className="text-center text-muted-foreground py-4">Nenhum comentário ainda</p>
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">
+                    Nenhum comentário ainda
+                  </p>
                 )}
               </div>
             </CardContent>
@@ -509,37 +637,38 @@ export default function DefectDetail() {
         {/* History Tab */}
         <TabsContent value="history">
           <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Alterações</CardTitle>
-              <CardDescription>Registro imutável de todas as alterações</CardDescription>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Auditoria</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {auditLogs?.map((log) => (
-                  <div key={log.id} className="border-l-2 border-primary pl-4 py-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <Badge variant="outline">{log.action}</Badge>
-                        {log.fieldName && <span className="ml-2 text-sm font-medium">{log.fieldName}</span>}
+              {auditLogs && auditLogs.length > 0 ? (
+                <div className="space-y-3">
+                  {auditLogs.map((log: any) => (
+                    <div key={log.id} className="flex items-start gap-3 p-3 border-b last:border-0">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <History className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(log.timestamp).toLocaleString("pt-BR")}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm">
+                          <span className="font-medium">{log.userName || "Sistema"}</span>
+                          {" alterou "}
+                          <span className="font-medium">{log.field}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {log.oldValue || "(vazio)"} → {log.newValue || "(vazio)"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(log.createdAt).toLocaleString("pt-BR")}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">Por: {log.userName}</p>
-                    {log.oldValue && log.newValue && (
-                      <p className="text-sm mt-1">
-                        <span className="line-through text-red-500">{log.oldValue}</span>
-                        {" → "}
-                        <span className="text-green-600">{log.newValue}</span>
-                      </p>
-                    )}
-                  </div>
-                ))}
-                {(!auditLogs || auditLogs.length === 0) && (
-                  <p className="text-center text-muted-foreground py-4">Nenhum registro de alteração</p>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhuma alteração registrada
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

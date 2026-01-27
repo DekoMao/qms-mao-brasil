@@ -74,3 +74,13 @@
 
 ## Bugs Reportados
 - [x] Barra lateral de menu desapareceu - restaurar navegação
+
+
+## Redesign Visual (conforme SDD e imagem de referência)
+- [x] Atualizar tema global para azul marinho/escuro
+- [x] Redesenhar sidebar com ícones coloridos
+- [x] Atualizar Dashboard com novo layout de cards
+- [x] Atualizar Lista de Defeitos com tabela estilizada
+- [x] Atualizar Detalhe do Defeito com timeline do workflow 8D
+- [x] Criar tela de Login com logo e estilo da referência
+- [x] Manter todas as funcionalidades existentes intactas
