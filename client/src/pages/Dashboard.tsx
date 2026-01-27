@@ -4,9 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, LineChart, Line, Legend 
+  PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart, Area
 } from "recharts";
-import { AlertTriangle, CheckCircle, Clock, TrendingUp, Package, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, TrendingUp, Package, Users, Search } from "lucide-react";
 
 const COLORS = ["#22c55e", "#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6"];
 const BUCKET_COLORS = {
@@ -19,6 +19,7 @@ const BUCKET_COLORS = {
 
 export default function Dashboard() {
   const { data: stats, isLoading } = trpc.defect.stats.useQuery();
+  const { data: rcaData, isLoading: rcaLoading } = trpc.rca.analysis.useQuery();
 
   if (isLoading) {
     return (
@@ -301,6 +302,123 @@ export default function Dashboard() {
               <Bar dataKey="value" fill="#8b5cf6" name="Casos" />
             </BarChart>
           </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Root Cause Analysis Section */}
+      <Card className="border-purple-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-purple-600" />
+            Análise de Causa Raiz (RCA)
+          </CardTitle>
+          <CardDescription>
+            Pareto das causas raiz mais frequentes - {rcaData?.totalWithCause || 0} casos com causa identificada
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {rcaLoading ? (
+            <Skeleton className="h-[300px] w-full" />
+          ) : rcaData?.topCauses && rcaData.topCauses.length > 0 ? (
+            <div className="space-y-6">
+              {/* Pareto Chart */}
+              <ResponsiveContainer width="100%" height={300}>
+                <ComposedChart data={rcaData.topCauses.slice(0, 8)}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="cause" 
+                    tick={{ fontSize: 10 }} 
+                    interval={0}
+                    angle={-20}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis yAxisId="left" orientation="left" stroke="#8b5cf6" />
+                  <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" domain={[0, 100]} />
+                  <Tooltip 
+                    formatter={(value: any, name: string) => {
+                      if (name === "Ocorrências") return [value, name];
+                      return [`${value}%`, name];
+                    }}
+                  />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="count" fill="#8b5cf6" name="Ocorrências" />
+                  <Line 
+                    yAxisId="right" 
+                    type="monotone" 
+                    dataKey="cumulativePercentage" 
+                    stroke="#f59e0b" 
+                    strokeWidth={2}
+                    name="% Acumulado"
+                    dot={{ fill: "#f59e0b" }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+
+              {/* RCA Summary Table */}
+              <div className="overflow-x-auto">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Categoria de Causa</th>
+                      <th>Ocorrências</th>
+                      <th>%</th>
+                      <th>% Acumulado</th>
+                      <th>Fornecedores Afetados</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rcaData.topCauses.slice(0, 10).map((item: any) => (
+                      <tr key={item.rank}>
+                        <td className="font-medium">{item.rank}</td>
+                        <td className="max-w-[200px]">
+                          <span className="truncate block" title={item.cause}>
+                            {item.cause}
+                          </span>
+                        </td>
+                        <td className="font-medium">{item.count}</td>
+                        <td>{item.percentage}%</td>
+                        <td>
+                          <Badge 
+                            variant="outline" 
+                            className={parseFloat(item.cumulativePercentage) <= 80 ? "bg-purple-50 text-purple-700" : ""}
+                          >
+                            {item.cumulativePercentage}%
+                          </Badge>
+                        </td>
+                        <td className="text-sm text-muted-foreground">
+                          {item.suppliers?.slice(0, 3).join(", ")}
+                          {item.suppliers?.length > 3 && ` +${item.suppliers.length - 3}`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* 80/20 Insight */}
+              {rcaData.topCauses.length > 0 && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <p className="text-sm text-purple-800">
+                    <strong>Insight 80/20:</strong>{" "}
+                    {(() => {
+                      const causes80 = rcaData.topCauses.filter(
+                        (c: any) => parseFloat(c.cumulativePercentage) <= 80
+                      );
+                      return `As ${causes80.length} principais categorias de causa representam aproximadamente 80% dos defeitos. Foque nas causas: ${causes80.map((c: any) => c.cause).slice(0, 3).join(", ")}.`;
+                    })()}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Nenhuma causa raiz registrada ainda.</p>
+              <p className="text-sm">As causas raiz serão exibidas aqui quando os casos forem atualizados.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

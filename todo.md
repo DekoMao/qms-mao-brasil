@@ -40,3 +40,24 @@
 - [x] Testes unitários para cálculo de aging
 - [x] Testes unitários para cálculo de bucketAging
 - [x] Validação dos critérios de aceite QA
+
+
+## Portal do Fornecedor
+- [x] Tabela de fornecedores com credenciais de acesso
+- [x] Rota de login específica para fornecedores
+- [x] View restrita mostrando apenas casos do fornecedor logado
+- [x] Formulário para atualizar causa raiz e ações corretivas
+- [x] Auditoria de alterações feitas pelo fornecedor
+
+## Notificações por E-mail (SLA)
+- [x] Configuração de SLA por etapa do workflow
+- [x] Job de verificação de casos que excedem SLA
+- [x] Envio de e-mail para responsável quando SLA é excedido
+- [x] Histórico de notificações enviadas
+- [x] Configuração de destinatários por tipo de alerta
+
+## Análise de Causa Raiz (RCA) no Dashboard
+- [x] Agregação de causas raiz por categoria
+- [x] Gráfico de Pareto das causas mais frequentes
+- [x] Drill-down para ver casos por causa raiz
+- [x] Filtros por período, fornecedor e severidade

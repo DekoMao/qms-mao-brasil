@@ -29,7 +29,10 @@ import {
   Kanban, 
   Upload, 
   FileBarChart,
-  Shield
+  Shield,
+  Building2,
+  Clock,
+  ExternalLink
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -42,6 +45,11 @@ const menuItems = [
   { icon: Kanban, label: "Kanban", path: "/kanban" },
   { icon: Upload, label: "Importação", path: "/import" },
   { icon: FileBarChart, label: "Relatórios", path: "/reports" },
+];
+
+const adminMenuItems = [
+  { icon: Building2, label: "Fornecedores", path: "/suppliers" },
+  { icon: Clock, label: "SLA e Notificações", path: "/sla-settings" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -226,6 +234,46 @@ function DashboardLayoutContent({
                 );
               })}
             </SidebarMenu>
+
+            {/* Admin Section */}
+            <div className="px-2 py-2 border-t">
+              {!isCollapsed && (
+                <p className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Administração
+                </p>
+              )}
+              <SidebarMenu>
+                {adminMenuItems.map(item => {
+                  const isActive = location.startsWith(item.path);
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => setLocation(item.path)}
+                        tooltip={item.label}
+                        className={`h-10 transition-all font-normal`}
+                      >
+                        <item.icon
+                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+                {/* Link to Supplier Portal */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => window.open("/supplier-portal", "_blank")}
+                    tooltip="Portal do Fornecedor"
+                    className="h-10 transition-all font-normal"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span>Portal do Fornecedor</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </div>
           </SidebarContent>
 
           <SidebarFooter className="p-3 border-t">

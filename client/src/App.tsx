@@ -11,8 +11,12 @@ import DefectDetail from "./pages/DefectDetail";
 import Kanban from "./pages/Kanban";
 import Import from "./pages/Import";
 import Reports from "./pages/Reports";
+import Suppliers from "./pages/Suppliers";
+import SlaSettings from "./pages/SlaSettings";
+import SupplierPortal from "./pages/SupplierPortal";
 
-function Router() {
+// Main app router with dashboard layout
+function MainRouter() {
   return (
     <DashboardLayout>
       <Switch>
@@ -22,6 +26,8 @@ function Router() {
         <Route path="/kanban" component={Kanban} />
         <Route path="/import" component={Import} />
         <Route path="/reports" component={Reports} />
+        <Route path="/suppliers" component={Suppliers} />
+        <Route path="/sla-settings" component={SlaSettings} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
@@ -29,13 +35,19 @@ function Router() {
   );
 }
 
+// App with route switching between main app and supplier portal
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <Switch>
+            {/* Supplier Portal - standalone without dashboard layout */}
+            <Route path="/supplier-portal" component={SupplierPortal} />
+            {/* Main application with dashboard layout */}
+            <Route component={MainRouter} />
+          </Switch>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

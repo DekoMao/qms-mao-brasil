@@ -458,3 +458,313 @@ export async function getFilterOptions() {
     bucketAgings: ["<=4", "5-14", "15-29", "30-59", ">60"],
   };
 }
+
+
+// =====================================================
+// SUPPLIER FUNCTIONS (Portal do Fornecedor)
+// =====================================================
+import { 
+  suppliers, InsertSupplier, Supplier,
+  slaConfigs, InsertSlaConfig,
+  notifications, InsertNotification,
+  notificationRecipients, InsertNotificationRecipient,
+  rootCauseCategories, InsertRootCauseCategory
+} from "../drizzle/schema";
+
+export async function getSuppliers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(suppliers).orderBy(suppliers.name);
+}
+
+export async function getSupplierById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(suppliers).where(eq(suppliers.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getSupplierByAccessCode(accessCode: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(suppliers)
+    .where(and(eq(suppliers.accessCode, accessCode), eq(suppliers.isActive, true)))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getSupplierByName(name: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(suppliers).where(eq(suppliers.name, name)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function createSupplier(data: InsertSupplier) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Generate unique access code
+  const accessCode = `SUP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+  
+  const result = await db.insert(suppliers).values({ ...data, accessCode });
+  return getSupplierById(result[0].insertId);
+}
+
+export async function updateSupplier(id: number, data: Partial<InsertSupplier>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(suppliers).set(data).where(eq(suppliers.id, id));
+  return getSupplierById(id);
+}
+
+export async function getDefectsForSupplier(supplierName: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select().from(defects)
+    .where(eq(defects.supplier, supplierName))
+    .orderBy(desc(defects.openDate));
+  
+  return result.map(enrichDefect);
+}
+
+// =====================================================
+// SLA CONFIGURATION FUNCTIONS
+// =====================================================
+export async function getSlaConfigs() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(slaConfigs).where(eq(slaConfigs.isActive, true));
+}
+
+export async function createSlaConfig(data: InsertSlaConfig) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(slaConfigs).values(data);
+  return result[0].insertId;
+}
+
+export async function updateSlaConfig(id: number, data: Partial<InsertSlaConfig>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(slaConfigs).set(data).where(eq(slaConfigs.id, id));
+}
+
+export async function getDefaultSlaForStep(step: string, severity?: string) {
+  const configs = await getSlaConfigs();
+  
+  // Try to find specific config for step + severity
+  let config = configs.find(c => c.step === step && c.severityMg === severity);
+  
+  // Fallback to step-only config
+  if (!config) {
+    config = configs.find(c => c.step === step && !c.severityMg);
+  }
+  
+  // Default SLA values
+  return config || { maxDays: 7, warningDays: 5 };
+}
+
+// =====================================================
+// NOTIFICATION FUNCTIONS
+// =====================================================
+export async function createNotification(data: InsertNotification) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(notifications).values(data);
+  return result[0].insertId;
+}
+
+export async function getNotifications(defectId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (defectId) {
+    return db.select().from(notifications)
+      .where(eq(notifications.defectId, defectId))
+      .orderBy(desc(notifications.createdAt));
+  }
+  
+  return db.select().from(notifications).orderBy(desc(notifications.createdAt)).limit(100);
+}
+
+export async function updateNotificationStatus(id: number, status: "SENT" | "FAILED", errorMessage?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const updateData: any = { status };
+  if (status === "SENT") {
+    updateData.sentAt = new Date();
+  }
+  if (errorMessage) {
+    updateData.errorMessage = errorMessage;
+  }
+  
+  await db.update(notifications).set(updateData).where(eq(notifications.id, id));
+}
+
+export async function getPendingNotifications() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(notifications).where(eq(notifications.status, "PENDING"));
+}
+
+// =====================================================
+// NOTIFICATION RECIPIENTS FUNCTIONS
+// =====================================================
+export async function getNotificationRecipients(type?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (type) {
+    return db.select().from(notificationRecipients)
+      .where(and(
+        eq(notificationRecipients.isActive, true),
+        or(eq(notificationRecipients.notificationType, type as any), eq(notificationRecipients.notificationType, "ALL"))
+      ));
+  }
+  
+  return db.select().from(notificationRecipients).where(eq(notificationRecipients.isActive, true));
+}
+
+export async function createNotificationRecipient(data: InsertNotificationRecipient) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(notificationRecipients).values(data);
+  return result[0].insertId;
+}
+
+export async function deleteNotificationRecipient(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(notificationRecipients).set({ isActive: false }).where(eq(notificationRecipients.id, id));
+}
+
+// =====================================================
+// ROOT CAUSE ANALYSIS FUNCTIONS
+// =====================================================
+export async function getRootCauseCategories() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(rootCauseCategories).where(eq(rootCauseCategories.isActive, true));
+}
+
+export async function createRootCauseCategory(data: InsertRootCauseCategory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(rootCauseCategories).values(data);
+  return result[0].insertId;
+}
+
+export async function getRootCauseAnalysis() {
+  const allDefects = await getDefects();
+  
+  // Extract and categorize root causes
+  const causeCounts: Record<string, { count: number; defects: typeof allDefects }> = {};
+  
+  allDefects.forEach(d => {
+    if (d.cause) {
+      // Simple categorization - extract first sentence or key phrase
+      const causeKey = extractCauseCategory(d.cause);
+      if (!causeCounts[causeKey]) {
+        causeCounts[causeKey] = { count: 0, defects: [] };
+      }
+      causeCounts[causeKey].count++;
+      causeCounts[causeKey].defects.push(d);
+    }
+  });
+  
+  // Sort by count (Pareto)
+  const sortedCauses = Object.entries(causeCounts)
+    .sort((a, b) => b[1].count - a[1].count)
+    .map(([cause, data], index) => ({
+      rank: index + 1,
+      cause,
+      count: data.count,
+      percentage: (data.count / allDefects.length * 100).toFixed(1),
+      defectIds: data.defects.map(d => d.id),
+      suppliers: Array.from(new Set(data.defects.map(d => d.supplier).filter(Boolean))),
+      symptoms: Array.from(new Set(data.defects.map(d => d.symptom).filter(Boolean))),
+    }));
+  
+  // Calculate cumulative percentage for Pareto
+  let cumulative = 0;
+  const paretoData = sortedCauses.map(item => {
+    cumulative += parseFloat(item.percentage);
+    return { ...item, cumulativePercentage: cumulative.toFixed(1) };
+  });
+  
+  return {
+    totalWithCause: allDefects.filter(d => d.cause).length,
+    totalWithoutCause: allDefects.filter(d => !d.cause).length,
+    topCauses: paretoData.slice(0, 10),
+    allCauses: paretoData,
+  };
+}
+
+// Helper to extract category from cause text
+function extractCauseCategory(cause: string): string {
+  // Common root cause categories in manufacturing
+  const categories = [
+    { keywords: ["material", "matéria-prima", "componente", "peça"], category: "Material/Componente" },
+    { keywords: ["processo", "procedimento", "método"], category: "Processo/Método" },
+    { keywords: ["máquina", "equipamento", "ferramenta"], category: "Máquina/Equipamento" },
+    { keywords: ["operador", "mão de obra", "treinamento"], category: "Mão de Obra" },
+    { keywords: ["medição", "inspeção", "teste"], category: "Medição/Inspeção" },
+    { keywords: ["ambiente", "temperatura", "umidade"], category: "Meio Ambiente" },
+    { keywords: ["fornecedor", "supplier"], category: "Fornecedor" },
+    { keywords: ["design", "projeto", "especificação"], category: "Design/Projeto" },
+  ];
+  
+  const causeLower = cause.toLowerCase();
+  
+  for (const cat of categories) {
+    if (cat.keywords.some(kw => causeLower.includes(kw))) {
+      return cat.category;
+    }
+  }
+  
+  // If no category matches, use first 50 chars as identifier
+  return cause.substring(0, 50).trim() + (cause.length > 50 ? "..." : "");
+}
+
+// =====================================================
+// SLA CHECK FUNCTIONS
+// =====================================================
+export async function checkSlaViolations() {
+  const allDefects = await getDefects();
+  const slaConfigs = await getSlaConfigs();
+  
+  const violations: Array<{
+    defect: ReturnType<typeof enrichDefect>;
+    slaConfig: { maxDays: number; warningDays: number };
+    daysInStep: number;
+    violationType: "WARNING" | "EXCEEDED";
+  }> = [];
+  
+  for (const defect of allDefects) {
+    if (defect.status === "CLOSED") continue;
+    
+    const sla = await getDefaultSlaForStep(defect.step, defect.mg || undefined);
+    const daysInStep = defect.agingByStep;
+    
+    if (daysInStep >= sla.maxDays) {
+      violations.push({
+        defect,
+        slaConfig: sla,
+        daysInStep,
+        violationType: "EXCEEDED",
+      });
+    } else if (daysInStep >= sla.warningDays) {
+      violations.push({
+        defect,
+        slaConfig: sla,
+        daysInStep,
+        violationType: "WARNING",
+      });
+    }
+  }
+  
+  return violations;
+}

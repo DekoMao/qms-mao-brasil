@@ -167,3 +167,96 @@ export const importLogs = mysqlTable("import_logs", {
 
 export type ImportLog = typeof importLogs.$inferSelect;
 export type InsertImportLog = typeof importLogs.$inferInsert;
+
+
+// =====================================================
+// SUPPLIERS TABLE (Supplier Portal)
+// =====================================================
+export const suppliers = mysqlTable("suppliers", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull().unique(),
+  code: varchar("code", { length: 50 }),
+  email: varchar("email", { length: 320 }),
+  contactName: varchar("contactName", { length: 200 }),
+  phone: varchar("phone", { length: 50 }),
+  accessCode: varchar("accessCode", { length: 100 }), // Unique access code for supplier login
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Supplier = typeof suppliers.$inferSelect;
+export type InsertSupplier = typeof suppliers.$inferInsert;
+
+// =====================================================
+// SLA CONFIGURATION TABLE
+// =====================================================
+export const slaConfigs = mysqlTable("sla_configs", {
+  id: int("id").autoincrement().primaryKey(),
+  step: mysqlEnum("step", [
+    "Aguardando Disposição",
+    "Aguardando Análise Técnica",
+    "Aguardando Causa Raiz",
+    "Aguardando Ação Corretiva",
+    "Aguardando Validação de Ação Corretiva"
+  ]).notNull(),
+  severityMg: mysqlEnum("severityMg", ["S", "A", "B", "C"]),
+  maxDays: int("maxDays").notNull().default(7),
+  warningDays: int("warningDays").notNull().default(5),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SlaConfig = typeof slaConfigs.$inferSelect;
+export type InsertSlaConfig = typeof slaConfigs.$inferInsert;
+
+// =====================================================
+// NOTIFICATIONS TABLE (Email alerts)
+// =====================================================
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  defectId: int("defectId").notNull(),
+  type: mysqlEnum("type", ["SLA_WARNING", "SLA_EXCEEDED", "STEP_CHANGE", "SUPPLIER_UPDATE"]).notNull(),
+  recipientEmail: varchar("recipientEmail", { length: 320 }).notNull(),
+  recipientName: varchar("recipientName", { length: 200 }),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  body: text("body").notNull(),
+  status: mysqlEnum("status", ["PENDING", "SENT", "FAILED"]).default("PENDING"),
+  sentAt: timestamp("sentAt"),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+// =====================================================
+// NOTIFICATION RECIPIENTS TABLE
+// =====================================================
+export const notificationRecipients = mysqlTable("notification_recipients", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 200 }),
+  notificationType: mysqlEnum("notificationType", ["SLA_WARNING", "SLA_EXCEEDED", "STEP_CHANGE", "SUPPLIER_UPDATE", "ALL"]).notNull(),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type NotificationRecipient = typeof notificationRecipients.$inferSelect;
+export type InsertNotificationRecipient = typeof notificationRecipients.$inferInsert;
+
+// =====================================================
+// ROOT CAUSE CATEGORIES TABLE (RCA Analysis)
+// =====================================================
+export const rootCauseCategories = mysqlTable("root_cause_categories", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull().unique(),
+  description: text("description"),
+  parentId: int("parentId"), // For hierarchical categories
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type RootCauseCategory = typeof rootCauseCategories.$inferSelect;
+export type InsertRootCauseCategory = typeof rootCauseCategories.$inferInsert;

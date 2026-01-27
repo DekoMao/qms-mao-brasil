@@ -22,6 +22,31 @@ import {
   getImportLogs,
   getDefectStats,
   getFilterOptions,
+  // Supplier Portal
+  getSuppliers,
+  getSupplierById,
+  getSupplierByAccessCode,
+  getSupplierByName,
+  createSupplier,
+  updateSupplier,
+  getDefectsForSupplier,
+  // SLA & Notifications
+  getSlaConfigs,
+  createSlaConfig,
+  updateSlaConfig,
+  getDefaultSlaForStep,
+  createNotification,
+  getNotifications,
+  updateNotificationStatus,
+  getPendingNotifications,
+  getNotificationRecipients,
+  createNotificationRecipient,
+  deleteNotificationRecipient,
+  checkSlaViolations,
+  // RCA Analysis
+  getRootCauseCategories,
+  createRootCauseCategory,
+  getRootCauseAnalysis,
 } from "./db";
 import { calculateStep, calculateResponsible } from "../shared/defectLogic";
 
@@ -448,6 +473,280 @@ const importRouter = router({
 });
 
 // =====================================================
+// SUPPLIER ROUTER (Portal do Fornecedor)
+// =====================================================
+const supplierRouter = router({
+  // List all suppliers (admin only)
+  list: protectedProcedure.query(async () => {
+    return getSuppliers();
+  }),
+
+  // Get supplier by ID
+  byId: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const supplier = await getSupplierById(input.id);
+      if (!supplier) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Supplier not found" });
+      }
+      return supplier;
+    }),
+
+  // Supplier login with access code
+  loginWithCode: publicProcedure
+    .input(z.object({ accessCode: z.string() }))
+    .mutation(async ({ input }) => {
+      const supplier = await getSupplierByAccessCode(input.accessCode);
+      if (!supplier) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid access code" });
+      }
+      return { supplier, token: `supplier-${supplier.id}-${Date.now()}` };
+    }),
+
+  // Get defects for supplier (supplier portal)
+  myDefects: publicProcedure
+    .input(z.object({ supplierName: z.string() }))
+    .query(async ({ input }) => {
+      return getDefectsForSupplier(input.supplierName);
+    }),
+
+  // Create new supplier
+  create: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      code: z.string().optional(),
+      email: z.string().email().optional(),
+      contactName: z.string().optional(),
+      phone: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      // Check for duplicate name
+      const existing = await getSupplierByName(input.name);
+      if (existing) {
+        throw new TRPCError({ code: "CONFLICT", message: "Supplier already exists" });
+      }
+      return createSupplier(input);
+    }),
+
+  // Update supplier
+  update: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      code: z.string().optional(),
+      email: z.string().email().optional(),
+      contactName: z.string().optional(),
+      phone: z.string().optional(),
+      isActive: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      return updateSupplier(id, data);
+    }),
+
+  // Regenerate access code
+  regenerateAccessCode: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const newCode = `SUP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      return updateSupplier(input.id, { accessCode: newCode } as any);
+    }),
+
+  // Supplier updates defect (limited fields)
+  updateDefect: publicProcedure
+    .input(z.object({
+      defectId: z.number(),
+      supplierName: z.string(),
+      cause: z.string().optional(),
+      correctiveActions: z.string().optional(),
+      supplyFeedback: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { defectId, supplierName, ...updateData } = input;
+      
+      // Verify supplier owns this defect
+      const defect = await getDefectById(defectId);
+      if (!defect || defect.supplier !== supplierName) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
+      }
+
+      const updated = await updateDefect(defectId, updateData);
+
+      // Create audit log
+      await createAuditLog({
+        defectId,
+        userName: `Supplier: ${supplierName}`,
+        action: "UPDATE",
+        fieldName: "supplier_update",
+        newValue: JSON.stringify(updateData),
+      });
+
+      return updated;
+    }),
+});
+
+// =====================================================
+// SLA ROUTER
+// =====================================================
+const slaRouter = router({
+  // Get all SLA configs
+  list: protectedProcedure.query(async () => {
+    return getSlaConfigs();
+  }),
+
+  // Create SLA config
+  create: protectedProcedure
+    .input(z.object({
+      step: z.enum([
+        "Aguardando Disposição",
+        "Aguardando Análise Técnica",
+        "Aguardando Causa Raiz",
+        "Aguardando Ação Corretiva",
+        "Aguardando Validação de Ação Corretiva"
+      ]),
+      severityMg: z.enum(["S", "A", "B", "C"]).optional(),
+      maxDays: z.number().min(1),
+      warningDays: z.number().min(1),
+    }))
+    .mutation(async ({ input }) => {
+      return createSlaConfig(input);
+    }),
+
+  // Update SLA config
+  update: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      maxDays: z.number().min(1).optional(),
+      warningDays: z.number().min(1).optional(),
+      isActive: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      await updateSlaConfig(id, data);
+      return { success: true };
+    }),
+
+  // Check SLA violations
+  checkViolations: protectedProcedure.query(async () => {
+    return checkSlaViolations();
+  }),
+});
+
+// =====================================================
+// NOTIFICATION ROUTER
+// =====================================================
+const notificationRouter = router({
+  // Get notifications
+  list: protectedProcedure
+    .input(z.object({ defectId: z.number().optional() }).optional())
+    .query(async ({ input }) => {
+      return getNotifications(input?.defectId);
+    }),
+
+  // Get pending notifications
+  pending: protectedProcedure.query(async () => {
+    return getPendingNotifications();
+  }),
+
+  // Get recipients
+  recipients: protectedProcedure.query(async () => {
+    return getNotificationRecipients();
+  }),
+
+  // Add recipient
+  addRecipient: protectedProcedure
+    .input(z.object({
+      email: z.string().email(),
+      name: z.string().optional(),
+      notificationType: z.enum(["SLA_WARNING", "SLA_EXCEEDED", "STEP_CHANGE", "SUPPLIER_UPDATE", "ALL"]),
+    }))
+    .mutation(async ({ input }) => {
+      return createNotificationRecipient(input);
+    }),
+
+  // Remove recipient
+  removeRecipient: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await deleteNotificationRecipient(input.id);
+      return { success: true };
+    }),
+
+  // Send SLA notifications (called by cron job or manually)
+  sendSlaAlerts: protectedProcedure.mutation(async () => {
+    const violations = await checkSlaViolations();
+    const recipients = await getNotificationRecipients();
+    const sentNotifications: number[] = [];
+
+    for (const violation of violations) {
+      const notificationType = violation.violationType === "EXCEEDED" ? "SLA_EXCEEDED" : "SLA_WARNING";
+      const relevantRecipients = recipients.filter(
+        r => r.notificationType === notificationType || r.notificationType === "ALL"
+      );
+
+      for (const recipient of relevantRecipients) {
+        const subject = violation.violationType === "EXCEEDED"
+          ? `[URGENTE] SLA Excedido - Caso ${violation.defect.docNumber}`
+          : `[AVISO] SLA Próximo do Limite - Caso ${violation.defect.docNumber}`;
+
+        const body = `
+Caso: ${violation.defect.docNumber}
+Fornecedor: ${violation.defect.supplier || "N/A"}
+Etapa Atual: ${violation.defect.step}
+Dias na Etapa: ${violation.daysInStep}
+SLA Máximo: ${violation.slaConfig.maxDays} dias
+Status: ${violation.violationType === "EXCEEDED" ? "EXCEDIDO" : "AVISO"}
+
+Por favor, tome as ações necessárias.
+        `.trim();
+
+        const notificationId = await createNotification({
+          defectId: violation.defect.id,
+          type: notificationType,
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+          subject,
+          body,
+        });
+
+        sentNotifications.push(notificationId);
+      }
+    }
+
+    return { 
+      violationsFound: violations.length, 
+      notificationsCreated: sentNotifications.length 
+    };
+  }),
+});
+
+// =====================================================
+// RCA (Root Cause Analysis) ROUTER
+// =====================================================
+const rcaRouter = router({
+  // Get RCA analysis data
+  analysis: publicProcedure.query(async () => {
+    return getRootCauseAnalysis();
+  }),
+
+  // Get categories
+  categories: publicProcedure.query(async () => {
+    return getRootCauseCategories();
+  }),
+
+  // Create category
+  createCategory: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      description: z.string().optional(),
+      parentId: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return createRootCauseCategory(input);
+    }),
+});
+
+// =====================================================
 // MAIN ROUTER
 // =====================================================
 export const appRouter = router({
@@ -464,6 +763,10 @@ export const appRouter = router({
   comment: commentRouter,
   attachment: attachmentRouter,
   import: importRouter,
+  supplier: supplierRouter,
+  sla: slaRouter,
+  notification: notificationRouter,
+  rca: rcaRouter,
 });
 
 export type AppRouter = typeof appRouter;
