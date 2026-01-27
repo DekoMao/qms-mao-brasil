@@ -70,3 +70,7 @@
 - [x] Implementar formulário de criação de novos defeitos
 - [x] Remover dependência da função de importação para uso diário
 - [x] Validar que todos os dados foram migrados corretamente
+
+
+## Bugs Reportados
+- [x] Barra lateral de menu desapareceu - restaurar navegação
