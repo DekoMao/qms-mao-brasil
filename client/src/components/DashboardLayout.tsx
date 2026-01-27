@@ -203,7 +203,7 @@ function DashboardLayoutContent({
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="font-bold text-sidebar-foreground tracking-tight truncate">
-                      Dashboard
+                      SQA TRACKING SYSTEM
                     </span>
                   </div>
                 </div>
