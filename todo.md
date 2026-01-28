@@ -107,3 +107,8 @@
 - [x] Melhorar design do botão voltar (seta) em todas as telas
 - [x] Implementar funcionalidade para ícone Alerta (sino) - Central de Notificações
 - [x] Implementar funcionalidade para ícone Configuração (engrenagem) - Preferências do Usuário
+
+
+## Bug - Duplicação de Header (Novo Defeito)
+- [x] Corrigir duplicação de header na tela Novo Defeito
+- [x] Verificar e corrigir outras telas com o mesmo problema
