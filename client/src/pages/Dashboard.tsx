@@ -166,7 +166,7 @@ export default function Dashboard() {
             </Button>
           </div>
           <div className="flex items-center gap-6">
-            <ResponsiveContainer width="50%" height={200}>
+            <ResponsiveContainer width="50%" height={300} style={{ marginTop: '-65px', marginLeft: '-30px' }}>
               <PieChart>
                 <Pie
                   data={statusData}
