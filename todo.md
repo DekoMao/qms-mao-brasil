@@ -112,3 +112,9 @@
 ## Bug - Duplicação de Header (Novo Defeito)
 - [x] Corrigir duplicação de header na tela Novo Defeito
 - [x] Verificar e corrigir outras telas com o mesmo problema
+
+
+## Melhoria UX - Botão Voltar Moderno
+- [x] Identificar todas as telas com botão voltar
+- [x] Aplicar design moderno de botão voltar em todas as telas
+- [x] Padronizar estilo em todo o sistema

@@ -112,8 +112,13 @@ export default function NewDefect() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setLocation("/defects")}>
-              <ArrowLeft className="h-5 w-5" />
+            <Button 
+              variant="ghost" 
+              onClick={() => setLocation("/defects")}
+              className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-all duration-200 shadow-sm hover:shadow group"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
+              Voltar
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Novo Defeito</h1>

@@ -79,11 +79,11 @@ export default function Notifications() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
           <Button 
-            variant="outline" 
+            variant="ghost" 
             onClick={() => setLocation("/")}
-            className="h-9 px-3 rounded-lg border-2 hover:bg-muted"
+            className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-all duration-200 shadow-sm hover:shadow group"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
             Voltar
           </Button>
           <div>
