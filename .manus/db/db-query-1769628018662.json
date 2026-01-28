@@ -1,0 +1,36 @@
+{
+  "query": "SELECT id, docNumber, openDate, supplier, model, pn, symptom, status, mg, qty, rate\nFROM defects \nWHERE docNumber IN ('105.11.25', '107.11.25')\nORDER BY docNumber;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT id, docNumber, openDate, supplier, model, pn, symptom, status, mg, qty, rate\nFROM defects \nWHERE docNumber IN ('105.11.25', '107.11.25')\nORDER BY docNumber;",
+  "rows": [
+    {
+      "id": "106",
+      "docNumber": "105.11.25",
+      "openDate": "2025-11-12",
+      "supplier": "KNAUF",
+      "model": "50U7045/78G",
+      "pn": "M44G5000GF1ZT02001 /M44G5000GF1ZB02001/ M44G5000GF1LR02001",
+      "symptom": "Wet cushion",
+      "status": "CLOSED",
+      "mg": "B",
+      "qty": "80",
+      "rate": "NULL"
+    },
+    {
+      "id": "108",
+      "docNumber": "107.11.25",
+      "openDate": "2025-12-01",
+      "supplier": "KNAUF",
+      "model": "32S5155/78G",
+      "pn": "M44GJD12101000 / M44GJD12201000",
+      "symptom": "Wet cushion",
+      "status": "CLOSED",
+      "mg": "B",
+      "qty": "32",
+      "rate": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdocNumber\topenDate\tsupplier\tmodel\tpn\tsymptom\tstatus\tmg\tqty\trate\n106\t105.11.25\t2025-11-12\tKNAUF\t50U7045/78G\tM44G5000GF1ZT02001 /M44G5000GF1ZB02001/ M44G5000GF1LR02001\tWet cushion\tCLOSED\tB\t80\tNULL\n108\t107.11.25\t2025-12-01\tKNAUF\t32S5155/78G\tM44GJD12101000 / M44GJD12201000\tWet cushion\tCLOSED\tB\t32\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1516
+}

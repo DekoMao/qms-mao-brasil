@@ -1,0 +1,130 @@
+{
+  "query": "SELECT DISTINCT symptom, COUNT(*) as total FROM defects GROUP BY symptom ORDER BY total DESC LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT DISTINCT symptom, COUNT(*) as total FROM defects GROUP BY symptom ORDER BY total DESC LIMIT 30;",
+  "rows": [
+    {
+      "symptom": "Wrong Material",
+      "total": "13"
+    },
+    {
+      "symptom": "Remote control does not work",
+      "total": "7"
+    },
+    {
+      "symptom": "Wet Material",
+      "total": "5"
+    },
+    {
+      "symptom": "Rupture",
+      "total": "3"
+    },
+    {
+      "symptom": "Wet Cushion",
+      "total": "3"
+    },
+    {
+      "symptom": "Offset Printing",
+      "total": "3"
+    },
+    {
+      "symptom": "Failed To Read EAN Code",
+      "total": "3"
+    },
+    {
+      "symptom": "Warped Rear Cover",
+      "total": "3"
+    },
+    {
+      "symptom": "Delivery of Wrong material",
+      "total": "2"
+    },
+    {
+      "symptom": "Glue Insufficiency on the closing joints",
+      "total": "2"
+    },
+    {
+      "symptom": "Cofisk",
+      "total": "2"
+    },
+    {
+      "symptom": "Cover Detachment",
+      "total": "2"
+    },
+    {
+      "symptom": "False Crease",
+      "total": "2"
+    },
+    {
+      "symptom": "Label Coming Off",
+      "total": "2"
+    },
+    {
+      "symptom": "Bloated Cushion",
+      "total": "2"
+    },
+    {
+      "symptom": "Color Of The Box Out Of Specification",
+      "total": "2"
+    },
+    {
+      "symptom": "Irregular Cut",
+      "total": "2"
+    },
+    {
+      "symptom": "Out of Spec Stapled Box",
+      "total": "1"
+    },
+    {
+      "symptom": "Printing Failure",
+      "total": "1"
+    },
+    {
+      "symptom": "Blured Priting",
+      "total": "1"
+    },
+    {
+      "symptom": "Imperfect Cut",
+      "total": "1"
+    },
+    {
+      "symptom": "Back cover speakers broken",
+      "total": "1"
+    },
+    {
+      "symptom": "Detachment in LAP",
+      "total": "1"
+    },
+    {
+      "symptom": "Crushed boxes",
+      "total": "1"
+    },
+    {
+      "symptom": "Divergence between invoice and physical material",
+      "total": "1"
+    },
+    {
+      "symptom": "Back cover broken",
+      "total": "1"
+    },
+    {
+      "symptom": "Lack of Material - Cofisk",
+      "total": "1"
+    },
+    {
+      "symptom": "Box with stains",
+      "total": "1"
+    },
+    {
+      "symptom": "Warped Back Cover",
+      "total": "1"
+    },
+    {
+      "symptom": "Scratched Lid",
+      "total": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "symptom\ttotal\nWrong Material\t13\nRemote control does not work\t7\nWet Material\t5\nRupture\t3\nWet Cushion\t3\nOffset Printing\t3\nFailed To Read EAN Code\t3\nWarped Rear Cover\t3\nDelivery of Wrong material\t2\nGlue Insufficiency on the closing joints\t2\nCofisk\t2\nCover Detachment\t2\nFalse Crease\t2\nLabel Coming Off\t2\nBloated Cushion\t2\nColor Of The Box Out Of Specification\t2\nIrregular Cut\t2\nOut of Spec Stapled Box\t1\nPrinting Failure\t1\nBlured Priting\t1\nImperfect Cut\t1\nBack cover speakers broken\t1\nDetachment in LAP\t1\nCrushed boxes\t1\nDivergence between invoice and physical material\t1\nBack cover broken\t1\nLack of Material - Cofisk\t1\nBox with stains\t1\nWarped Back Cover\t1\nScratched Lid\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1530
+}

@@ -1,0 +1,70 @@
+{
+  "query": "SELECT DISTINCT supplier, COUNT(*) as total FROM defects GROUP BY supplier ORDER BY supplier;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT DISTINCT supplier, COUNT(*) as total FROM defects GROUP BY supplier ORDER BY supplier;",
+  "rows": [
+    {
+      "supplier": "AMAZON ETIQUETAS",
+      "total": "2"
+    },
+    {
+      "supplier": "ELSYS",
+      "total": "4"
+    },
+    {
+      "supplier": "FABRIL",
+      "total": "1"
+    },
+    {
+      "supplier": "FLEX",
+      "total": "4"
+    },
+    {
+      "supplier": "I-SHENG",
+      "total": "4"
+    },
+    {
+      "supplier": "KLABIN AM",
+      "total": "16"
+    },
+    {
+      "supplier": "KLABIN S/A",
+      "total": "3"
+    },
+    {
+      "supplier": "KNAUF",
+      "total": "8"
+    },
+    {
+      "supplier": "PAM EPS",
+      "total": "5"
+    },
+    {
+      "supplier": "PAM PLÁSTICOS",
+      "total": "5"
+    },
+    {
+      "supplier": "PCE",
+      "total": "40"
+    },
+    {
+      "supplier": "TERMOTECNICA",
+      "total": "2"
+    },
+    {
+      "supplier": "TUTIPLAST",
+      "total": "9"
+    },
+    {
+      "supplier": "UEI",
+      "total": "12"
+    },
+    {
+      "supplier": "VM Etiquetas",
+      "total": "2"
+    }
+  ],
+  "messages": [],
+  "stdout": "supplier\ttotal\nAMAZON ETIQUETAS\t2\nELSYS\t4\nFABRIL\t1\nFLEX\t4\nI-SHENG\t4\nKLABIN AM\t16\nKLABIN S/A\t3\nKNAUF\t8\nPAM EPS\t5\nPAM PLÁSTICOS\t5\nPCE\t40\nTERMOTECNICA\t2\nTUTIPLAST\t9\nUEI\t12\nVM Etiquetas\t2\n",
+  "stderr": "",
+  "execution_time_ms": 1552
+}

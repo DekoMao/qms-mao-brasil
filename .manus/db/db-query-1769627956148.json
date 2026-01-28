@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, docNumber, openDate, supplier, model, symptom, status, mg \nFROM defects \nWHERE supplier LIKE '%KNAUF%' AND symptom LIKE '%Wet%cushion%'\nORDER BY docNumber;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT id, docNumber, openDate, supplier, model, symptom, status, mg \nFROM defects \nWHERE supplier LIKE '%KNAUF%' AND symptom LIKE '%Wet%cushion%'\nORDER BY docNumber;",
+  "rows": [
+    {
+      "id": "106",
+      "docNumber": "105.11.25",
+      "openDate": "2025-11-12",
+      "supplier": "KNAUF",
+      "model": "50U7045/78G",
+      "symptom": "Wet cushion",
+      "status": "CLOSED",
+      "mg": "B"
+    },
+    {
+      "id": "108",
+      "docNumber": "107.11.25",
+      "openDate": "2025-12-01",
+      "supplier": "KNAUF",
+      "model": "32S5155/78G",
+      "symptom": "Wet cushion",
+      "status": "CLOSED",
+      "mg": "B"
+    },
+    {
+      "id": "85",
+      "docNumber": "84.08.25",
+      "openDate": "2025-08-18",
+      "supplier": "KNAUF",
+      "model": "50U7045/78G",
+      "symptom": "Wet EPS Cushion",
+      "status": "CLOSED",
+      "mg": "B"
+    },
+    {
+      "id": "98",
+      "docNumber": "97.09.25",
+      "openDate": "2025-09-23",
+      "supplier": "KNAUF",
+      "model": "S22e-18",
+      "symptom": "Wet Cushion",
+      "status": "CLOSED",
+      "mg": "B"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdocNumber\topenDate\tsupplier\tmodel\tsymptom\tstatus\tmg\n106\t105.11.25\t2025-11-12\tKNAUF\t50U7045/78G\tWet cushion\tCLOSED\tB\n108\t107.11.25\t2025-12-01\tKNAUF\t32S5155/78G\tWet cushion\tCLOSED\tB\n85\t84.08.25\t2025-08-18\tKNAUF\t50U7045/78G\tWet EPS Cushion\tCLOSED\tB\n98\t97.09.25\t2025-09-23\tKNAUF\tS22e-18\tWet Cushion\tCLOSED\tB\n",
+  "stderr": "",
+  "execution_time_ms": 1525
+}

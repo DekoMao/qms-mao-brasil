@@ -1,0 +1,86 @@
+{
+  "query": "SELECT id, symptom FROM defects WHERE symptom LIKE '%Wrong%' LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT id, symptom FROM defects WHERE symptom LIKE '%Wrong%' LIMIT 20;",
+  "rows": [
+    {
+      "id": "16",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "17",
+      "symptom": "Bag Label With Wrong Code"
+    },
+    {
+      "id": "30",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "31",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "51",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "52",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "61",
+      "symptom": "Wrong Code"
+    },
+    {
+      "id": "63",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "69",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "72",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "76",
+      "symptom": "Material with Wrong Invoice"
+    },
+    {
+      "id": "80",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "82",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "83",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "91",
+      "symptom": "Delivery of Wrong material"
+    },
+    {
+      "id": "92",
+      "symptom": "Delivery of Wrong material"
+    },
+    {
+      "id": "94",
+      "symptom": "Wrong Layout"
+    },
+    {
+      "id": "102",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "110",
+      "symptom": "Wrong Material"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsymptom\n16\tWrong Material\n17\tBag Label With Wrong Code\n30\tWrong Material\n31\tWrong Material\n51\tWrong Material\n52\tWrong Material\n61\tWrong Code\n63\tWrong Material\n69\tWrong Material\n72\tWrong Material\n76\tMaterial with Wrong Invoice\n80\tWrong Material\n82\tWrong Material\n83\tWrong Material\n91\tDelivery of Wrong material\n92\tDelivery of Wrong material\n94\tWrong Layout\n102\tWrong Material\n110\tWrong Material\n",
+  "stderr": "",
+  "execution_time_ms": 1521
+}

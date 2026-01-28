@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, symptom FROM defects WHERE symptom LIKE '%Wrong%material%' OR symptom LIKE '%Wrong%Material%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT id, symptom FROM defects WHERE symptom LIKE '%Wrong%material%' OR symptom LIKE '%Wrong%Material%';",
+  "rows": [
+    {
+      "id": "16",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "30",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "31",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "51",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "52",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "63",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "69",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "72",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "80",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "82",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "83",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "91",
+      "symptom": "Delivery of Wrong material"
+    },
+    {
+      "id": "92",
+      "symptom": "Delivery of Wrong material"
+    },
+    {
+      "id": "102",
+      "symptom": "Wrong Material"
+    },
+    {
+      "id": "110",
+      "symptom": "Wrong Material"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsymptom\n16\tWrong Material\n30\tWrong Material\n31\tWrong Material\n51\tWrong Material\n52\tWrong Material\n63\tWrong Material\n69\tWrong Material\n72\tWrong Material\n80\tWrong Material\n82\tWrong Material\n83\tWrong Material\n91\tDelivery of Wrong material\n92\tDelivery of Wrong material\n102\tWrong Material\n110\tWrong Material\n",
+  "stderr": "",
+  "execution_time_ms": 1529
+}

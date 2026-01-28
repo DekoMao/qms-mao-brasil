@@ -338,7 +338,8 @@ export default function Dashboard() {
               <thead>
                 <tr>
                   <th>Série de Ocorrência</th>
-                  <th>Número</th>
+                  <th>Fornecedor</th>
+                  <th>Modelo</th>
                   <th>Sintoma</th>
                   <th>Status</th>
                   <th>Aging</th>
@@ -353,6 +354,7 @@ export default function Dashboard() {
                   >
                     <td className="font-medium">{defect.docNumber}</td>
                     <td>{defect.supplier || "-"}</td>
+                    <td className="text-muted-foreground">{defect.model || "-"}</td>
                     <td className="max-w-[200px] truncate">{defect.symptom || "-"}</td>
                     <td>
                       <Badge className={`

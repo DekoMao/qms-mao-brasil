@@ -1,0 +1,112 @@
+{
+  "query": "SELECT supplier, symptom, COUNT(*) as count, GROUP_CONCAT(docNumber) as docs \nFROM defects \nGROUP BY supplier, symptom \nHAVING COUNT(*) > 1 \nORDER BY count DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT supplier, symptom, COUNT(*) as count, GROUP_CONCAT(docNumber) as docs \nFROM defects \nGROUP BY supplier, symptom \nHAVING COUNT(*) > 1 \nORDER BY count DESC;",
+  "rows": [
+    {
+      "supplier": "UEI",
+      "symptom": "Remote Control does not work",
+      "count": "4",
+      "docs": "53 05.25,61 06.25,87.08.25,103.11.25"
+    },
+    {
+      "supplier": "KNAUF",
+      "symptom": "Wet Cushion",
+      "count": "3",
+      "docs": "97.09.25,105.11.25,107.11.25"
+    },
+    {
+      "supplier": "PAM EPS",
+      "symptom": "Wrong Material",
+      "count": "3",
+      "docs": "29 03.25,82.08.25,02.01.26"
+    },
+    {
+      "supplier": "KNAUF",
+      "symptom": "Bloated Cushion",
+      "count": "2",
+      "docs": "11 01.25,77.07.25"
+    },
+    {
+      "supplier": "PAM PLÁSTICOS",
+      "symptom": "Warped Rear Cover",
+      "count": "2",
+      "docs": "70. 07.25,98.09.25"
+    },
+    {
+      "supplier": "VM Etiquetas",
+      "symptom": "Irregular Cut",
+      "count": "2",
+      "docs": "55 05.25,76.07.25"
+    },
+    {
+      "supplier": "PCE",
+      "symptom": "Color Of The Box Out Of Specification",
+      "count": "2",
+      "docs": "09 01.25,46 04.25"
+    },
+    {
+      "supplier": "PCE",
+      "symptom": "Rupture",
+      "count": "2",
+      "docs": "25 02.25,28 03.25"
+    },
+    {
+      "supplier": "FLEX",
+      "symptom": "Remote control does not work",
+      "count": "2",
+      "docs": "45 04.25,56 05.25"
+    },
+    {
+      "supplier": "PCE",
+      "symptom": "Offset Printing",
+      "count": "2",
+      "docs": "24 02.25,26 02.25"
+    },
+    {
+      "supplier": "TUTIPLAST",
+      "symptom": "Wrong Material",
+      "count": "2",
+      "docs": "81.08.25,101.09.25"
+    },
+    {
+      "supplier": "PCE",
+      "symptom": "Failed To Read EAN Code",
+      "count": "2",
+      "docs": "23 02.25,27 02.25"
+    },
+    {
+      "supplier": "PCE",
+      "symptom": "Wrong Material",
+      "count": "2",
+      "docs": "30 03.25,50 04.25"
+    },
+    {
+      "supplier": "I-SHENG",
+      "symptom": "Wrong Material",
+      "count": "2",
+      "docs": "15 01.25,71. 07.25"
+    },
+    {
+      "supplier": "PAM EPS",
+      "symptom": "Wet Material",
+      "count": "2",
+      "docs": "03 01.25,22 02.25"
+    },
+    {
+      "supplier": "PCE",
+      "symptom": "False Crease",
+      "count": "2",
+      "docs": "20 02.25,92.09.25"
+    },
+    {
+      "supplier": "KLABIN AM",
+      "symptom": "Cofisk",
+      "count": "2",
+      "docs": "12 01.25,33 03.25"
+    }
+  ],
+  "messages": [],
+  "stdout": "supplier\tsymptom\tcount\tdocs\nUEI\tRemote Control does not work\t4\t53 05.25,61 06.25,87.08.25,103.11.25\nKNAUF\tWet Cushion\t3\t97.09.25,105.11.25,107.11.25\nPAM EPS\tWrong Material\t3\t29 03.25,82.08.25,02.01.26\nKNAUF\tBloated Cushion\t2\t11 01.25,77.07.25\nPAM PLÁSTICOS\tWarped Rear Cover\t2\t70. 07.25,98.09.25\nVM Etiquetas\tIrregular Cut\t2\t55 05.25,76.07.25\nPCE\tColor Of The Box Out Of Specification\t2\t09 01.25,46 04.25\nPCE\tRupture\t2\t25 02.25,28 03.25\nFLEX\tRemote control does not work\t2\t45 04.25,56 05.25\nPCE\tOffset Printing\t2\t24 02.25,26 02.25\nTUTIPLAST\tWrong Material\t2\t81.08.25,101.09.25\nPCE\tFailed To Read EAN Code\t2\t23 02.25,27 02.25\nPCE\tWrong Material\t2\t30 03.25,50 04.25\nI-SHENG\tWrong Material\t2\t15 01.25,71. 07.25\nPAM EPS\tWet Material\t2\t03 01.25,22 02.25\nPCE\tFalse Crease\t2\t20 02.25,92.09.25\nKLABIN AM\tCofisk\t2\t12 01.25,33 03.25\n",
+  "stderr": "",
+  "execution_time_ms": 1564
+}

@@ -118,3 +118,15 @@
 - [x] Identificar todas as telas com botão voltar
 - [x] Aplicar design moderno de botão voltar em todas as telas
 - [x] Padronizar estilo em todo o sistema
+
+
+## Correção de Dados
+- [x] Corrigir capitalização: "Wrong material" → "Wrong Material"
+- [x] Identificar e corrigir dados duplicados (casos críticos e sintomas)
+- [x] Verificar duplicidade KNAUF "Wet cushion" (107.11.25 e 105.11.25) - NÃO SÃO DUPLICATAS (modelos e PNs diferentes)
+
+
+## Melhoria UX - Coluna Modelo
+- [x] Adicionar coluna Modelo na tabela Casos Críticos (Dashboard)
+- [x] Top Sintomas e Top Fornecedores são agregações (contagem), não precisam de coluna Modelo
+- [x] Verificar outras tabelas - Lista de Defeitos já possui coluna Modelo

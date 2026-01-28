@@ -1,0 +1,47 @@
+{
+  "query": "SELECT id, docNumber, openDate, supplier, model, symptom, status, mg, description \nFROM defects \nWHERE docNumber LIKE '105%' OR docNumber LIKE '107%'\nORDER BY docNumber;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT id, docNumber, openDate, supplier, model, symptom, status, mg, description \nFROM defects \nWHERE docNumber LIKE '105%' OR docNumber LIKE '107%'\nORDER BY docNumber;",
+  "rows": [
+    {
+      "id": "106",
+      "docNumber": "105.11.25",
+      "openDate": "2025-11-12",
+      "supplier": "KNAUF",
+      "model": "50U7045/78G",
+      "symptom": "Wet cushion",
+      "status": "CLOSED",
+      "mg": "B",
+      "description": "Where: IQC"
+    },
+    {
+      "id": "108",
+      "docNumber": "107.11.25",
+      "openDate": "2025-12-01",
+      "supplier": "KNAUF",
+      "model": "32S5155/78G",
+      "symptom": "Wet cushion",
+      "status": "CLOSED",
+      "mg": "B",
+      "description": "Where: Line T02"
+    }
+  ],
+  "messages": [
+    "Description: EPS Cushion",
+    "Invoice: 000010775-7",
+    "Qty: 1.200",
+    "Part number: M44G5000GF1ZT02001 /M44G5000GF1ZB02001/ M44G5000GF1LR02001",
+    "Defect Rate (FOR): 32/1.200 = 2.7% 26.667 PPM",
+    "Rate: 2,7%",
+    "Symptom: Wet cushion",
+    "Description: EPS CUSHION",
+    "Invoice: 000011275-7",
+    "Qty: 32",
+    "Part number:M44GJD12101000 / M44GJD12201000",
+    "Defect Rate (FOR): 32/792 = 4,0% 40.404 PPM",
+    "Rate: 4,0%",
+    "Symptom: Wet cushion"
+  ],
+  "stdout": "id\tdocNumber\topenDate\tsupplier\tmodel\tsymptom\tstatus\tmg\tdescription\n106\t105.11.25\t2025-11-12\tKNAUF\t50U7045/78G\tWet cushion\tCLOSED\tB\tWhere: IQC\nDescription: EPS Cushion\nInvoice: 000010775-7\nQty: 1.200\nPart number: M44G5000GF1ZT02001 /M44G5000GF1ZB02001/ M44G5000GF1LR02001\nDefect Rate (FOR): 32/1.200 = 2.7% 26.667 PPM\nRate: 2,7%\nSymptom: Wet cushion\n108\t107.11.25\t2025-12-01\tKNAUF\t32S5155/78G\tWet cushion\tCLOSED\tB\tWhere: Line T02\nDescription: EPS CUSHION\nInvoice: 000011275-7\nQty: 32\nPart number:M44GJD12101000 / M44GJD12201000\nDefect Rate (FOR): 32/792 = 4,0% 40.404 PPM\nRate: 4,0%\nSymptom: Wet cushion\n",
+  "stderr": "",
+  "execution_time_ms": 1537
+}

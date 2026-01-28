@@ -1,0 +1,28 @@
+{
+  "query": "SELECT DISTINCT symptom FROM defects WHERE symptom LIKE '%Wrong%' OR symptom LIKE '%wrong%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT DISTINCT symptom FROM defects WHERE symptom LIKE '%Wrong%' OR symptom LIKE '%wrong%';",
+  "rows": [
+    {
+      "symptom": "Delivery of Wrong material"
+    },
+    {
+      "symptom": "Wrong Layout"
+    },
+    {
+      "symptom": "Material with Wrong Invoice"
+    },
+    {
+      "symptom": "Bag Label With Wrong Code"
+    },
+    {
+      "symptom": "Wrong Code"
+    },
+    {
+      "symptom": "Wrong Material"
+    }
+  ],
+  "messages": [],
+  "stdout": "symptom\nDelivery of Wrong material\nWrong Layout\nMaterial with Wrong Invoice\nBag Label With Wrong Code\nWrong Code\nWrong Material\n",
+  "stderr": "",
+  "execution_time_ms": 1520
+}
