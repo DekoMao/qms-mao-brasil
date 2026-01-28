@@ -130,3 +130,8 @@
 - [x] Adicionar coluna Modelo na tabela Casos Críticos (Dashboard)
 - [x] Top Sintomas e Top Fornecedores são agregações (contagem), não precisam de coluna Modelo
 - [x] Verificar outras tabelas - Lista de Defeitos já possui coluna Modelo
+
+
+## Melhoria UX - Botões '...' Dashboard
+- [x] Verificar funcionalidade dos botões '...' nas divs do Dashboard - NÃO TINHAM FUNCIONALIDADE
+- [x] Remover botões sem funcionalidade (6 botões removidos)

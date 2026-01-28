@@ -9,7 +9,7 @@ import {
 } from "recharts";
 import { 
   AlertTriangle, CheckCircle, Clock, TrendingUp, Package, 
-  MoreHorizontal, ArrowUpRight, RefreshCw 
+  ArrowUpRight, RefreshCw 
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -161,9 +161,6 @@ export default function Dashboard() {
               <h3 className="chart-title">Distribuição de Status</h3>
               <p className="text-sm text-muted-foreground">Visão geral por status</p>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
           </div>
           <div className="flex items-center gap-6">
             <ResponsiveContainer width="50%" height={300} style={{ marginTop: '-65px', marginLeft: '-30px' }}>
@@ -211,9 +208,6 @@ export default function Dashboard() {
               <h3 className="chart-title">Aging por Faixa</h3>
               <p className="text-sm text-muted-foreground">Distribuição por tempo de vida</p>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={bucketData} barCategoryGap="20%">
@@ -258,9 +252,6 @@ export default function Dashboard() {
               <h3 className="chart-title">Top Sintomas</h3>
               <p className="text-sm text-muted-foreground">Sintomas mais frequentes</p>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
           </div>
           <div className="space-y-3">
             {(stats.topSymptoms || []).slice(0, 5).map((item: any, index: number) => {
@@ -291,9 +282,6 @@ export default function Dashboard() {
               <h3 className="chart-title">Top Fornecedores</h3>
               <p className="text-sm text-muted-foreground">Fornecedores com mais ocorrências</p>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
           </div>
           <div className="space-y-3">
             {(stats.topSuppliers || []).slice(0, 5).map((item: any, index: number) => {
@@ -329,9 +317,6 @@ export default function Dashboard() {
               </h3>
               <p className="text-sm text-muted-foreground">Casos que requerem atenção imediata</p>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
           </div>
           <div className="table-wrapper">
             <table className="data-table">
@@ -384,9 +369,6 @@ export default function Dashboard() {
               <h3 className="chart-title">Pareto RCA</h3>
               <p className="text-sm text-muted-foreground">Análise de causa raiz - Princípio 80/20</p>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
