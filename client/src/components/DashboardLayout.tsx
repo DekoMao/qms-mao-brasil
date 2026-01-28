@@ -338,10 +338,18 @@ function DashboardLayoutContent({
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button className="h-9 w-9 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+            <button 
+              onClick={() => setLocation("/notifications")}
+              className="h-9 w-9 rounded-lg hover:bg-muted flex items-center justify-center transition-colors relative"
+              title="Central de Notificações"
+            >
               <Bell className="h-5 w-5 text-muted-foreground" />
             </button>
-            <button className="h-9 w-9 rounded-lg hover:bg-muted flex items-center justify-center transition-colors">
+            <button 
+              onClick={() => setLocation("/settings")}
+              className="h-9 w-9 rounded-lg hover:bg-muted flex items-center justify-center transition-colors"
+              title="Configurações"
+            >
               <Settings className="h-5 w-5 text-muted-foreground" />
             </button>
             <div className="flex items-center gap-2 pl-3 border-l">

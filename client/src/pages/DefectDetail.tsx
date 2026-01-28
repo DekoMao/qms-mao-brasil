@@ -168,12 +168,12 @@ export default function DefectDetail() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
           <Button 
-            variant="ghost" 
-            size="icon" 
+            variant="outline" 
             onClick={() => setLocation("/defects")}
-            className="h-9 w-9 rounded-lg"
+            className="h-9 px-3 rounded-lg border-2 hover:bg-muted"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
           </Button>
           <div>
             <div className="flex items-center gap-3">
@@ -213,9 +213,7 @@ export default function DefectDetail() {
               <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <X className="h-4 w-4" />
-          </Button>
+          
         </div>
       </div>
 

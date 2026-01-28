@@ -98,3 +98,12 @@
 - [x] Integrar com S3 para armazenamento dos arquivos
 - [x] Exibir lista de anexos já enviados
 - [x] Permitir visualização e download dos anexos
+
+
+## Correções de UI e Funcionalidades (Solicitação do Usuário)
+- [x] Corrigir duplicação de header nas telas Fornecedores e SLA
+- [x] Ajustar largura do conteúdo removendo espaço em branco à esquerda
+- [x] Remover botão X desnecessário na tela de Defeitos
+- [x] Melhorar design do botão voltar (seta) em todas as telas
+- [x] Implementar funcionalidade para ícone Alerta (sino) - Central de Notificações
+- [x] Implementar funcionalidade para ícone Configuração (engrenagem) - Preferências do Usuário

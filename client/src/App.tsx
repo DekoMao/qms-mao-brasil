@@ -15,6 +15,8 @@ import Reports from "./pages/Reports";
 import Suppliers from "./pages/Suppliers";
 import SlaSettings from "./pages/SlaSettings";
 import SupplierPortal from "./pages/SupplierPortal";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
 
 // Main app router with dashboard layout
 function MainRouter() {
@@ -30,6 +32,8 @@ function MainRouter() {
         <Route path="/reports" component={Reports} />
         <Route path="/suppliers" component={Suppliers} />
         <Route path="/sla-settings" component={SlaSettings} />
+        <Route path="/notifications" component={Notifications} />
+        <Route path="/settings" component={Settings} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

@@ -738,6 +738,33 @@ const notificationRouter = router({
       return { success: true };
     }),
 
+  // Mark notification as read
+  markAsRead: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await updateNotificationStatus(input.id, "READ");
+      return { success: true };
+    }),
+
+  // Mark all notifications as read
+  markAllAsRead: protectedProcedure.mutation(async () => {
+    const notifications = await getNotifications();
+    for (const n of notifications) {
+      if (n.status !== "READ") {
+        await updateNotificationStatus(n.id, "READ");
+      }
+    }
+    return { success: true };
+  }),
+
+  // Delete notification
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await updateNotificationStatus(input.id, "DELETED");
+      return { success: true };
+    }),
+
   // Send SLA notifications (called by cron job or manually)
   sendSlaAlerts: protectedProcedure.mutation(async () => {
     const violations = await checkSlaViolations();

@@ -1,0 +1,1 @@
+ALTER TABLE `notifications` MODIFY COLUMN `status` enum('PENDING','SENT','FAILED','READ','DELETED') DEFAULT 'PENDING';

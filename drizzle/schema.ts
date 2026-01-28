@@ -222,7 +222,7 @@ export const notifications = mysqlTable("notifications", {
   recipientName: varchar("recipientName", { length: 200 }),
   subject: varchar("subject", { length: 500 }).notNull(),
   body: text("body").notNull(),
-  status: mysqlEnum("status", ["PENDING", "SENT", "FAILED"]).default("PENDING"),
+  status: mysqlEnum("status", ["PENDING", "SENT", "FAILED", "READ", "DELETED"]).default("PENDING"),
   sentAt: timestamp("sentAt"),
   errorMessage: text("errorMessage"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

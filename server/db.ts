@@ -607,7 +607,7 @@ export async function getNotifications(defectId?: number) {
   return db.select().from(notifications).orderBy(desc(notifications.createdAt)).limit(100);
 }
 
-export async function updateNotificationStatus(id: number, status: "SENT" | "FAILED", errorMessage?: string) {
+export async function updateNotificationStatus(id: number, status: "SENT" | "FAILED" | "READ" | "DELETED", errorMessage?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
