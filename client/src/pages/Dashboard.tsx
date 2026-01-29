@@ -13,12 +13,12 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 
-// Professional color palette
+// Professional color palette - SDD-UX compliant
 const STATUS_COLORS = {
-  CLOSED: "#22c55e",
-  ONGOING: "#3b82f6", 
-  DELAYED: "#ef4444",
-  WAITING: "#f59e0b"
+  CLOSED: "#4ade80",      // Muted green - baseline, not alert
+  ONGOING: "#3b82f6",     // Blue
+  DELAYED: "#ef4444",     // Strong red - highest visual priority
+  "Waiting for CHK Solution": "#f59e0b"  // Orange/amber
 };
 
 const BUCKET_COLORS = {
@@ -154,49 +154,93 @@ export default function Dashboard() {
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Status Distribution - Pie Chart */}
-        <Card className="chart-container">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="chart-title">Distribuição de Status</h3>
-              <p className="text-sm text-muted-foreground">Visão geral por status</p>
-            </div>
+        {/* Status Distribution - SDD-UX Design */}
+        <Card className="chart-container bg-slate-50/50">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-slate-800">Status Overview</h3>
+            <p className="text-sm text-slate-500">
+              Last update: {new Date().toLocaleDateString('pt-BR')} · Total items: {stats.total}
+            </p>
           </div>
-          <div className="flex items-center gap-6">
-            <ResponsiveContainer width="55%" height={280}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={70}
-                  outerRadius={110}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS] || PIE_COLORS[index % PIE_COLORS.length]} 
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="flex items-center gap-8">
+            {/* Donut Chart with Center KPI */}
+            <div className="relative">
+              <ResponsiveContainer width={220} height={220}>
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={65}
+                    outerRadius={95}
+                    paddingAngle={2}
+                    dataKey="value"
+                    strokeWidth={0}
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS] || PIE_COLORS[index % PIE_COLORS.length]} 
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [value, 'Casos']}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              {/* Center KPI - CLOSED percentage */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-3xl font-bold text-slate-700">
+                  {statusData.find(s => s.name === 'CLOSED')?.percentage || 0}%
+                </span>
+                <span className="text-sm font-medium text-slate-500">CLOSED</span>
+              </div>
+            </div>
+            
+            {/* Status Cards - Replace traditional legend */}
             <div className="flex-1 space-y-3">
-              {statusData.map((item, index) => (
-                <div key={item.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+              {statusData
+                .filter(item => item.name !== 'CLOSED')
+                .sort((a, b) => {
+                  // DELAYED first (highest priority)
+                  if (a.name === 'DELAYED') return -1;
+                  if (b.name === 'DELAYED') return 1;
+                  return 0;
+                })
+                .map((item) => {
+                  const isDelayed = item.name === 'DELAYED';
+                  const isOngoing = item.name === 'ONGOING';
+                  const bgColor = isDelayed ? 'bg-red-50' : isOngoing ? 'bg-white' : 'bg-white';
+                  const borderColor = isDelayed ? 'border-red-200' : 'border-slate-200';
+                  const iconColor = STATUS_COLORS[item.name as keyof typeof STATUS_COLORS] || '#6b7280';
+                  
+                  return (
                     <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: STATUS_COLORS[item.name as keyof typeof STATUS_COLORS] || PIE_COLORS[index % PIE_COLORS.length] }}
-                    />
-                    <span className="text-sm">{item.name}</span>
-                  </div>
-                  <span className="text-sm font-medium">{item.percentage}%</span>
-                </div>
-              ))}
+                      key={item.name} 
+                      className={`flex items-center justify-between px-4 py-3 rounded-lg border ${bgColor} ${borderColor} cursor-pointer hover:shadow-sm transition-shadow`}
+                      onClick={() => setLocation(`/defects?status=${item.name}`)}
+                    >
+                      <div className="flex items-center gap-3">
+                        {isDelayed ? (
+                          <AlertTriangle className="w-5 h-5" style={{ color: iconColor }} />
+                        ) : (
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: iconColor }}
+                          />
+                        )}
+                        <span className={`text-sm font-medium ${isDelayed ? 'text-red-700' : 'text-slate-700'}`}>
+                          {item.name === 'Waiting for CHK Solution' ? 'WAITING FOR CHK' : item.name}
+                        </span>
+                      </div>
+                      <span className={`text-lg font-semibold ${isDelayed ? 'text-red-600' : 'text-slate-600'}`}>
+                        {item.percentage}%
+                      </span>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </Card>

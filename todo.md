@@ -135,3 +135,13 @@
 ## Melhoria UX - Botões '...' Dashboard
 - [x] Verificar funcionalidade dos botões '...' nas divs do Dashboard - NÃO TINHAM FUNCIONALIDADE
 - [x] Remover botões sem funcionalidade (6 botões removidos)
+
+
+## Redesign SDD-UX - Status Distribution
+- [x] Implementar donut chart com stroke fino
+- [x] Adicionar KPI central mostrando CLOSED (86%)
+- [x] Substituir legenda por status cards verticais à direita
+- [x] Destacar DELAYED com fundo vermelho claro e ícone de alerta
+- [x] Adicionar header com última atualização e total de itens
+- [x] Aplicar cores: verde muted para CLOSED, vermelho forte para DELAYED
+- [x] Adicionar interação: click nos cards filtra defeitos por status
