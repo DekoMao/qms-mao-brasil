@@ -663,13 +663,13 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* Pareto RCA - Non Compliance Cases */}
+      {/* Pareto RCA */}
       {rcaData && rcaData.topCauses && rcaData.topCauses.length > 0 && (
         <Card className={`chart-container transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="chart-title">Non Compliance Cases</h3>
-              <p className="text-sm text-muted-foreground">Vieesty breakdown since April 24</p>
+              <h3 className="chart-title">Pareto RCA</h3>
+              <p className="text-sm text-muted-foreground">Análise de causa raiz - Princípio 80/20</p>
             </div>
           </div>
 
@@ -678,26 +678,38 @@ export default function Dashboard() {
             <div>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart
-                  data={rcaData.topCauses.slice(0, 7).map((item: any, idx: number) => ({
-                    category: `Vicod ${idx + 1}`,
+                  data={rcaData.topCauses.slice(0, 7).map((item: any) => ({
+                    category: item.cause.length > 15 ? item.cause.substring(0, 15) + "..." : item.cause,
                     count: item.count,
-                    percentage: parseFloat(item.percentage || "0"),
+                    cumulativePercentage: parseFloat(item.cumulativePercentage || "0"),
                   }))}
                   margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                   <XAxis 
                     dataKey="category" 
-                    tick={{ fontSize: 11, fill: "#6b7280" }} 
+                    tick={{ fontSize: 10, fill: "#6b7280" }} 
                     axisLine={false} 
-                    tickLine={false} 
+                    tickLine={false}
+                    interval={0}
+                    angle={-20}
+                    textAnchor="end"
+                    height={50}
                   />
                   <YAxis 
+                    yAxisId="left"
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 11, fill: "#6b7280" }}
+                  />
+                  <YAxis 
+                    yAxisId="right"
+                    orientation="right"
                     axisLine={false} 
                     tickLine={false} 
                     tick={{ fontSize: 11, fill: "#6b7280" }}
                     tickFormatter={(v) => `${v}%`}
-                    domain={[0, 40]}
+                    domain={[0, 100]}
                   />
                   <Tooltip
                     contentStyle={{
@@ -706,24 +718,26 @@ export default function Dashboard() {
                       boxShadow: "0 10px 15px -3px rgba(0,0,0,0.10)",
                     }}
                     formatter={(value: any, name: string) => [
-                      name === "count" ? value : `${value}%`,
-                      name === "count" ? "Qtd" : "% do Total"
+                      name === "Ocorrências" ? value : `${value}%`,
+                      name
                     ]}
                   />
                   <Bar 
-                    dataKey="percentage" 
+                    yAxisId="left"
+                    dataKey="count" 
                     fill="#3b82f6" 
-                    name="Percentual" 
+                    name="Ocorrências" 
                     radius={[4, 4, 0, 0]}
-                    barSize={40}
+                    barSize={35}
                   />
                   <Line
+                    yAxisId="right"
                     type="monotone"
-                    dataKey="percentage"
+                    dataKey="cumulativePercentage"
                     stroke="#f59e0b"
                     strokeWidth={2}
                     dot={{ fill: "#f59e0b", strokeWidth: 2, r: 4 }}
-                    name="Tendência"
+                    name="% Acumulado"
                   />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -734,23 +748,19 @@ export default function Dashboard() {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b">
                   <tr>
-                    <th className="text-left py-3 px-4 font-semibold text-slate-700">Tnenala</th>
-                    <th className="text-center py-3 px-4 font-semibold text-slate-700">Qai</th>
-                    <th className="text-right py-3 px-4 font-semibold text-slate-700">% voda</th>
+                    <th className="text-left py-3 px-4 font-semibold text-slate-700">Causa Raiz</th>
+                    <th className="text-center py-3 px-4 font-semibold text-slate-700">Qtd</th>
+                    <th className="text-right py-3 px-4 font-semibold text-slate-700">% Acum.</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rcaData.topCauses.slice(0, 5).map((item: any, index: number) => {
-                    const totalCount = rcaData.topCauses.reduce((sum: number, i: any) => sum + i.count, 0);
-                    const pct = totalCount > 0 ? ((item.count / totalCount) * 100).toFixed(1) : "0.0";
-                    return (
-                      <tr key={index} className="border-b last:border-b-0 hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-4 font-medium text-slate-800">{item.cause}</td>
-                        <td className="py-3 px-4 text-center text-slate-600">{item.count}</td>
-                        <td className="py-3 px-4 text-right font-semibold text-sky-600">{pct}%</td>
-                      </tr>
-                    );
-                  })}
+                  {rcaData.topCauses.slice(0, 5).map((item: any, index: number) => (
+                    <tr key={index} className="border-b last:border-b-0 hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-4 font-medium text-slate-800 truncate max-w-[200px]" title={item.cause}>{item.cause}</td>
+                      <td className="py-3 px-4 text-center text-slate-600">{item.count}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-sky-600">{item.cumulativePercentage}%</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
