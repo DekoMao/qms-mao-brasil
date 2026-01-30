@@ -164,3 +164,9 @@
 - [x] Identificar problema na função de importação (mapeamento de colunas)
 - [x] Corrigir função de importação para encontrar novos registros
 - [x] Importar novo registro 10.01.26 manualmente
+
+
+## Animação Card Slider - Critical Cases
+- [x] Implementar animação de swipe horizontal para esquerda
+- [x] Manter transição suave entre cards (0.4s ease-in-out)
+- [x] Preservar dados e informações existentes

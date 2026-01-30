@@ -159,7 +159,7 @@ function StatusRow({
   );
 }
 
-// Critical Cases Carousel Component
+// Critical Cases Carousel Component with Horizontal Swipe Animation
 function CriticalCasesCarousel({ 
   cases, 
   onCaseClick 
@@ -169,23 +169,41 @@ function CriticalCasesCarousel({
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const nextSlide = useCallback(() => {
-    setIsTransitioning(true);
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setSlideDirection('left');
     setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % cases.length);
-      setIsTransitioning(false);
-    }, 300);
-  }, [cases.length]);
+      setSlideDirection(null);
+      setIsAnimating(false);
+    }, 400);
+  }, [cases.length, isAnimating]);
 
   const prevSlide = useCallback(() => {
-    setIsTransitioning(true);
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setSlideDirection('right');
     setTimeout(() => {
       setCurrentIndex((prev) => (prev - 1 + cases.length) % cases.length);
-      setIsTransitioning(false);
-    }, 300);
-  }, [cases.length]);
+      setSlideDirection(null);
+      setIsAnimating(false);
+    }, 400);
+  }, [cases.length, isAnimating]);
+
+  const goToSlide = useCallback((idx: number) => {
+    if (isAnimating || idx === currentIndex) return;
+    setIsAnimating(true);
+    setSlideDirection(idx > currentIndex ? 'left' : 'right');
+    setTimeout(() => {
+      setCurrentIndex(idx);
+      setSlideDirection(null);
+      setIsAnimating(false);
+    }, 400);
+  }, [currentIndex, isAnimating]);
 
   useEffect(() => {
     if (!isPlaying || cases.length <= 1) return;
@@ -197,24 +215,60 @@ function CriticalCasesCarousel({
 
   const currentCase = cases[currentIndex];
 
+  // CSS classes for swipe animation
+  const getSlideClasses = () => {
+    if (slideDirection === 'left') {
+      return 'animate-slide-out-left';
+    }
+    if (slideDirection === 'right') {
+      return 'animate-slide-out-right';
+    }
+    return 'animate-slide-in';
+  };
+
   return (
     <div className="space-y-4">
+      {/* Inline styles for swipe animations */}
+      <style>{`
+        @keyframes slideOutLeft {
+          0% { transform: translateX(0); opacity: 1; }
+          100% { transform: translateX(-100%); opacity: 0; }
+        }
+        @keyframes slideOutRight {
+          0% { transform: translateX(0); opacity: 1; }
+          100% { transform: translateX(100%); opacity: 0; }
+        }
+        @keyframes slideIn {
+          0% { transform: translateX(30px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-out-left {
+          animation: slideOutLeft 0.4s ease-in-out forwards;
+        }
+        .animate-slide-out-right {
+          animation: slideOutRight 0.4s ease-in-out forwards;
+        }
+        .animate-slide-in {
+          animation: slideIn 0.3s ease-out forwards;
+        }
+      `}</style>
+
       {/* Carousel Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 transition-transform hover:scale-105"
             onClick={prevSlide}
-            disabled={cases.length <= 1}
+            disabled={cases.length <= 1 || isAnimating}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 transition-transform hover:scale-105"
             onClick={() => setIsPlaying(!isPlaying)}
           >
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -222,9 +276,9 @@ function CriticalCasesCarousel({
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 transition-transform hover:scale-105"
             onClick={nextSlide}
-            disabled={cases.length <= 1}
+            disabled={cases.length <= 1 || isAnimating}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -233,13 +287,8 @@ function CriticalCasesCarousel({
           {cases.slice(0, 5).map((_, idx) => (
             <button
               key={idx}
-              onClick={() => {
-                setIsTransitioning(true);
-                setTimeout(() => {
-                  setCurrentIndex(idx);
-                  setIsTransitioning(false);
-                }, 300);
-              }}
+              onClick={() => goToSlide(idx)}
+              disabled={isAnimating}
               className={`h-2 rounded-full transition-all duration-300 ${
                 idx === currentIndex 
                   ? "w-6 bg-rose-500" 
@@ -253,59 +302,61 @@ function CriticalCasesCarousel({
         </div>
       </div>
 
-      {/* Carousel Card */}
-      <div 
-        className={`
-          relative overflow-hidden rounded-xl border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-white p-6 
-          cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-rose-300
-          ${isTransitioning ? "opacity-0 transform scale-95" : "opacity-100 transform scale-100"}
-        `}
-        onClick={() => onCaseClick(currentCase.id)}
-      >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-rose-100/50 rounded-full -mr-16 -mt-16" />
-        <div className="relative">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <p className="text-xs font-medium text-rose-600 uppercase tracking-wider mb-1">
-                Caso Crítico #{currentIndex + 1} de {cases.length}
-              </p>
-              <h4 className="text-xl font-bold text-slate-800">{currentCase.docNumber}</h4>
+      {/* Carousel Card with Swipe Animation */}
+      <div className="relative overflow-hidden">
+        <div 
+          className={`
+            relative rounded-xl border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-white p-6 
+            cursor-pointer transition-shadow duration-300 hover:shadow-lg hover:border-rose-300
+            ${getSlideClasses()}
+          `}
+          onClick={() => onCaseClick(currentCase.id)}
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-100/50 rounded-full -mr-16 -mt-16" />
+          <div className="relative">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-xs font-medium text-rose-600 uppercase tracking-wider mb-1">
+                  Caso Crítico #{currentIndex + 1} de {cases.length}
+                </p>
+                <h4 className="text-xl font-bold text-slate-800">{currentCase.docNumber}</h4>
+              </div>
+              <Badge
+                className={
+                  currentCase.status === "DELAYED"
+                    ? "bg-rose-500 text-white border-rose-600 animate-pulse"
+                    : currentCase.status === "ONGOING"
+                      ? "bg-sky-100 text-sky-700 border-sky-200"
+                      : "bg-emerald-100 text-emerald-700 border-emerald-200"
+                }
+              >
+                {currentCase.status}
+              </Badge>
             </div>
-            <Badge
-              className={
-                currentCase.status === "DELAYED"
-                  ? "bg-rose-500 text-white border-rose-600 animate-pulse"
-                  : currentCase.status === "ONGOING"
-                    ? "bg-sky-100 text-sky-700 border-sky-200"
-                    : "bg-emerald-100 text-emerald-700 border-emerald-200"
-              }
-            >
-              {currentCase.status}
-            </Badge>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider">Fornecedor</p>
-              <p className="font-semibold text-slate-700">{currentCase.supplier || "-"}</p>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Fornecedor</p>
+                <p className="font-semibold text-slate-700">{currentCase.supplier || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Sintoma</p>
+                <p className="font-semibold text-slate-700 truncate">{currentCase.symptom || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Sistema</p>
+                <p className="font-semibold text-slate-700">{currentCase.system || currentCase.area || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Aging</p>
+                <p className="font-bold text-rose-600 text-lg">{currentCase.agingTotal || 0} dias</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider">Sintoma</p>
-              <p className="font-semibold text-slate-700 truncate">{currentCase.symptom || "-"}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider">Sistema</p>
-              <p className="font-semibold text-slate-700">{currentCase.system || currentCase.area || "-"}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wider">Aging</p>
-              <p className="font-bold text-rose-600 text-lg">{currentCase.agingTotal || 0} dias</p>
-            </div>
-          </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-rose-100">
-            <p className="text-sm text-slate-500">Clique para ver detalhes</p>
-            <ChevronRight className="h-5 w-5 text-rose-400" />
+            <div className="flex items-center justify-between pt-4 border-t border-rose-100">
+              <p className="text-sm text-slate-500">Clique para ver detalhes</p>
+              <ChevronRight className="h-5 w-5 text-rose-400" />
+            </div>
           </div>
         </div>
       </div>
