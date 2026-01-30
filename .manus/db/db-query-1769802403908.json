@@ -1,0 +1,50 @@
+{
+  "query": "SELECT COUNT(*) as total, docNumber FROM defects WHERE docNumber LIKE '%.01.26' OR docNumber LIKE '%.02.26' GROUP BY docNumber ORDER BY docNumber;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT COUNT(*) as total, docNumber FROM defects WHERE docNumber LIKE '%.01.26' OR docNumber LIKE '%.02.26' GROUP BY docNumber ORDER BY docNumber;",
+  "rows": [
+    {
+      "total": "1",
+      "docNumber": "01.01.26"
+    },
+    {
+      "total": "1",
+      "docNumber": "02.01.26"
+    },
+    {
+      "total": "1",
+      "docNumber": "03.01.26"
+    },
+    {
+      "total": "1",
+      "docNumber": "04.01.26"
+    },
+    {
+      "total": "1",
+      "docNumber": "05.01.26"
+    },
+    {
+      "total": "1",
+      "docNumber": "06.01.26"
+    },
+    {
+      "total": "1",
+      "docNumber": "07.01.26"
+    },
+    {
+      "total": "1",
+      "docNumber": "08.01.26"
+    },
+    {
+      "total": "1",
+      "docNumber": "09.01.26"
+    },
+    {
+      "total": "1",
+      "docNumber": "10.01.26"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tdocNumber\n1\t01.01.26\n1\t02.01.26\n1\t03.01.26\n1\t04.01.26\n1\t05.01.26\n1\t06.01.26\n1\t07.01.26\n1\t08.01.26\n1\t09.01.26\n1\t10.01.26\n",
+  "stderr": "",
+  "execution_time_ms": 1537
+}

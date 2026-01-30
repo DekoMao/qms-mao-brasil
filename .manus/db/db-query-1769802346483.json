@@ -1,0 +1,346 @@
+{
+  "query": "DESCRIBE defects;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute DESCRIBE defects;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "docNumber",
+      "Type": "varchar(20)",
+      "Null": "NO",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "openDate",
+      "Type": "varchar(20)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "year",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "weekKey",
+      "Type": "varchar(10)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "monthName",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "mg",
+      "Type": "enum('S','A','B','C')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "defectsSeverity",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "category",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "model",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "customer",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "pn",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "material",
+      "Type": "varchar(200)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "symptom",
+      "Type": "varchar(500)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "detection",
+      "Type": "varchar(200)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "rate",
+      "Type": "decimal(10,4)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "qty",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "description",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "evidence",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "cause",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "correctiveActions",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "trackingProgress",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "supplier",
+      "Type": "varchar(200)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "supplyFeedback",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "statusSupplyFB",
+      "Type": "enum('On Time','Late Replay','DELAYED','ONGOING')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "owner",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "targetDate",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "checkSolution",
+      "Type": "tinyint(1)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "qcrNumber",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "occurrence",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dateDisposition",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dateTechAnalysis",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dateRootCause",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dateCorrectiveAction",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dateValidation",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "step",
+      "Type": "enum('Aguardando Disposição','Aguardando Análise Técnica','Aguardando Causa Raiz','Aguardando Ação Corretiva','Aguardando Validação de Ação Corretiva','CLOSED')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "Aguardando Disposição",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('CLOSED','ONGOING','DELAYED','Waiting for CHK Solution')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "ONGOING",
+      "Extra": ""
+    },
+    {
+      "Field": "closeWeekKey",
+      "Type": "varchar(10)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "createdBy",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedBy",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint(11)\tNO\tPRI\tNULL\tauto_increment\ndocNumber\tvarchar(20)\tNO\tUNI\tNULL\t\nopenDate\tvarchar(20)\tNO\t\tNULL\t\nyear\tint(11)\tYES\t\tNULL\t\nweekKey\tvarchar(10)\tYES\t\tNULL\t\nmonthName\tvarchar(20)\tYES\t\tNULL\t\nmg\tenum('S','A','B','C')\tYES\t\tNULL\t\ndefectsSeverity\tvarchar(100)\tYES\t\tNULL\t\ncategory\tvarchar(100)\tYES\t\tNULL\t\nmodel\tvarchar(100)\tYES\t\tNULL\t\ncustomer\tvarchar(100)\tYES\t\tNULL\t\npn\tvarchar(100)\tYES\t\tNULL\t\nmaterial\tvarchar(200)\tYES\t\tNULL\t\nsymptom\tvarchar(500)\tYES\t\tNULL\t\ndetection\tvarchar(200)\tYES\t\tNULL\t\nrate\tdecimal(10,4)\tYES\t\tNULL\t\nqty\tint(11)\tYES\t\tNULL\t\ndescription\ttext\tYES\t\tNULL\t\nevidence\ttext\tYES\t\tNULL\t\ncause\ttext\tYES\t\tNULL\t\ncorrectiveActions\ttext\tYES\t\tNULL\t\ntrackingProgress\ttext\tYES\t\tNULL\t\nsupplier\tvarchar(200)\tYES\t\tNULL\t\nsupplyFeedback\ttext\tYES\t\tNULL\t\nstatusSupplyFB\tenum('On Time','Late Replay','DELAYED','ONGOING')\tYES\t\tNULL\t\nowner\tvarchar(100)\tYES\t\tNULL\t\ntargetDate\tvarchar(20)\tYES\t\tNULL\t\ncheckSolution\ttinyint(1)\tYES\t\t0\t\nqcrNumber\tvarchar(50)\tYES\t\tNULL\t\noccurrence\tvarchar(20)\tYES\t\tNULL\t\ndateDisposition\tvarchar(20)\tYES\t\tNULL\t\ndateTechAnalysis\tvarchar(20)\tYES\t\tNULL\t\ndateRootCause\tvarchar(20)\tYES\t\tNULL\t\ndateCorrectiveAction\tvarchar(20)\tYES\t\tNULL\t\ndateValidation\tvarchar(20)\tYES\t\tNULL\t\nstep\tenum('Aguardando Disposição','Aguardando Análise Técnica','Aguardando Causa Raiz','Aguardando Ação Corretiva','Aguardando Validação de Ação Corretiva','CLOSED')\tYES\t\tAguardando Disposição\t\nstatus\tenum('CLOSED','ONGOING','DELAYED','Waiting for CHK Solution')\tYES\t\tONGOING\t\ncloseWeekKey\tvarchar(10)\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\ncreatedBy\tint(11)\tYES\t\tNULL\t\nupdatedBy\tint(11)\tYES\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 1583
+}

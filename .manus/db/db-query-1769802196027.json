@@ -1,0 +1,37 @@
+{
+  "query": "SELECT docNumber FROM defects WHERE docNumber IN ('01.01.26', '02.01.26', '03.01.26', '04.01.26', '05.01.26', '06.01.26', '07.01.26', '08.01.26', '09.01.26', '10.01.26');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT docNumber FROM defects WHERE docNumber IN ('01.01.26', '02.01.26', '03.01.26', '04.01.26', '05.01.26', '06.01.26', '07.01.26', '08.01.26', '09.01.26', '10.01.26');",
+  "rows": [
+    {
+      "docNumber": "01.01.26"
+    },
+    {
+      "docNumber": "02.01.26"
+    },
+    {
+      "docNumber": "03.01.26"
+    },
+    {
+      "docNumber": "04.01.26"
+    },
+    {
+      "docNumber": "05.01.26"
+    },
+    {
+      "docNumber": "06.01.26"
+    },
+    {
+      "docNumber": "07.01.26"
+    },
+    {
+      "docNumber": "08.01.26"
+    },
+    {
+      "docNumber": "09.01.26"
+    }
+  ],
+  "messages": [],
+  "stdout": "docNumber\n01.01.26\n02.01.26\n03.01.26\n04.01.26\n05.01.26\n06.01.26\n07.01.26\n08.01.26\n09.01.26\n",
+  "stderr": "",
+  "execution_time_ms": 1518
+}

@@ -1,0 +1,136 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'defects' ORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'defects' ORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "docNumber"
+    },
+    {
+      "COLUMN_NAME": "openDate"
+    },
+    {
+      "COLUMN_NAME": "year"
+    },
+    {
+      "COLUMN_NAME": "weekKey"
+    },
+    {
+      "COLUMN_NAME": "monthName"
+    },
+    {
+      "COLUMN_NAME": "mg"
+    },
+    {
+      "COLUMN_NAME": "defectsSeverity"
+    },
+    {
+      "COLUMN_NAME": "category"
+    },
+    {
+      "COLUMN_NAME": "model"
+    },
+    {
+      "COLUMN_NAME": "customer"
+    },
+    {
+      "COLUMN_NAME": "pn"
+    },
+    {
+      "COLUMN_NAME": "material"
+    },
+    {
+      "COLUMN_NAME": "symptom"
+    },
+    {
+      "COLUMN_NAME": "detection"
+    },
+    {
+      "COLUMN_NAME": "rate"
+    },
+    {
+      "COLUMN_NAME": "qty"
+    },
+    {
+      "COLUMN_NAME": "description"
+    },
+    {
+      "COLUMN_NAME": "evidence"
+    },
+    {
+      "COLUMN_NAME": "cause"
+    },
+    {
+      "COLUMN_NAME": "correctiveActions"
+    },
+    {
+      "COLUMN_NAME": "trackingProgress"
+    },
+    {
+      "COLUMN_NAME": "supplier"
+    },
+    {
+      "COLUMN_NAME": "supplyFeedback"
+    },
+    {
+      "COLUMN_NAME": "statusSupplyFB"
+    },
+    {
+      "COLUMN_NAME": "owner"
+    },
+    {
+      "COLUMN_NAME": "targetDate"
+    },
+    {
+      "COLUMN_NAME": "checkSolution"
+    },
+    {
+      "COLUMN_NAME": "qcrNumber"
+    },
+    {
+      "COLUMN_NAME": "occurrence"
+    },
+    {
+      "COLUMN_NAME": "dateDisposition"
+    },
+    {
+      "COLUMN_NAME": "dateTechAnalysis"
+    },
+    {
+      "COLUMN_NAME": "dateRootCause"
+    },
+    {
+      "COLUMN_NAME": "dateCorrectiveAction"
+    },
+    {
+      "COLUMN_NAME": "dateValidation"
+    },
+    {
+      "COLUMN_NAME": "step"
+    },
+    {
+      "COLUMN_NAME": "status"
+    },
+    {
+      "COLUMN_NAME": "closeWeekKey"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "COLUMN_NAME": "createdBy"
+    },
+    {
+      "COLUMN_NAME": "updatedBy"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\ndocNumber\nopenDate\nyear\nweekKey\nmonthName\nmg\ndefectsSeverity\ncategory\nmodel\ncustomer\npn\nmaterial\nsymptom\ndetection\nrate\nqty\ndescription\nevidence\ncause\ncorrectiveActions\ntrackingProgress\nsupplier\nsupplyFeedback\nstatusSupplyFB\nowner\ntargetDate\ncheckSolution\nqcrNumber\noccurrence\ndateDisposition\ndateTechAnalysis\ndateRootCause\ndateCorrectiveAction\ndateValidation\nstep\nstatus\ncloseWeekKey\ncreatedAt\nupdatedAt\ncreatedBy\nupdatedBy\n",
+  "stderr": "",
+  "execution_time_ms": 1537
+}

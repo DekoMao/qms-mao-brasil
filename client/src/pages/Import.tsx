@@ -8,39 +8,87 @@ import { toast } from "sonner";
 import { Upload, FileSpreadsheet, CheckCircle, XCircle, AlertTriangle, Download } from "lucide-react";
 
 // Column mapping from Excel to database fields
+// Suporta múltiplos nomes de coluna para cada campo (planilha original e variações)
 const COLUMN_MAPPING: Record<string, string> = {
+  // Doc Number - nome na planilha: "Doc. Nº"
+  "Doc. Nº": "docNumber",
   "Doc Number": "docNumber",
+  "docNumber": "docNumber",
+  // Open Date - nome na planilha: "Open date"
+  "Open date": "openDate",
   "Open Date": "openDate",
+  "openDate": "openDate",
+  // MG
   "MG": "mg",
+  // Defects Severity - nome na planilha: "Defects"
+  "Defects": "defectsSeverity",
   "Defects Severity": "defectsSeverity",
+  // Category
   "Category": "category",
+  // Model
   "Model": "model",
+  // Customer
   "Customer": "customer",
+  // PN
   "PN": "pn",
+  // Material
   "Material": "material",
+  // Symptom
   "Symptom": "symptom",
+  // Detection
   "Detection": "detection",
+  // Rate
   "Rate": "rate",
+  // Qty - nome na planilha: "QTY"
+  "QTY": "qty",
   "Qty": "qty",
+  // Description
   "Description": "description",
+  // Evidence
   "Evidence": "evidence",
+  // Cause
   "Cause": "cause",
+  // Corrective Actions - nome na planilha: "Corrective actions"
+  "Corrective actions": "correctiveActions",
   "Corrective Actions": "correctiveActions",
+  // Tracking Progress - nome na planilha: "Tracking Progress "
+  "Tracking Progress ": "trackingProgress",
   "Tracking Progress": "trackingProgress",
-  "Supplier": "supplier",
-  "Supply Feedback": "supplyFeedback",
-  "Status Supply FB": "statusSupplyFB",
+  // Owner
   "Owner": "owner",
+  // Supplier
+  "Supplier": "supplier",
+  // Supply Feedback
+  "Supply Feedback": "supplyFeedback",
+  // Status Supply FB
+  "Status Supply FB": "statusSupplyFB",
+  // Target Date - nome na planilha: "Target"
+  "Target": "targetDate",
   "Target Date": "targetDate",
+  // Check Solution
   "Check Solution": "checkSolution",
-  "QCR Number": "qcrNumber",
-  "Occurrence": "occurrence",
-  "Date Disposition": "dateDisposition",
-  "Date Tech Analysis": "dateTechAnalysis",
-  "Date Root Cause": "dateRootCause",
-  "Date Corrective Action": "dateCorrectiveAction",
-  "Date Validation": "dateValidation",
+  // Status
   "Status": "status",
+  // QCR Number - nome na planilha: "QCR nº"
+  "QCR nº": "qcrNumber",
+  "QCR Number": "qcrNumber",
+  // Occurrence
+  "Occurrence": "occurrence",
+  // Date Disposition - nome na planilha: "Data Disposição (Cotenção)"
+  "Data Disposição (Cotenção)": "dateDisposition",
+  "Date Disposition": "dateDisposition",
+  // Date Tech Analysis - nome na planilha: "Data Análise Técnica"
+  "Data Análise Técnica": "dateTechAnalysis",
+  "Date Tech Analysis": "dateTechAnalysis",
+  // Date Root Cause - nome na planilha: "Data Causa Raiz"
+  "Data Causa Raiz": "dateRootCause",
+  "Date Root Cause": "dateRootCause",
+  // Date Corrective Action - nome na planilha: "Data Ação Corretiva"
+  "Data Ação Corretiva": "dateCorrectiveAction",
+  "Date Corrective Action": "dateCorrectiveAction",
+  // Date Validation - nome na planilha: "Data Validação Ação Corretiva"
+  "Data Validação Ação Corretiva": "dateValidation",
+  "Date Validation": "dateValidation",
 };
 
 export default function Import() {
@@ -75,16 +123,49 @@ export default function Import() {
       ) || workbook.SheetNames[0];
       
       const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+      // Usar header: 1 para obter array de arrays e encontrar a linha de cabeçalho
+      const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" }) as any[][];
+      
+      // Encontrar a linha de cabeçalho (procurar por "Doc. Nº" ou "NO")
+      let headerRowIndex = -1;
+      for (let i = 0; i < Math.min(rawData.length, 15); i++) {
+        const row = rawData[i];
+        if (row && (row.includes("Doc. Nº") || row.includes("NO") || row.includes("Open date"))) {
+          headerRowIndex = i;
+          break;
+        }
+      }
+      
+      if (headerRowIndex === -1) {
+        throw new Error("Cabeçalho não encontrado na planilha");
+      }
+      
+      // Converter para JSON usando a linha de cabeçalho correta
+      const headers = rawData[headerRowIndex] as string[];
+      const dataRows = rawData.slice(headerRowIndex + 1);
+      
+      const jsonData = dataRows.map(row => {
+        const obj: Record<string, any> = {};
+        headers.forEach((header, idx) => {
+          if (header && row[idx] !== undefined) {
+            obj[String(header).trim()] = row[idx];
+          }
+        });
+        return obj;
+      });
 
       // Map columns to database fields
       const mappedData = (jsonData as Record<string, any>[]).map((row: Record<string, any>) => {
         const mappedRow: Record<string, any> = {};
         for (const [excelCol, dbField] of Object.entries(COLUMN_MAPPING)) {
-          // Try exact match first, then case-insensitive
+          // Try exact match first, then case-insensitive, then trimmed
           let value = row[excelCol];
           if (value === undefined) {
-            const key = Object.keys(row).find(k => k.toLowerCase() === excelCol.toLowerCase());
+            // Tentar match case-insensitive
+            const key = Object.keys(row).find(k => 
+              k.toLowerCase() === excelCol.toLowerCase() ||
+              k.trim().toLowerCase() === excelCol.trim().toLowerCase()
+            );
             if (key) value = row[key];
           }
           if (value !== undefined && value !== "") {
@@ -94,8 +175,16 @@ export default function Import() {
                 // Excel serial date
                 const date = new Date((value - 25569) * 86400 * 1000);
                 mappedRow[dbField] = date.toISOString().split("T")[0];
+              } else if (value instanceof Date) {
+                mappedRow[dbField] = value.toISOString().split("T")[0];
               } else if (typeof value === "string" && value) {
-                mappedRow[dbField] = value;
+                // Tentar parsear string de data
+                const parsed = new Date(value);
+                if (!isNaN(parsed.getTime())) {
+                  mappedRow[dbField] = parsed.toISOString().split("T")[0];
+                } else {
+                  mappedRow[dbField] = value;
+                }
               }
             } else {
               mappedRow[dbField] = value;
@@ -103,7 +192,11 @@ export default function Import() {
           }
         }
         return mappedRow;
-      }).filter(row => row.docNumber); // Only include rows with docNumber
+      }).filter(row => {
+        // Filtrar apenas linhas com docNumber válido (formato XX.XX.XX ou similar)
+        const docNum = String(row.docNumber || "");
+        return docNum && /^\d+\.\d+\.\d+$/.test(docNum);
+      });
 
       setParsedData(mappedData);
       toast.success(`${mappedData.length} registros encontrados na planilha`);

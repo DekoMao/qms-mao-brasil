@@ -156,3 +156,11 @@
 ## Redesign Pareto RCA
 - [x] Redesenhar layout com gráfico de barras + linha à esquerda
 - [x] Adicionar tabela de dados à direita com colunas: Tnenala, Qai, % voda
+
+
+## Correção Importação de Planilha
+- [x] Analisar planilha e identificar novos registros (10.01.26 faltando)
+- [x] Verificar última data atualizada no sistema (9 registros de 2026 existentes)
+- [x] Identificar problema na função de importação (mapeamento de colunas)
+- [x] Corrigir função de importação para encontrar novos registros
+- [x] Importar novo registro 10.01.26 manualmente
