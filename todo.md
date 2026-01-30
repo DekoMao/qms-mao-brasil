@@ -151,3 +151,8 @@
 - [x] Animação de carregamento individual para cada card do dashboard
 - [x] Tooltip com número exato de casos e porcentagem nos cards de status
 - [x] Carrossel automático para Casos Críticos
+
+
+## Redesign Pareto RCA
+- [x] Redesenhar layout com gráfico de barras + linha à esquerda
+- [x] Adicionar tabela de dados à direita com colunas: Tnenala, Qai, % voda
