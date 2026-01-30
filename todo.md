@@ -145,3 +145,9 @@
 - [x] Adicionar header com última atualização e total de itens
 - [x] Aplicar cores: verde muted para CLOSED, vermelho forte para DELAYED
 - [x] Adicionar interação: click nos cards filtra defeitos por status
+
+
+## Melhorias UX Dashboard - Animações e Interatividade
+- [x] Animação de carregamento individual para cada card do dashboard
+- [x] Tooltip com número exato de casos e porcentagem nos cards de status
+- [x] Carrossel automático para Casos Críticos
