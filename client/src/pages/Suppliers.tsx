@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { 
   Building2, 
@@ -16,17 +17,40 @@ import {
   Mail,
   Phone,
   User,
-  Key
+  Key,
+  Pencil
 } from "lucide-react";
+
+interface Supplier {
+  id: number;
+  name: string;
+  code: string | null;
+  email: string | null;
+  contactName: string | null;
+  phone: string | null;
+  accessCode: string | null;
+  isActive: boolean;
+}
 
 export default function Suppliers() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [newSupplier, setNewSupplier] = useState({
     name: "",
     code: "",
     email: "",
     contactName: "",
     phone: "",
+  });
+  const [editSupplier, setEditSupplier] = useState({
+    id: 0,
+    name: "",
+    code: "",
+    email: "",
+    contactName: "",
+    phone: "",
+    isActive: true,
   });
 
   const { data: suppliers, isLoading, refetch } = trpc.supplier.list.useQuery();
@@ -36,6 +60,18 @@ export default function Suppliers() {
       toast.success("Fornecedor criado com sucesso!");
       setIsCreateOpen(false);
       setNewSupplier({ name: "", code: "", email: "", contactName: "", phone: "" });
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+
+  const updateMutation = trpc.supplier.update.useMutation({
+    onSuccess: () => {
+      toast.success("Fornecedor atualizado com sucesso!");
+      setIsEditOpen(false);
+      setEditingSupplier(null);
       refetch();
     },
     onError: (error) => {
@@ -59,6 +95,36 @@ export default function Suppliers() {
       return;
     }
     createMutation.mutate(newSupplier);
+  };
+
+  const handleEdit = (supplier: Supplier) => {
+    setEditingSupplier(supplier);
+    setEditSupplier({
+      id: supplier.id,
+      name: supplier.name,
+      code: supplier.code || "",
+      email: supplier.email || "",
+      contactName: supplier.contactName || "",
+      phone: supplier.phone || "",
+      isActive: supplier.isActive,
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleUpdate = () => {
+    if (!editSupplier.name.trim()) {
+      toast.error("Nome do fornecedor é obrigatório");
+      return;
+    }
+    updateMutation.mutate({
+      id: editSupplier.id,
+      name: editSupplier.name,
+      code: editSupplier.code || undefined,
+      email: editSupplier.email || undefined,
+      contactName: editSupplier.contactName || undefined,
+      phone: editSupplier.phone || undefined,
+      isActive: editSupplier.isActive,
+    });
   };
 
   const copyToClipboard = (text: string) => {
@@ -143,6 +209,80 @@ export default function Suppliers() {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Fornecedor</DialogTitle>
+              <DialogDescription>
+                Atualize os dados do fornecedor. O código de acesso não será alterado.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Nome do Fornecedor *</Label>
+                <Input
+                  placeholder="Ex: ABC Components Ltd"
+                  value={editSupplier.name}
+                  onChange={(e) => setEditSupplier(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Código</Label>
+                <Input
+                  placeholder="Código interno (opcional)"
+                  value={editSupplier.code}
+                  onChange={(e) => setEditSupplier(prev => ({ ...prev, code: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>E-mail</Label>
+                <Input
+                  type="email"
+                  placeholder="contato@fornecedor.com"
+                  value={editSupplier.email}
+                  onChange={(e) => setEditSupplier(prev => ({ ...prev, email: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nome do Contato</Label>
+                <Input
+                  placeholder="Nome da pessoa de contato"
+                  value={editSupplier.contactName}
+                  onChange={(e) => setEditSupplier(prev => ({ ...prev, contactName: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <Input
+                  placeholder="+55 92 99999-9999"
+                  value={editSupplier.phone}
+                  onChange={(e) => setEditSupplier(prev => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <div className="space-y-0.5">
+                  <Label>Status do Fornecedor</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Fornecedores inativos não podem acessar o portal
+                  </p>
+                </div>
+                <Switch
+                  checked={editSupplier.isActive}
+                  onCheckedChange={(checked) => setEditSupplier(prev => ({ ...prev, isActive: checked }))}
+                />
+              </div>
+              <Button 
+                className="w-full" 
+                onClick={handleUpdate}
+                disabled={updateMutation.isPending}
+              >
+                {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Portal Link Info */}
         <Card className="bg-blue-50 border-blue-200">
@@ -238,6 +378,14 @@ export default function Suppliers() {
                         </div>
                       </div>
                       <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(supplier as Supplier)}
+                        >
+                          <Pencil className="w-4 h-4 mr-1" />
+                          Editar
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"

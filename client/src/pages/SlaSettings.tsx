@@ -93,7 +93,7 @@ export default function SlaSettings() {
     }
     createSlaMutation.mutate({
       step: newSla.step as any,
-      severityMg: newSla.severityMg as any || undefined,
+      severityMg: (newSla.severityMg && newSla.severityMg !== "ALL") ? newSla.severityMg as any : undefined,
       maxDays: newSla.maxDays,
       warningDays: newSla.warningDays,
     });
@@ -191,7 +191,7 @@ export default function SlaSettings() {
                             <SelectValue placeholder="Todas as severidades" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Todas</SelectItem>
+                            <SelectItem value="ALL">Todas</SelectItem>
                             {SEVERITIES.map(sev => (
                               <SelectItem key={sev} value={sev}>Severidade {sev}</SelectItem>
                             ))}

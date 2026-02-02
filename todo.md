@@ -170,3 +170,24 @@
 - [x] Implementar animação de swipe horizontal para esquerda
 - [x] Manter transição suave entre cards (0.4s ease-in-out)
 - [x] Preservar dados e informações existentes
+
+
+## Importação de Imagens de Evidências
+- [x] Analisar coluna "T" da aba "NEW_FORM" da planilha - 136 imagens encontradas
+- [x] Verificar viabilidade de importar imagens de evidências - VIÁVEL
+- [ ] Implementar importação de imagens aos respectivos defeitos
+
+## Cadastro e Edição de Fornecedores
+- [x] Implementar cadastro de fornecedores com geração de código de acesso (já existia)
+- [x] Implementar edição de nome, email e status dos fornecedores
+- [x] Testar funcionalidades de fornecedores
+
+## Configuração de SLAs
+- [x] Implementar configuração de SLAs por etapa do workflow 8D (já existia em /sla-settings)
+- [x] Definir prazos máximos por etapa (ex: 7 dias Causa Raiz, 5 dias Ação Corretiva)
+- [x] Ativar alertas automáticos de SLA
+
+## Job Automático de Verificação de SLA
+- [x] Criar rotina automática de verificação diária de SLA (sendSlaAlerts já existe)
+- [x] Implementar envio de notificações por email para casos atrasados (já implementado)
+- [x] Testar job de verificação de SLA
