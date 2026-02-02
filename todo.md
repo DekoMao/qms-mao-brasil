@@ -191,3 +191,6 @@
 - [x] Criar rotina automática de verificação diária de SLA (sendSlaAlerts já existe)
 - [x] Implementar envio de notificações por email para casos atrasados (já implementado)
 - [x] Testar job de verificação de SLA
+
+## Bug Fix - Edição de Fornecedor
+- [x] Corrigir erro "Failed query: update suppliers" ao tentar editar nome de fornecedor (KLABIN AM -> KLABIN S/A)

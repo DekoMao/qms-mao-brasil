@@ -532,6 +532,15 @@ export async function createSupplier(data: InsertSupplier) {
 export async function updateSupplier(id: number, data: Partial<InsertSupplier>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  // Check if name is being updated and if it already exists for another supplier
+  if (data.name) {
+    const existingSupplier = await getSupplierByName(data.name);
+    if (existingSupplier && existingSupplier.id !== id) {
+      throw new Error(`Já existe um fornecedor com o nome "${data.name}". Por favor, escolha outro nome ou exclua o fornecedor duplicado.`);
+    }
+  }
+  
   await db.update(suppliers).set(data).where(eq(suppliers.id, id));
   return getSupplierById(id);
 }
