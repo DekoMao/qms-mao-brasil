@@ -198,3 +198,6 @@
 ## Bug Fix - Atualização de Nome de Fornecedor
 - [x] Lista de defeitos não atualiza nome do fornecedor após edição (mostra nome antigo "KLABIN AM" ao invés de "Klabin S/A_Unid.2")
 - [x] Filtro de fornecedores mostra nomes obsoletos/duplicados que não existem mais no cadastro
+
+## Documentação
+- [x] Criar README.md profissional para o repositório GitHub
