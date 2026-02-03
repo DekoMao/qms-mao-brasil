@@ -1,0 +1,18 @@
+{
+  "query": "SELECT supplier, COUNT(*) as count FROM defects WHERE supplier LIKE '%labin%' OR supplier LIKE '%LABIN%' GROUP BY supplier;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT supplier, COUNT(*) as count FROM defects WHERE supplier LIKE '%labin%' OR supplier LIKE '%LABIN%' GROUP BY supplier;",
+  "rows": [
+    {
+      "supplier": "KLABIN S/A",
+      "count": "3"
+    },
+    {
+      "supplier": "Klabin S/A_Unid.2",
+      "count": "16"
+    }
+  ],
+  "messages": [],
+  "stdout": "supplier\tcount\nKLABIN S/A\t3\nKlabin S/A_Unid.2\t16\n",
+  "stderr": "",
+  "execution_time_ms": 1515
+}

@@ -194,3 +194,7 @@
 
 ## Bug Fix - Edição de Fornecedor
 - [x] Corrigir erro "Failed query: update suppliers" ao tentar editar nome de fornecedor (KLABIN AM -> KLABIN S/A)
+
+## Bug Fix - Atualização de Nome de Fornecedor
+- [x] Lista de defeitos não atualiza nome do fornecedor após edição (mostra nome antigo "KLABIN AM" ao invés de "Klabin S/A_Unid.2")
+- [x] Filtro de fornecedores mostra nomes obsoletos/duplicados que não existem mais no cadastro

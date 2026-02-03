@@ -451,18 +451,21 @@ export async function getFilterOptions() {
   if (!db) return null;
 
   const allDefects = await getDefects();
+  
+  // Get suppliers from suppliers table (source of truth) instead of defects
+  const allSuppliers = await getSuppliers();
+  const supplierNames = allSuppliers.map(s => s.name).sort();
 
   const years = Array.from(new Set(allDefects.map(d => d.year).filter((y): y is number => y !== null))).sort((a, b) => b - a);
   const months = Array.from(new Set(allDefects.map(d => d.monthName).filter((m): m is string => m !== null)));
   const weekKeys = Array.from(new Set(allDefects.map(d => d.weekKey).filter((w): w is string => w !== null))).sort().reverse();
-  const suppliers = Array.from(new Set(allDefects.map(d => d.supplier).filter((s): s is string => s !== null))).sort();
   const symptoms = Array.from(new Set(allDefects.map(d => d.symptom).filter((s): s is string => s !== null))).sort();
 
   return {
     years,
     months,
     weekKeys,
-    suppliers,
+    suppliers: supplierNames,
     symptoms,
     statuses: ["CLOSED", "ONGOING", "DELAYED", "Waiting for CHK Solution"],
     steps: [
@@ -533,12 +536,23 @@ export async function updateSupplier(id: number, data: Partial<InsertSupplier>) 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // Get current supplier to check if name is changing
+  const currentSupplier = await getSupplierById(id);
+  if (!currentSupplier) {
+    throw new Error("Fornecedor não encontrado");
+  }
+  
   // Check if name is being updated and if it already exists for another supplier
-  if (data.name) {
+  if (data.name && data.name !== currentSupplier.name) {
     const existingSupplier = await getSupplierByName(data.name);
     if (existingSupplier && existingSupplier.id !== id) {
       throw new Error(`Já existe um fornecedor com o nome "${data.name}". Por favor, escolha outro nome ou exclua o fornecedor duplicado.`);
     }
+    
+    // Update supplier name in all related defects
+    await db.update(defects)
+      .set({ supplier: data.name })
+      .where(eq(defects.supplier, currentSupplier.name));
   }
   
   await db.update(suppliers).set(data).where(eq(suppliers.id, id));

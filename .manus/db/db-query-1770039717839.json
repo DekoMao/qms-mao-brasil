@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE defects SET supplier = 'Klabin S/A_Unid.2' WHERE supplier = 'KLABIN AM' OR supplier = 'Klabin AM' OR supplier = 'Klabin Am';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute UPDATE defects SET supplier = 'Klabin S/A_Unid.2' WHERE supplier = 'KLABIN AM' OR supplier = 'Klabin AM' OR supplier = 'Klabin Am';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1560
+}
