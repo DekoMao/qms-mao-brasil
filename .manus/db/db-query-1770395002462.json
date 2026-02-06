@@ -1,0 +1,85 @@
+{
+  "query": "SELECT id, name, code FROM suppliers ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT id, name, code FROM suppliers ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "AMAZON ETIQUETAS",
+      "code": "SUP001"
+    },
+    {
+      "id": "2",
+      "name": "ELSYS",
+      "code": "SUP002"
+    },
+    {
+      "id": "3",
+      "name": "FABRIL",
+      "code": "SUP003"
+    },
+    {
+      "id": "4",
+      "name": "FLEX",
+      "code": "SUP005"
+    },
+    {
+      "id": "6",
+      "name": "I-SHENG",
+      "code": "SUP006"
+    },
+    {
+      "id": "7",
+      "name": "Klabin S/A_Unid.2",
+      "code": "SUP011"
+    },
+    {
+      "id": "8",
+      "name": "Klabin S/A_Unid.1",
+      "code": "SUP012"
+    },
+    {
+      "id": "9",
+      "name": "KNAUF",
+      "code": "SUP009"
+    },
+    {
+      "id": "13",
+      "name": "PAM EPS",
+      "code": "SUP013"
+    },
+    {
+      "id": "14",
+      "name": "PAM PLÁSTICOS",
+      "code": "SUP014"
+    },
+    {
+      "id": "15",
+      "name": "PCE",
+      "code": "SUP015"
+    },
+    {
+      "id": "16",
+      "name": "TERMOTECNICA",
+      "code": "SUP016"
+    },
+    {
+      "id": "17",
+      "name": "TUTIPLAST",
+      "code": "SUP017"
+    },
+    {
+      "id": "18",
+      "name": "UEI",
+      "code": "SUP018"
+    },
+    {
+      "id": "19",
+      "name": "VM Etiquetas",
+      "code": "SUP019"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcode\n1\tAMAZON ETIQUETAS\tSUP001\n2\tELSYS\tSUP002\n3\tFABRIL\tSUP003\n4\tFLEX\tSUP005\n6\tI-SHENG\tSUP006\n7\tKlabin S/A_Unid.2\tSUP011\n8\tKlabin S/A_Unid.1\tSUP012\n9\tKNAUF\tSUP009\n13\tPAM EPS\tSUP013\n14\tPAM PLÁSTICOS\tSUP014\n15\tPCE\tSUP015\n16\tTERMOTECNICA\tSUP016\n17\tTUTIPLAST\tSUP017\n18\tUEI\tSUP018\n19\tVM Etiquetas\tSUP019\n",
+  "stderr": "",
+  "execution_time_ms": 2036
+}

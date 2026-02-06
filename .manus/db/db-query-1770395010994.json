@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, name FROM suppliers ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT id, name FROM suppliers ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "AMAZON ETIQUETAS"
+    },
+    {
+      "id": "2",
+      "name": "ELSYS"
+    },
+    {
+      "id": "3",
+      "name": "FABRIL"
+    },
+    {
+      "id": "4",
+      "name": "FLEX"
+    },
+    {
+      "id": "6",
+      "name": "I-SHENG"
+    },
+    {
+      "id": "7",
+      "name": "Klabin S/A_Unid.2"
+    },
+    {
+      "id": "8",
+      "name": "Klabin S/A_Unid.1"
+    },
+    {
+      "id": "9",
+      "name": "KNAUF"
+    },
+    {
+      "id": "13",
+      "name": "PAM EPS"
+    },
+    {
+      "id": "14",
+      "name": "PAM PLÁSTICOS"
+    },
+    {
+      "id": "15",
+      "name": "PCE"
+    },
+    {
+      "id": "16",
+      "name": "TERMOTECNICA"
+    },
+    {
+      "id": "17",
+      "name": "TUTIPLAST"
+    },
+    {
+      "id": "18",
+      "name": "UEI"
+    },
+    {
+      "id": "19",
+      "name": "VM Etiquetas"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n1\tAMAZON ETIQUETAS\n2\tELSYS\n3\tFABRIL\n4\tFLEX\n6\tI-SHENG\n7\tKlabin S/A_Unid.2\n8\tKlabin S/A_Unid.1\n9\tKNAUF\n13\tPAM EPS\n14\tPAM PLÁSTICOS\n15\tPCE\n16\tTERMOTECNICA\n17\tTUTIPLAST\n18\tUEI\n19\tVM Etiquetas\n",
+  "stderr": "",
+  "execution_time_ms": 1517
+}

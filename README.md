@@ -1,7 +1,7 @@
 # QMS MAO Brasil - Quality Defect Tracking System
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react" alt="React 19" />
+<img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Node.js-22-339933?style=flat-square&logo=node.js" alt="Node.js" />
   <img src="https://img.shields.io/badge/tRPC-11-2596BE?style=flat-square&logo=trpc" alt="tRPC" />
@@ -15,20 +15,33 @@ Sistema de Gestão da Qualidade para rastreamento e controle de defeitos de forn
 
 ## Índice
 
-- [Visão Geral](#visão-geral)
+- [Visão Geral](#vis%C3%A3o-geral)
+
 - [Funcionalidades](#funcionalidades)
+
 - [Arquitetura](#arquitetura)
-- [Stack Tecnológica](#stack-tecnológica)
+
+- [Stack Tecnológica](#stack-tecnol%C3%B3gica)
+
 - [Estrutura do Projeto](#estrutura-do-projeto)
+
 - [Modelo de Dados](#modelo-de-dados)
-- [Instalação](#instalação)
-- [Configuração](#configuração)
+
+- [Instalação](#instala%C3%A7%C3%A3o)
+
+- [Configuração](#configura%C3%A7%C3%A3o)
+
 - [Uso](#uso)
+
 - [API Reference](#api-reference)
+
 - [Testes](#testes)
+
 - [Roadmap](#roadmap)
-- [Contribuição](#contribuição)
-- [Licença](#licença)
+
+- [Contribuição](#contribui%C3%A7%C3%A3o)
+
+- [Licença](#licen%C3%A7a)
 
 ---
 
@@ -39,7 +52,7 @@ O **QMS MAO Brasil** é uma aplicação web full-stack projetada para equipes de
 ### Principais Benefícios
 
 | Benefício | Descrição |
-|-----------|-----------|
+| --- | --- |
 | **Rastreabilidade Completa** | Histórico de auditoria imutável para todas as alterações em defeitos |
 | **Workflow 8D** | Etapas estruturadas: Disposição → Análise Técnica → Causa Raiz → Ação Corretiva → Validação |
 | **Portal do Fornecedor** | Acesso seguro para fornecedores acompanharem e responderem a defeitos |
@@ -56,10 +69,15 @@ O **QMS MAO Brasil** é uma aplicação web full-stack projetada para equipes de
 O módulo principal permite o cadastro, edição e acompanhamento de defeitos com campos estruturados para classificação, descrição do problema, análise de causa raiz e ações corretivas.
 
 - Cadastro manual ou importação via Excel
+
 - Classificação por severidade (S, A, B, C)
+
 - Workflow automático baseado em datas preenchidas
+
 - Cálculo automático de aging e status
+
 - Anexos de evidências (imagens, documentos)
+
 - Comentários colaborativos
 
 ### Kanban Board
@@ -77,8 +95,11 @@ Definição de prazos máximos e alertas de warning por etapa do workflow, com p
 ### Relatórios e Dashboards
 
 - **Status Overview**: Distribuição de defeitos por status (ONGOING, DELAYED, CLOSED)
+
 - **Aging por Fase**: Histograma de tempo em cada etapa
+
 - **Top Fornecedores**: Ranking de fornecedores por quantidade de defeitos
+
 - **Tendência Semanal**: Evolução de abertura e fechamento de defeitos
 
 ---
@@ -125,7 +146,7 @@ Definição de prazos máximos e alertas de warning por etapa do workflow, com p
 ### Frontend
 
 | Tecnologia | Versão | Propósito |
-|------------|--------|-----------|
+| --- | --- | --- |
 | React | 19.x | Framework UI |
 | TypeScript | 5.x | Tipagem estática |
 | Tailwind CSS | 4.x | Estilização utility-first |
@@ -138,7 +159,7 @@ Definição de prazos máximos e alertas de warning por etapa do workflow, com p
 ### Backend
 
 | Tecnologia | Versão | Propósito |
-|------------|--------|-----------|
+| --- | --- | --- |
 | Node.js | 22.x | Runtime JavaScript |
 | Express | 4.x | Framework HTTP |
 | tRPC | 11.x | API type-safe |
@@ -149,7 +170,7 @@ Definição de prazos máximos e alertas de warning por etapa do workflow, com p
 ### Infraestrutura
 
 | Tecnologia | Propósito |
-|------------|-----------|
+| --- | --- |
 | MySQL / TiDB | Banco de dados relacional |
 | AWS S3 | Armazenamento de arquivos |
 | Manus OAuth | Autenticação SSO |
@@ -212,7 +233,7 @@ erDiagram
 ### Tabelas
 
 | Tabela | Descrição |
-|--------|-----------|
+| --- | --- |
 | `users` | Usuários do sistema com roles (admin, sqa, supplier, viewer) |
 | `defects` | Defeitos de qualidade com workflow 8D |
 | `audit_logs` | Histórico imutável de alterações |
@@ -271,7 +292,9 @@ O sistema implementa um workflow estruturado baseado na metodologia 8D:
 ### Pré-requisitos
 
 - Node.js 22.x ou superior
+
 - pnpm 8.x ou superior
+
 - MySQL 8.x ou TiDB
 
 ### Passos
@@ -302,7 +325,7 @@ pnpm dev
 ### Variáveis de Ambiente
 
 | Variável | Descrição | Obrigatória |
-|----------|-----------|-------------|
+| --- | --- | --- |
 | `DATABASE_URL` | String de conexão MySQL/TiDB | Sim |
 | `JWT_SECRET` | Chave para assinatura de tokens | Sim |
 | `VITE_APP_ID` | ID da aplicação OAuth | Sim |
@@ -317,13 +340,15 @@ pnpm dev
 ### Acesso ao Sistema
 
 1. Acesse a URL do sistema
-2. Faça login via Manus OAuth
-3. Navegue pelo menu lateral para acessar as funcionalidades
+
+1. Faça login via Manus OAuth
+
+1. Navegue pelo menu lateral para acessar as funcionalidades
 
 ### Roles de Usuário
 
 | Role | Permissões |
-|------|------------|
+| --- | --- |
 | `admin` | Acesso total, configuração de SLA, gestão de usuários |
 | `sqa` | Gestão de defeitos, importação, relatórios |
 | `supplier` | Visualização de defeitos atribuídos, envio de feedback |
@@ -332,10 +357,14 @@ pnpm dev
 ### Importação de Defeitos
 
 1. Acesse **Importação** no menu lateral
-2. Faça download do template Excel
-3. Preencha os dados seguindo o formato
-4. Faça upload do arquivo
-5. Revise o resultado da importação
+
+1. Faça download do template Excel
+
+1. Preencha os dados seguindo o formato
+
+1. Faça upload do arquivo
+
+1. Revise o resultado da importação
 
 ---
 
@@ -346,7 +375,7 @@ O sistema utiliza tRPC para comunicação type-safe entre frontend e backend. Os
 ### Defect Router
 
 | Procedure | Tipo | Descrição |
-|-----------|------|-----------|
+| --- | --- | --- |
 | `defect.list` | Query | Lista defeitos com filtros |
 | `defect.byId` | Query | Busca defeito por ID |
 | `defect.create` | Mutation | Cria novo defeito |
@@ -357,7 +386,7 @@ O sistema utiliza tRPC para comunicação type-safe entre frontend e backend. Os
 ### Supplier Router
 
 | Procedure | Tipo | Descrição |
-|-----------|------|-----------|
+| --- | --- | --- |
 | `supplier.list` | Query | Lista fornecedores |
 | `supplier.create` | Mutation | Cadastra fornecedor |
 | `supplier.update` | Mutation | Atualiza fornecedor |
@@ -366,7 +395,7 @@ O sistema utiliza tRPC para comunicação type-safe entre frontend e backend. Os
 ### Stats Router
 
 | Procedure | Tipo | Descrição |
-|-----------|------|-----------|
+| --- | --- | --- |
 | `stats.overview` | Query | Estatísticas gerais |
 | `stats.filterOptions` | Query | Opções de filtro disponíveis |
 
@@ -401,23 +430,34 @@ server/
 
 ## Roadmap
 
-### Versão Atual (v1.0)
+### Versão Atual (v1.0 )
 
 - [x] Gestão completa de defeitos
+
 - [x] Workflow 8D automatizado
+
 - [x] Portal do fornecedor
+
 - [x] Importação via Excel
+
 - [x] Dashboards analíticos
+
 - [x] Configuração de SLA
+
 - [x] Histórico de auditoria
 
 ### Próximas Versões
 
 - [ ] Notificações por email
+
 - [ ] Relatórios exportáveis (PDF)
+
 - [ ] Integração com ERP
+
 - [ ] App mobile
+
 - [ ] Análise preditiva de defeitos
+
 - [ ] Merge de fornecedores duplicados
 
 ---
@@ -427,16 +467,23 @@ server/
 Contribuições são bem-vindas! Por favor, siga os passos:
 
 1. Fork o repositório
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas alterações (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)
-5. Abra um Pull Request
+
+1. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
+
+1. Commit suas alterações (`git commit -m 'Adiciona nova funcionalidade'`)
+
+1. Push para a branch (`git push origin feature/nova-funcionalidade`)
+
+1. Abra um Pull Request
 
 ### Padrões de Código
 
 - TypeScript strict mode
+
 - ESLint + Prettier
+
 - Commits semânticos (conventional commits)
+
 - Testes para novas funcionalidades
 
 ---
@@ -454,5 +501,6 @@ Para dúvidas ou suporte, entre em contato com a equipe de SQA.
 ---
 
 <p align="center">
-  Desenvolvido com ❤️ pela equipe SQA MAO Brasil
+Desenvolvido com ❤️ pela equipe SQA MAO Brasil
 </p>
+

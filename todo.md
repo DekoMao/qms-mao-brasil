@@ -123,7 +123,7 @@
 ## Correção de Dados
 - [x] Corrigir capitalização: "Wrong material" → "Wrong Material"
 - [x] Identificar e corrigir dados duplicados (casos críticos e sintomas)
-- [x] Verificar duplicidade KNAUF "Wet cushion" (107.11.25 e 105.11.25) - NÃO SÃO DUPLICATAS (modelos e PNs diferentes)
+- [x] Verificar duplicidade FOAMTEC "Wet cushion" (107.11.25 e 105.11.25) - NÃO SÃO DUPLICATAS (modelos e PNs diferentes)
 
 
 ## Melhoria UX - Coluna Modelo
@@ -193,11 +193,27 @@
 - [x] Testar job de verificação de SLA
 
 ## Bug Fix - Edição de Fornecedor
-- [x] Corrigir erro "Failed query: update suppliers" ao tentar editar nome de fornecedor (KLABIN AM -> KLABIN S/A)
+- [x] Corrigir erro "Failed query: update suppliers" ao tentar editar nome de fornecedor duplicado
 
 ## Bug Fix - Atualização de Nome de Fornecedor
-- [x] Lista de defeitos não atualiza nome do fornecedor após edição (mostra nome antigo "KLABIN AM" ao invés de "Klabin S/A_Unid.2")
+- [x] Lista de defeitos não atualiza nome do fornecedor após edição (mostra nome antigo ao invés do novo nome atualizado)
 - [x] Filtro de fornecedores mostra nomes obsoletos/duplicados que não existem mais no cadastro
 
 ## Documentação
 - [x] Criar README.md profissional para o repositório GitHub
+
+## Marketing
+- [x] Criar post LinkedIn com screenshots e resumo do sistema
+- [x] Criar carrossel de imagens para LinkedIn (formato 4:5, 1080x1350px)
+- [x] Substituir dados reais por fictícios para screenshots do LinkedIn
+- [x] Recapturar screenshots com dados fictícios
+- [x] Regenerar carrossel com novas imagens
+- [x] Restaurar dados originais no banco
+
+## Anonimização Permanente de Dados para GitHub
+- [x] Substituir fornecedores reais por fictícios no banco (permanente)
+- [x] Substituir modelos reais por fictícios no banco (permanente)
+- [x] Substituir clientes reais por fictícios no banco (permanente)
+- [x] Verificar e limpar dados reais em arquivos de código/seeds/fixtures
+- [x] Validar sistema funcionando com dados fictícios
+- [x] Salvar checkpoint para upload no GitHub
