@@ -288,7 +288,7 @@ O sistema implementa um workflow estruturado baseado na metodologia 8D:
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/qtrack-system.git
+git clone https://github.com/DekoMao/qtrack-system.git
 cd qtrack-system
 
 # Instale as dependências
