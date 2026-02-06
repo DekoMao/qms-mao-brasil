@@ -85,13 +85,13 @@ export default function DashboardLayout({
       <div className="login-container">
         <div className="login-card animate-fade-in">
           <div className="login-logo">
-            <Shield className="h-10 w-10 text-primary" />
+            <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/YCDEzlwkgDTTmqGn.png" alt="QTrack System" className="h-14 w-14 object-contain" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-center mb-2">
-            QMS MAO Brasil
+            QTrack System
           </h1>
           <p className="text-sm text-muted-foreground text-center mb-8">
-            Sistema de Gestão de Qualidade – Rastreamento de Defeitos
+            Vendor Defect Tracking – Quality Management
           </p>
           <Button
             onClick={() => {
@@ -198,12 +198,12 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed && (
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center shrink-0 shadow-lg">
-                    <Shield className="h-5 w-5 text-white" />
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-lg overflow-hidden">
+                    <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/YCDEzlwkgDTTmqGn.png" alt="QTrack" className="h-9 w-9 object-contain" />
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="font-bold text-sidebar-foreground tracking-tight truncate">
-                      SQA TRACKING SYSTEM
+                      QTrack System
                     </span>
                   </div>
                 </div>

@@ -1,4 +1,8 @@
-# QMS MAO Brasil - Quality Defect Tracking System
+# QTrack System - Vendor Defect Tracking
+
+<p align="center">
+  <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/YCDEzlwkgDTTmqGn.png" alt="QTrack System Logo" width="120" />
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react" alt="React 19" />
@@ -36,7 +40,7 @@ Sistema de Gestão da Qualidade para rastreamento e controle de defeitos de forn
 
 ## Visão Geral
 
-O **QMS MAO Brasil** é uma aplicação web full-stack projetada para equipes de Supplier Quality Assurance (SQA) gerenciarem defeitos de qualidade de fornecedores. O sistema oferece rastreabilidade completa, workflow estruturado baseado em 8D, portal de acesso para fornecedores e dashboards analíticos para tomada de decisão.
+O **QTrack System** é uma aplicação web full-stack projetada para equipes de Supplier Quality Assurance (SQA) gerenciarem defeitos de qualidade de fornecedores. O sistema oferece rastreabilidade completa, workflow estruturado baseado em 8D, portal de acesso para fornecedores e dashboards analíticos para tomada de decisão.
 
 ### Principais Benefícios
 
@@ -161,7 +165,7 @@ Definição de prazos máximos e alertas de warning por etapa do workflow, com p
 ## Estrutura do Projeto
 
 ```
-qms-mao-brasil/
+qtrack-system/
 ├── client/                    # Frontend React
 │   ├── public/                # Assets estáticos
 │   └── src/
@@ -284,8 +288,8 @@ O sistema implementa um workflow estruturado baseado na metodologia 8D:
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/qms-mao-brasil.git
-cd qms-mao-brasil
+git clone https://github.com/seu-usuario/qtrack-system.git
+cd qtrack-system
 
 # Instale as dependências
 pnpm install

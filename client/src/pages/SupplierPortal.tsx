@@ -228,7 +228,7 @@ export default function SupplierPortal() {
             </div>
             <CardTitle className="text-2xl">Portal do Fornecedor</CardTitle>
             <CardDescription>
-              QMS MAO Brasil - Sistema de Gestão de Qualidade
+              QTrack System - Vendor Defect Tracking
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

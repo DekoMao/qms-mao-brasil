@@ -1,4 +1,4 @@
-# QMS MAO Brasil - TODO
+# QTrack System - TODO
 
 ## Banco de Dados
 - [x] Schema da tabela Defects com todos os campos
@@ -217,3 +217,9 @@
 - [x] Verificar e limpar dados reais em arquivos de código/seeds/fixtures
 - [x] Validar sistema funcionando com dados fictícios
 - [x] Salvar checkpoint para upload no GitHub
+
+## Rebranding - QTrack System
+- [x] Renomear sistema de "SQA TRACKING SYSTEM" para "QTrack System" em todo o código
+- [x] Criar logo estilizado para QTrack System
+- [x] Implementar logo no sidebar, favicon e telas do sistema
+- [x] Atualizar README.md com novo nome e logo
