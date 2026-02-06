@@ -461,10 +461,10 @@ Este projeto está licenciado sob a [MIT License](LICENSE).
 
 ## Autor
 
-Desenvolvido por **Wanderley Bezerra Uchoa** - Engenheiro de Qualidade / Quality Engineering.
+Desenvolvido por **Wanderley Bezerra Uchoa** - Quality Specialist / Automations Quality Systems.
 
 ---
 
 <p align="center">
-  Desenvolvido com dedicação para a comunidade de Quality Engineering
+  Desenvolvido com dedicação para a comunidade de Sistemas Automações de Engenharia da Qualidade
 </p>
