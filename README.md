@@ -466,5 +466,5 @@ Desenvolvido por **Wanderley Bezerra Uchoa** - Quality Specialist / Automations 
 ---
 
 <p align="center">
-  Desenvolvido com dedicação para a comunidade de Sistemas Automações de Engenharia da Qualidade
+  Desenvolvido com dedicação para a comunidade de Sistemas de Automações - Controle da Qualidade
 </p>
