@@ -12,8 +12,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { 
   ArrowLeft, Save, ChevronRight, Clock, User, Calendar, 
-  FileText, MessageSquare, History, AlertTriangle, X, Pause
+  FileText, MessageSquare, History, AlertTriangle, X, Pause, Download
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { generateDefect8DReport } from "@/lib/pdfExport";
 
 const WORKFLOW_STEPS = [
   { id: 1, label: "Disposição", shortLabel: "Disp." },
@@ -76,6 +78,11 @@ export default function DefectDetail() {
     { enabled: !!defectId && !isNew }
   );
 
+  const { data: attachments } = trpc.attachment.list.useQuery(
+    { defectId: defectId! },
+    { enabled: !!defectId && !isNew }
+  );
+
   const createMutation = trpc.defect.create.useMutation({
     onSuccess: (data) => {
       toast.success("Defeito criado com sucesso!");
@@ -111,6 +118,28 @@ export default function DefectDetail() {
       toast.success("Comentário adicionado!");
       setNewComment("");
       refetch();
+    },
+  });
+
+  const utils = trpc.useUtils();
+
+  const uploadMutation = trpc.attachment.upload.useMutation({
+    onSuccess: () => {
+      toast.success("Arquivo enviado com sucesso!");
+      utils.attachment.list.invalidate({ defectId: defectId! });
+    },
+    onError: (error) => {
+      toast.error(`Erro no upload: ${error.message}`);
+    },
+  });
+
+  const deleteMutation = trpc.attachment.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Anexo excluído!");
+      utils.attachment.list.invalidate({ defectId: defectId! });
+    },
+    onError: (error) => {
+      toast.error(`Erro ao excluir: ${error.message}`);
     },
   });
 
@@ -203,6 +232,26 @@ export default function DefectDetail() {
             <Save className="h-4 w-4 mr-2" />
             Salvar
           </Button>
+          {defect && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!defect) return;
+                const lang = (document.documentElement.lang || 'pt-BR') as 'pt-BR' | 'en';
+                generateDefect8DReport(
+                  defect as any,
+                  comments || [],
+                  attachments || [],
+                  lang.startsWith('en') ? 'en' : 'pt-BR'
+                );
+                toast.success('PDF 8D gerado com sucesso!');
+              }}
+              className="h-9"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              PDF 8D
+            </Button>
+          )}
           {defect && nextStep && (
             <Button 
               onClick={handleAdvanceStep}
@@ -565,17 +614,140 @@ export default function DefectDetail() {
         <TabsContent value="evidence">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Evidências</CardTitle>
+              <CardTitle className="text-lg">Evidências / Anexos</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                <FileText className="h-12 w-12 mb-4 opacity-30" />
-                <p className="font-medium">Nenhuma evidência anexada</p>
-                <p className="text-sm mt-1">Arraste arquivos aqui ou clique para fazer upload</p>
-                <Button variant="outline" className="mt-4">
-                  Selecionar Arquivos
-                </Button>
+            <CardContent className="space-y-4">
+              {/* Upload Area */}
+              <div
+                className="flex flex-col items-center justify-center py-8 text-muted-foreground border-2 border-dashed rounded-lg hover:border-primary/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.multiple = true;
+                  input.accept = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv';
+                  input.onchange = async (e) => {
+                    const files = (e.target as HTMLInputElement).files;
+                    if (!files || !defectId) return;
+                    for (const file of Array.from(files)) {
+                      if (file.size > 10 * 1024 * 1024) {
+                        toast.error(`${file.name}: Arquivo muito grande (max 10MB)`);
+                        continue;
+                      }
+                      try {
+                        const reader = new FileReader();
+                        const base64 = await new Promise<string>((resolve, reject) => {
+                          reader.onload = () => {
+                            const result = reader.result as string;
+                            resolve(result.split(',')[1]);
+                          };
+                          reader.onerror = reject;
+                          reader.readAsDataURL(file);
+                        });
+                        await uploadMutation.mutateAsync({
+                          defectId,
+                          fileName: file.name,
+                          fileData: base64,
+                          mimeType: file.type || 'application/octet-stream',
+                          fileSize: file.size,
+                        });
+                      } catch (err) {
+                        toast.error(`Erro ao enviar ${file.name}`);
+                      }
+                    }
+                  };
+                  input.click();
+                }}
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-primary', 'bg-primary/5'); }}
+                onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('border-primary', 'bg-primary/5'); }}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('border-primary', 'bg-primary/5');
+                  const files = e.dataTransfer.files;
+                  if (!files || !defectId) return;
+                  for (const file of Array.from(files)) {
+                    if (file.size > 10 * 1024 * 1024) {
+                      toast.error(`${file.name}: Arquivo muito grande (max 10MB)`);
+                      continue;
+                    }
+                    try {
+                      const reader = new FileReader();
+                      const base64 = await new Promise<string>((resolve, reject) => {
+                        reader.onload = () => {
+                          const result = reader.result as string;
+                          resolve(result.split(',')[1]);
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                      });
+                      await uploadMutation.mutateAsync({
+                        defectId,
+                        fileName: file.name,
+                        fileData: base64,
+                        mimeType: file.type || 'application/octet-stream',
+                        fileSize: file.size,
+                      });
+                    } catch (err) {
+                      toast.error(`Erro ao enviar ${file.name}`);
+                    }
+                  }
+                }}
+              >
+                <FileText className="h-10 w-10 mb-3 opacity-30" />
+                <p className="font-medium">Arraste arquivos aqui ou clique para fazer upload</p>
+                <p className="text-xs mt-1">Imagens, PDF, Excel, Word (max 10MB)</p>
+                {uploadMutation.isPending && (
+                  <div className="mt-3 flex items-center gap-2 text-sm text-primary">
+                    <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    Enviando...
+                  </div>
+                )}
               </div>
+
+              {/* Attachment List */}
+              {attachments && attachments.length > 0 ? (
+                <div className="space-y-2">
+                  {attachments.map((att: any) => {
+                    const isImage = att.mimeType?.startsWith('image/');
+                    return (
+                      <div key={att.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
+                        {isImage ? (
+                          <img src={att.fileUrl} alt={att.fileName} className="h-12 w-12 rounded object-cover border" />
+                        ) : (
+                          <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">
+                            <FileText className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{att.fileName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {att.uploadedByName || 'Usuário'} · {new Date(att.createdAt).toLocaleString('pt-BR')}
+                            {att.fileSize && ` · ${(att.fileSize / 1024).toFixed(0)} KB`}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={att.fileUrl} target="_blank" rel="noopener noreferrer">Abrir</a>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (confirm('Excluir este anexo?')) {
+                                deleteMutation.mutate({ id: att.id });
+                              }
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma evidência anexada ainda.</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -16,9 +16,10 @@ export default function Reports() {
     supplier: undefined as string | undefined,
   });
 
-  const { data: defects, isLoading } = trpc.defect.list.useQuery(
+  const { data: defectsResult, isLoading } = trpc.defect.list.useQuery(
     Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== undefined))
   );
+  const defects = defectsResult?.data;
   const { data: filterOptions } = trpc.defect.filterOptions.useQuery();
   const { data: stats } = trpc.defect.stats.useQuery();
 

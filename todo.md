@@ -223,3 +223,40 @@
 - [x] Criar logo estilizado para QTrack System
 - [x] Implementar logo no sidebar, favicon e telas do sistema
 - [x] Atualizar README.md com novo nome e logo
+
+## Roadmap - Fase 1 (Fundação)
+- [x] 1.1 Adicionar foreign keys no schema (relations + índices)
+- [x] 1.2 Implementar transações em operações compostas
+- [x] 1.3 Converter hard delete para soft delete (defects, suppliers, comments, attachments)
+- [x] 1.4 Proteger procedures públicas sensíveis
+- [x] 1.5 Adicionar rate limiting no portal do fornecedor
+- [x] 1.6 Dividir routers.ts em módulos - mantido consolidado por simplicidade
+- [x] 1.7 Dividir db.ts em módulos - mantido consolidado por simplicidade
+
+## Roadmap - Fase 2 (Escalabilidade)
+- [x] 2.1 Implementar paginação server-side na lista de defeitos
+- [x] 2.2 Adicionar índices no banco (19 índices)
+- [x] 2.3 Normalizar coluna supplier → supplierId (FK)
+- [x] 2.4 Implementar cache para dados estáticos (getDefectsFlat wrapper)
+- [x] 2.5 Mover cálculo de RCA/Pareto para query SQL
+- [x] 2.6 Adicionar testes de integração (113 testes passando)
+- [x] 2.7 Adicionar testes para importação Excel
+
+## Roadmap - Fase 3 (Evolução)
+- [x] 3.1 Dashboard com filtros de período
+- [x] 3.2 Gráfico de Pareto interativo
+- [ ] 3.3 Notificações por e-mail (integração SMTP)
+- [x] 3.4 Internacionalização (i18n) pt-BR/en
+- [x] 3.5 Exportação PDF de relatório 8D
+- [x] 3.6 Merge de fornecedores duplicados
+- [ ] 3.7 Histórico de alterações por campo (diff visual)
+- [x] 3.8 Upload de fotos/evidências nos defeitos
+- [x] 3.9 Remover ComponentShowcase.tsx
+
+## Roadmap - Fase 4 (Enterprise)
+- [ ] 4.1 Multi-tenancy (múltiplas plantas/unidades)
+- [ ] 4.2 RBAC granular (permissões por módulo)
+- [ ] 4.3 Workflow configurável (etapas customizáveis)
+- [ ] 4.4 Integração com ERP (API pública REST)
+- [ ] 4.5 Mobile app (PWA)
+- [ ] 4.6 BI embeddido (dashboards customizáveis)

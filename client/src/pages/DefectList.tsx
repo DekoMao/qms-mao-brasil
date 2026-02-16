@@ -60,9 +60,10 @@ export default function DefectList() {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showFilters, setShowFilters] = useState(true);
 
-  const { data: defects, isLoading, refetch } = trpc.defect.list.useQuery(
+  const { data: defectsResult, isLoading, refetch } = trpc.defect.list.useQuery(
     Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== undefined && v !== ""))
   );
+  const defects = defectsResult?.data;
   const { data: filterOptions } = trpc.defect.filterOptions.useQuery();
 
   const clearFilters = () => {
@@ -104,7 +105,7 @@ export default function DefectList() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Lista de Defeitos</h1>
           <p className="text-muted-foreground mt-1">
-            {defects?.length || 0} registros encontrados
+            {defectsResult?.total || 0} registros encontrados
           </p>
         </div>
         <div className="flex items-center gap-3">

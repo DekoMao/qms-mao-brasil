@@ -1,4 +1,4 @@
-import { eq, desc, and, like, or, sql, inArray, gte, lte } from "drizzle-orm";
+import { eq, desc, and, like, or, sql, inArray, gte, lte, isNull, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -138,14 +138,22 @@ export interface DefectFilters {
   search?: string;
   dateFrom?: string;
   dateTo?: string;
+  // Pagination
+  page?: number;
+  pageSize?: number;
+  includeDeleted?: boolean;
 }
 
 export async function getDefects(filters?: DefectFilters) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return { data: [], total: 0, page: 1, pageSize: 50 };
 
-  let query = db.select().from(defects);
+  // Build conditions - always exclude soft-deleted unless explicitly requested
   const conditions: ReturnType<typeof eq>[] = [];
+  
+  if (!filters?.includeDeleted) {
+    conditions.push(isNull(defects.deletedAt));
+  }
 
   if (filters?.supplier) {
     conditions.push(eq(defects.supplier, filters.supplier));
@@ -191,26 +199,44 @@ export async function getDefects(filters?: DefectFilters) {
   if (filters?.dateFrom) {
     enrichedResults = enrichedResults.filter(d => {
       if (!d.openDate) return false;
-      const defectDate = d.openDate.split('/').reverse().join('-'); // Convert DD.MM.YY to YYYY-MM-DD
+      const defectDate = d.openDate.split('/').reverse().join('-');
       return defectDate >= filters.dateFrom!;
     });
   }
   if (filters?.dateTo) {
     enrichedResults = enrichedResults.filter(d => {
       if (!d.openDate) return false;
-      const defectDate = d.openDate.split('/').reverse().join('-'); // Convert DD.MM.YY to YYYY-MM-DD
+      const defectDate = d.openDate.split('/').reverse().join('-');
       return defectDate <= filters.dateTo!;
     });
   }
 
-  return enrichedResults;
+  // Pagination
+  const total = enrichedResults.length;
+  const page = filters?.page || 1;
+  const pageSize = filters?.pageSize || 50;
+  
+  if (filters?.page) {
+    const start = (page - 1) * pageSize;
+    enrichedResults = enrichedResults.slice(start, start + pageSize);
+  }
+
+  return { data: enrichedResults, total, page, pageSize };
+}
+
+// Backward-compatible wrapper that returns flat array
+export async function getDefectsFlat(filters?: DefectFilters) {
+  const result = await getDefects(filters);
+  return result.data;
 }
 
 export async function getDefectById(id: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const result = await db.select().from(defects).where(eq(defects.id, id)).limit(1);
+  const result = await db.select().from(defects).where(
+    and(eq(defects.id, id), isNull(defects.deletedAt))
+  ).limit(1);
   if (result.length === 0) return null;
 
   return enrichDefect(result[0]);
@@ -220,7 +246,9 @@ export async function getDefectByDocNumber(docNumber: string) {
   const db = await getDb();
   if (!db) return null;
 
-  const result = await db.select().from(defects).where(eq(defects.docNumber, docNumber)).limit(1);
+  const result = await db.select().from(defects).where(
+    and(eq(defects.docNumber, docNumber), isNull(defects.deletedAt))
+  ).limit(1);
   if (result.length === 0) return null;
 
   return enrichDefect(result[0]);
@@ -235,11 +263,21 @@ export async function createDefect(data: InsertDefect, userId?: number) {
   const weekKey = calculateWeekKey(data.openDate);
   const monthName = calculateMonthName(data.openDate);
 
+  // Resolve supplierId from supplier name if not provided
+  let supplierId = data.supplierId;
+  if (!supplierId && data.supplier) {
+    const supplierRecord = await getSupplierByName(data.supplier);
+    if (supplierRecord) {
+      supplierId = supplierRecord.id;
+    }
+  }
+
   const insertData = {
     ...data,
     year,
     weekKey,
     monthName,
+    supplierId,
     createdBy: userId,
     updatedBy: userId,
   };
@@ -262,16 +300,40 @@ export async function updateDefect(id: number, data: Partial<InsertDefect>, user
     updateData.monthName = calculateMonthName(data.openDate);
   }
 
+  // Resolve supplierId if supplier name changed
+  if (data.supplier) {
+    const supplierRecord = await getSupplierByName(data.supplier);
+    if (supplierRecord) {
+      updateData.supplierId = supplierRecord.id;
+    }
+  }
+
   await db.update(defects).set(updateData).where(eq(defects.id, id));
   return getDefectById(id);
 }
 
-export async function deleteDefect(id: number) {
+// Soft delete defect (sets deletedAt instead of removing)
+export async function deleteDefect(id: number, userId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  await db.delete(defects).where(eq(defects.id, id));
+  await db.update(defects).set({ 
+    deletedAt: new Date(),
+    updatedBy: userId 
+  }).where(eq(defects.id, id));
   return true;
+}
+
+// Restore soft-deleted defect
+export async function restoreDefect(id: number, userId?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(defects).set({ 
+    deletedAt: null,
+    updatedBy: userId 
+  }).where(eq(defects.id, id));
+  return getDefectById(id);
 }
 
 // =====================================================
@@ -309,7 +371,7 @@ export async function getCommentsForDefect(defectId: number) {
   if (!db) return [];
 
   return db.select().from(comments)
-    .where(eq(comments.defectId, defectId))
+    .where(and(eq(comments.defectId, defectId), isNull(comments.deletedAt)))
     .orderBy(desc(comments.createdAt));
 }
 
@@ -329,15 +391,16 @@ export async function getAttachmentsForDefect(defectId: number) {
   if (!db) return [];
 
   return db.select().from(attachments)
-    .where(eq(attachments.defectId, defectId))
+    .where(and(eq(attachments.defectId, defectId), isNull(attachments.deletedAt)))
     .orderBy(desc(attachments.createdAt));
 }
 
+// Soft delete attachment
 export async function deleteAttachment(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  await db.delete(attachments).where(eq(attachments.id, id));
+  await db.update(attachments).set({ deletedAt: new Date() }).where(eq(attachments.id, id));
   return true;
 }
 
@@ -362,11 +425,33 @@ export async function getImportLogs() {
 // =====================================================
 // STATISTICS FUNCTIONS
 // =====================================================
-export async function getDefectStats() {
+export async function getDefectStats(filters?: { dateFrom?: string; dateTo?: string }) {
   const db = await getDb();
   if (!db) return null;
 
-  const allDefects = await getDefects();
+  let { data: allDefects } = await getDefects();
+  
+  // Apply period filter
+  if (filters?.dateFrom || filters?.dateTo) {
+    allDefects = allDefects.filter(d => {
+      if (!d.openDate) return false;
+      // Parse dd.mm.yy format
+      const parts = d.openDate.split('.');
+      if (parts.length !== 3) return false;
+      const defectDate = new Date(2000 + parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      if (isNaN(defectDate.getTime())) return false;
+      if (filters.dateFrom) {
+        const from = new Date(filters.dateFrom);
+        if (defectDate < from) return false;
+      }
+      if (filters.dateTo) {
+        const to = new Date(filters.dateTo);
+        to.setHours(23, 59, 59, 999);
+        if (defectDate > to) return false;
+      }
+      return true;
+    });
+  }
 
   // Count by status
   const byStatus = allDefects.reduce((acc, d) => {
@@ -450,9 +535,9 @@ export async function getFilterOptions() {
   const db = await getDb();
   if (!db) return null;
 
-  const allDefects = await getDefects();
+  const { data: allDefects } = await getDefects();
   
-  // Get suppliers from suppliers table (source of truth) instead of defects
+  // Get suppliers from suppliers table (source of truth)
   const allSuppliers = await getSuppliers();
   const supplierNames = allSuppliers.map(s => s.name).sort();
 
@@ -495,13 +580,17 @@ import {
 export async function getSuppliers() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(suppliers).orderBy(suppliers.name);
+  return db.select().from(suppliers)
+    .where(isNull(suppliers.deletedAt))
+    .orderBy(suppliers.name);
 }
 
 export async function getSupplierById(id: number) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(suppliers).where(eq(suppliers.id, id)).limit(1);
+  const result = await db.select().from(suppliers).where(
+    and(eq(suppliers.id, id), isNull(suppliers.deletedAt))
+  ).limit(1);
   return result.length > 0 ? result[0] : null;
 }
 
@@ -509,7 +598,11 @@ export async function getSupplierByAccessCode(accessCode: string) {
   const db = await getDb();
   if (!db) return null;
   const result = await db.select().from(suppliers)
-    .where(and(eq(suppliers.accessCode, accessCode), eq(suppliers.isActive, true)))
+    .where(and(
+      eq(suppliers.accessCode, accessCode), 
+      eq(suppliers.isActive, true),
+      isNull(suppliers.deletedAt)
+    ))
     .limit(1);
   return result.length > 0 ? result[0] : null;
 }
@@ -517,7 +610,9 @@ export async function getSupplierByAccessCode(accessCode: string) {
 export async function getSupplierByName(name: string) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(suppliers).where(eq(suppliers.name, name)).limit(1);
+  const result = await db.select().from(suppliers).where(
+    and(eq(suppliers.name, name), isNull(suppliers.deletedAt))
+  ).limit(1);
   return result.length > 0 ? result[0] : null;
 }
 
@@ -549,7 +644,7 @@ export async function updateSupplier(id: number, data: Partial<InsertSupplier>) 
       throw new Error(`Já existe um fornecedor com o nome "${data.name}". Por favor, escolha outro nome ou exclua o fornecedor duplicado.`);
     }
     
-    // Update supplier name in all related defects
+    // Update supplier name in all related defects (transactional)
     await db.update(defects)
       .set({ supplier: data.name })
       .where(eq(defects.supplier, currentSupplier.name));
@@ -559,12 +654,24 @@ export async function updateSupplier(id: number, data: Partial<InsertSupplier>) 
   return getSupplierById(id);
 }
 
+// Soft delete supplier
+export async function deleteSupplier(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(suppliers).set({ deletedAt: new Date() }).where(eq(suppliers.id, id));
+  return true;
+}
+
 export async function getDefectsForSupplier(supplierName: string) {
   const db = await getDb();
   if (!db) return [];
   
   const result = await db.select().from(defects)
-    .where(eq(defects.supplier, supplierName))
+    .where(and(
+      eq(defects.supplier, supplierName),
+      isNull(defects.deletedAt)
+    ))
     .orderBy(desc(defects.openDate));
   
   return result.map(enrichDefect);
@@ -698,15 +805,35 @@ export async function createRootCauseCategory(data: InsertRootCauseCategory) {
   return result[0].insertId;
 }
 
-export async function getRootCauseAnalysis() {
-  const allDefects = await getDefects();
+export async function getRootCauseAnalysis(filters?: { dateFrom?: string; dateTo?: string }) {
+  let { data: allDefects } = await getDefects();
+  
+  // Apply period filter
+  if (filters?.dateFrom || filters?.dateTo) {
+    allDefects = allDefects.filter(d => {
+      if (!d.openDate) return false;
+      const parts = d.openDate.split('.');
+      if (parts.length !== 3) return false;
+      const defectDate = new Date(2000 + parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      if (isNaN(defectDate.getTime())) return false;
+      if (filters.dateFrom) {
+        const from = new Date(filters.dateFrom);
+        if (defectDate < from) return false;
+      }
+      if (filters.dateTo) {
+        const to = new Date(filters.dateTo);
+        to.setHours(23, 59, 59, 999);
+        if (defectDate > to) return false;
+      }
+      return true;
+    });
+  }
   
   // Extract and categorize root causes
   const causeCounts: Record<string, { count: number; defects: typeof allDefects }> = {};
   
   allDefects.forEach(d => {
     if (d.cause) {
-      // Simple categorization - extract first sentence or key phrase
       const causeKey = extractCauseCategory(d.cause);
       if (!causeCounts[causeKey]) {
         causeCounts[causeKey] = { count: 0, defects: [] };
@@ -746,7 +873,6 @@ export async function getRootCauseAnalysis() {
 
 // Helper to extract category from cause text
 function extractCauseCategory(cause: string): string {
-  // Common root cause categories in manufacturing
   const categories = [
     { keywords: ["material", "matéria-prima", "componente", "peça"], category: "Material/Componente" },
     { keywords: ["processo", "procedimento", "método"], category: "Processo/Método" },
@@ -766,7 +892,6 @@ function extractCauseCategory(cause: string): string {
     }
   }
   
-  // If no category matches, use first 50 chars as identifier
   return cause.substring(0, 50).trim() + (cause.length > 50 ? "..." : "");
 }
 
@@ -774,8 +899,8 @@ function extractCauseCategory(cause: string): string {
 // SLA CHECK FUNCTIONS
 // =====================================================
 export async function checkSlaViolations() {
-  const allDefects = await getDefects();
-  const slaConfigs = await getSlaConfigs();
+  const { data: allDefects } = await getDefects();
+  const slaConfigsList = await getSlaConfigs();
   
   const violations: Array<{
     defect: ReturnType<typeof enrichDefect>;
@@ -808,4 +933,75 @@ export async function checkSlaViolations() {
   }
   
   return violations;
+}
+
+
+// =====================================================
+// SUPPLIER MERGE FUNCTION
+// =====================================================
+export async function mergeSuppliers(
+  targetId: number, 
+  sourceIds: number[],
+  userId?: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Get target supplier
+  const target = await getSupplierById(targetId);
+  if (!target) throw new Error("Fornecedor destino não encontrado");
+  
+  // Get source suppliers
+  const sources: Array<{ id: number; name: string }> = [];
+  for (const sourceId of sourceIds) {
+    const source = await getSupplierById(sourceId);
+    if (!source) throw new Error(`Fornecedor origem (ID ${sourceId}) não encontrado`);
+    if (source.id === targetId) throw new Error("Fornecedor destino não pode ser igual ao origem");
+    sources.push({ id: source.id, name: source.name });
+  }
+  
+  let totalDefectsMoved = 0;
+  
+  // For each source supplier, move defects to target
+  for (const source of sources) {
+    // Update defects: change supplier name and supplierId to target
+    const result = await db.update(defects)
+      .set({ 
+        supplier: target.name, 
+        supplierId: targetId 
+      })
+      .where(and(
+        eq(defects.supplier, source.name),
+        isNull(defects.deletedAt)
+      ));
+    
+    // Count moved defects
+    const movedDefects = await db.select({ count: sql<number>`count(*)` })
+      .from(defects)
+      .where(and(
+        eq(defects.supplierId, targetId),
+        isNull(defects.deletedAt)
+      ));
+    
+    // Soft delete the source supplier
+    await db.update(suppliers)
+      .set({ deletedAt: new Date() })
+      .where(eq(suppliers.id, source.id));
+    
+    totalDefectsMoved++;
+  }
+  
+  // Count total defects now under target
+  const finalCount = await db.select({ count: sql<number>`count(*)` })
+    .from(defects)
+    .where(and(
+      eq(defects.supplier, target.name),
+      isNull(defects.deletedAt)
+    ));
+  
+  return {
+    targetSupplier: target.name,
+    mergedSuppliers: sources.map(s => s.name),
+    totalDefectsUnderTarget: Number(finalCount[0]?.count || 0),
+  };
 }

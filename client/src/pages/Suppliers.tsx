@@ -18,8 +18,10 @@ import {
   Phone,
   User,
   Key,
-  Pencil
+  Pencil,
+  GitMerge
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Supplier {
   id: number;
@@ -89,6 +91,43 @@ export default function Suppliers() {
     },
   });
 
+  // Merge supplier state
+  const [isMergeOpen, setIsMergeOpen] = useState(false);
+  const [mergeTarget, setMergeTarget] = useState<string>("");
+  const [mergeSources, setMergeSources] = useState<number[]>([]);
+
+  const mergeMutation = trpc.supplier.merge.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Fornecedores mesclados! ${result.mergedSuppliers.join(', ')} → ${result.targetSupplier}`);
+      setIsMergeOpen(false);
+      setMergeTarget("");
+      setMergeSources([]);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao mesclar: ${error.message}`);
+    },
+  });
+
+  const handleMerge = () => {
+    if (!mergeTarget || mergeSources.length === 0) {
+      toast.error("Selecione o fornecedor destino e pelo menos um fornecedor para mesclar");
+      return;
+    }
+    const targetId = parseInt(mergeTarget);
+    if (mergeSources.includes(targetId)) {
+      toast.error("O fornecedor destino não pode estar na lista de origem");
+      return;
+    }
+    mergeMutation.mutate({ targetId, sourceIds: mergeSources });
+  };
+
+  const toggleMergeSource = (id: number) => {
+    setMergeSources(prev => 
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    );
+  };
+
   const handleCreate = () => {
     if (!newSupplier.name.trim()) {
       toast.error("Nome do fornecedor é obrigatório");
@@ -142,13 +181,18 @@ export default function Suppliers() {
               Gerencie fornecedores e seus códigos de acesso ao portal
             </p>
           </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Fornecedor
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsMergeOpen(true)}>
+              <GitMerge className="w-4 h-4 mr-2" />
+              Mesclar
+            </Button>
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Fornecedor
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Cadastrar Novo Fornecedor</DialogTitle>
@@ -208,6 +252,7 @@ export default function Suppliers() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Edit Dialog */}
@@ -403,6 +448,72 @@ export default function Suppliers() {
             )}
           </CardContent>
         </Card>
+      {/* Merge Suppliers Dialog */}
+      <Dialog open={isMergeOpen} onOpenChange={setIsMergeOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GitMerge className="h-5 w-5" />
+              Mesclar Fornecedores
+            </DialogTitle>
+            <DialogDescription>
+              Consolide fornecedores duplicados. Os defeitos dos fornecedores selecionados serão movidos para o fornecedor destino.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Fornecedor Destino</Label>
+              <Select value={mergeTarget} onValueChange={setMergeTarget}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o fornecedor destino" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers?.filter((s: any) => !mergeSources.includes(s.id)).map((s: any) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Fornecedores a Mesclar (serão removidos)</Label>
+              <div className="mt-2 max-h-48 overflow-y-auto space-y-1 border rounded-lg p-2">
+                {suppliers?.filter((s: any) => s.id.toString() !== mergeTarget).map((s: any) => (
+                  <label key={s.id} className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={mergeSources.includes(s.id)}
+                      onChange={() => toggleMergeSource(s.id)}
+                      className="rounded"
+                    />
+                    <span className="text-sm">{s.name}</span>
+                    {!s.isActive && <Badge variant="secondary" className="text-xs">Inativo</Badge>}
+                  </label>
+                ))}
+              </div>
+            </div>
+            {mergeSources.length > 0 && mergeTarget && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                <p className="font-medium text-amber-800">
+                  {mergeSources.length} fornecedor(es) serão mesclados no fornecedor destino.
+                </p>
+                <p className="text-amber-600 mt-1">
+                  Esta ação não pode ser desfeita.
+                </p>
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsMergeOpen(false)}>Cancelar</Button>
+              <Button 
+                onClick={handleMerge}
+                disabled={mergeMutation.isPending || !mergeTarget || mergeSources.length === 0}
+                className="bg-amber-600 hover:bg-amber-700"
+              >
+                {mergeMutation.isPending ? "Mesclando..." : "Mesclar Fornecedores"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
   );
 }

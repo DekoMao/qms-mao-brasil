@@ -41,6 +41,29 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { useTranslation } from 'react-i18next';
+
+// Language Switcher Component
+function LanguageSwitcher() {
+  const { i18n } = useTranslation();
+  const currentLang = i18n.language;
+  
+  const toggleLanguage = () => {
+    const newLang = currentLang === 'pt-BR' ? 'en' : 'pt-BR';
+    i18n.changeLanguage(newLang);
+  };
+  
+  return (
+    <button
+      onClick={toggleLanguage}
+      className="h-9 px-2 rounded-lg hover:bg-muted flex items-center gap-1.5 transition-colors text-sm font-medium text-muted-foreground hover:text-foreground"
+      title={currentLang === 'pt-BR' ? 'Switch to English' : 'Mudar para Português'}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+      <span className="hidden sm:inline">{currentLang === 'pt-BR' ? 'PT' : 'EN'}</span>
+    </button>
+  );
+}
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/", iconColor: "text-sky-400" },
@@ -352,6 +375,7 @@ function DashboardLayoutContent({
             >
               <Settings className="h-5 w-5 text-muted-foreground" />
             </button>
+            <LanguageSwitcher />
             <div className="flex items-center gap-2 pl-3 border-l">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="text-xs font-semibold bg-primary text-primary-foreground">

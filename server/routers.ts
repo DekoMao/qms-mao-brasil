@@ -47,6 +47,8 @@ import {
   getRootCauseCategories,
   createRootCauseCategory,
   getRootCauseAnalysis,
+  // Supplier Merge
+  mergeSuppliers,
 } from "./db";
 import { calculateStep, calculateResponsible } from "../shared/defectLogic";
 
@@ -312,10 +314,15 @@ const defectRouter = router({
       return getAuditLogsForDefect(input.defectId);
     }),
 
-  // Get statistics
-  stats: publicProcedure.query(async () => {
-    return getDefectStats();
-  }),
+  // Get statistics (with optional period filter)
+  stats: publicProcedure
+    .input(z.object({
+      dateFrom: z.string().optional(),
+      dateTo: z.string().optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      return getDefectStats(input);
+    }),
 
   // Get filter options
   filterOptions: publicProcedure.query(async () => {
@@ -375,6 +382,55 @@ const attachmentRouter = router({
         uploadedByName: ctx.user.name || "Unknown",
       });
       return { id };
+    }),
+
+  // Upload file (base64) to S3 and create attachment record
+  upload: protectedProcedure
+    .input(z.object({
+      defectId: z.number(),
+      fileName: z.string(),
+      fileData: z.string(), // base64 encoded
+      mimeType: z.string(),
+      fileSize: z.number(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { defectId, fileName, fileData, mimeType, fileSize } = input;
+      
+      // Max 10MB
+      if (fileSize > 10 * 1024 * 1024) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Arquivo muito grande (max 10MB)" });
+      }
+      
+      const { storagePut } = await import("./storage");
+      
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).substring(2, 8);
+      const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileKey = `defects/${defectId}/evidence/${timestamp}-${randomSuffix}-${sanitizedFileName}`;
+      
+      const fileBuffer = Buffer.from(fileData, 'base64');
+      const { url } = await storagePut(fileKey, fileBuffer, mimeType);
+      
+      const id = await createAttachment({
+        defectId,
+        fileName,
+        fileUrl: url,
+        fileKey,
+        mimeType,
+        fileSize,
+        uploadedBy: ctx.user.id,
+        uploadedByName: ctx.user.name || "Unknown",
+      });
+
+      await createAuditLog({
+        defectId,
+        userName: ctx.user.name || "System",
+        action: "UPDATE",
+        fieldName: "evidence_upload",
+        newValue: fileName,
+      });
+
+      return { id, fileName, fileUrl: url, fileKey, mimeType, fileSize };
     }),
 
   delete: protectedProcedure
@@ -584,6 +640,27 @@ const supplierRouter = router({
       });
 
       return updated;
+    }),
+
+  // Merge suppliers (consolidate duplicates)
+  merge: protectedProcedure
+    .input(z.object({
+      targetId: z.number(),
+      sourceIds: z.array(z.number()).min(1),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const result = await mergeSuppliers(input.targetId, input.sourceIds, ctx.user.id);
+      
+      // Create audit log for each merged supplier
+      await createAuditLog({
+        defectId: 0,
+        userName: ctx.user.name || "System",
+        action: "UPDATE",
+        fieldName: "supplier_merge",
+        newValue: JSON.stringify(result),
+      });
+      
+      return result;
     }),
 
   // Supplier uploads attachment
@@ -817,10 +894,15 @@ Por favor, tome as ações necessárias.
 // RCA (Root Cause Analysis) ROUTER
 // =====================================================
 const rcaRouter = router({
-  // Get RCA analysis data
-  analysis: publicProcedure.query(async () => {
-    return getRootCauseAnalysis();
-  }),
+  // Get RCA analysis data (with optional period filter)
+  analysis: publicProcedure
+    .input(z.object({
+      dateFrom: z.string().optional(),
+      dateTo: z.string().optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      return getRootCauseAnalysis(input);
+    }),
 
   // Get categories
   categories: publicProcedure.query(async () => {

@@ -34,7 +34,8 @@ function getAgingColor(aging: number) {
 
 export default function Kanban() {
   const [, setLocation] = useLocation();
-  const { data: defects, isLoading } = trpc.defect.list.useQuery({});
+  const { data: defectsResult, isLoading } = trpc.defect.list.useQuery({});
+  const defects = defectsResult?.data;
 
   // Group defects by step
   const defectsByStep = KANBAN_COLUMNS.reduce((acc, col) => {
