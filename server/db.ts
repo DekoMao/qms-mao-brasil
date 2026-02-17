@@ -1514,7 +1514,7 @@ export async function removeRoleFromUser(userId: number, roleId: number) {
 export async function getAllRoles() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.select().from(roles);
+  return db.select().from(roles).where(isNull(roles.deletedAt));
 }
 
 export async function getAllPermissions() {
@@ -1601,7 +1601,7 @@ export async function seedDefaultWorkflow() {
 export async function getWorkflowDefinitions() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.select().from(workflowDefinitions).where(eq(workflowDefinitions.isActive, true));
+  return db.select().from(workflowDefinitions).where(and(eq(workflowDefinitions.isActive, true), isNull(workflowDefinitions.deletedAt)));
 }
 
 export async function getWorkflowDefinitionById(id: number) {
@@ -1709,7 +1709,7 @@ export async function seedDefaultTenant() {
 export async function getTenants() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.select().from(tenants).where(eq(tenants.isActive, true));
+  return db.select().from(tenants).where(and(eq(tenants.isActive, true), isNull(tenants.deletedAt)));
 }
 
 export async function getTenantById(id: number) {
@@ -1761,9 +1761,9 @@ export async function getWebhookConfigs(tenantId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   if (tenantId) {
-    return db.select().from(webhookConfigs).where(and(eq(webhookConfigs.isActive, true), eq(webhookConfigs.tenantId, tenantId)));
+    return db.select().from(webhookConfigs).where(and(eq(webhookConfigs.isActive, true), isNull(webhookConfigs.deletedAt), eq(webhookConfigs.tenantId, tenantId)));
   }
-  return db.select().from(webhookConfigs).where(eq(webhookConfigs.isActive, true));
+  return db.select().from(webhookConfigs).where(and(eq(webhookConfigs.isActive, true), isNull(webhookConfigs.deletedAt)));
 }
 
 export async function createWebhookConfig(data: { tenantId?: number; name: string; url: string; events: string[]; headers?: any }) {
@@ -1779,7 +1779,7 @@ export async function createWebhookConfig(data: { tenantId?: number; name: strin
 export async function deleteWebhookConfig(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(webhookConfigs).set({ isActive: false }).where(eq(webhookConfigs.id, id));
+  await db.update(webhookConfigs).set({ isActive: false, deletedAt: new Date() }).where(eq(webhookConfigs.id, id));
 }
 
 export function signPayload(payload: string, secret: string): string {

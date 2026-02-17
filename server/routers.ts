@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, authorizedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
@@ -218,6 +218,22 @@ const defectRouter = router({
         newValue: JSON.stringify(input),
       });
 
+      // Auto-create workflow instance from default workflow definition
+      try {
+        const definitions = await getWorkflowDefinitions();
+        const defaultDef = definitions.find((d: any) => d.isDefault) || definitions[0];
+        if (defaultDef) {
+          const steps = (defaultDef.steps as any[]) || [];
+          const firstStep = steps.sort((a: any, b: any) => a.order - b.order)[0];
+          if (firstStep) {
+            await createWorkflowInstance(defect!.id, defaultDef.id, firstStep.id);
+          }
+        }
+      } catch (_e) { /* graceful: workflow instance creation is optional */ }
+
+      // Fire webhook for defect creation
+      await fireWebhook("defect.created", { defectId: defect!.id, docNumber: input.docNumber, userId: ctx.user.id });
+
       return defect;
     }),
 
@@ -352,6 +368,65 @@ const defectRouter = router({
         newValue: step,
       });
 
+      // Sync workflow engine instance with defect step
+      const STEP_TO_ENGINE: Record<string, string> = {
+        "Aguardando Disposição": "disposition",
+        "Aguardando Análise Técnica": "tech_analysis",
+        "Aguardando Causa Raiz": "root_cause",
+        "Aguardando Ação Corretiva": "corrective_action",
+        "Aguardando Validação de Ação Corretiva": "validation",
+        "CLOSED": "closed",
+      };
+      try {
+        const engineStepId = STEP_TO_ENGINE[step];
+        if (engineStepId) {
+          const instance = await getWorkflowInstanceByDefect(id);
+          if (instance) {
+            await advanceWorkflowInstance(instance.id, engineStepId, ctx.user.id);
+          }
+        }
+      } catch (_e) { /* graceful: workflow sync is optional */ }
+
+      // Fire webhooks for step change
+      await fireWebhook("defect.status_changed", { defectId: id, oldStep: currentDefect.step, newStep: step, userId: ctx.user.id });
+
+      // RN-IA-01: Auto-trigger AI suggestion when reaching "Aguardando Causa Raiz"
+      if (step === "Aguardando Causa Raiz") {
+        // Fire-and-forget: don't block the step advance
+        (async () => {
+          try {
+            const existing = await getAiSuggestions(id);
+            const hasRootCause = existing.find((s: any) => s.type === "ROOT_CAUSE");
+            if (!hasRootCause) {
+              const { invokeLLM } = await import("./_core/llm");
+              const defectData = await getDefectById(id);
+              if (!defectData) return;
+              const categories = await getRootCauseCategories();
+              const similar = await getSimilarDefects({
+                supplier: defectData.supplier || undefined,
+                model: defectData.model || undefined,
+              });
+              const response = await Promise.race([
+                invokeLLM({
+                  messages: [
+                    { role: "system", content: "Você é um engenheiro de qualidade especialista em RCA. Analise o defeito e sugira categoria, raciocínio, ações corretivas e confiança. Responda APENAS em JSON válido." },
+                    { role: "user", content: JSON.stringify({ defect: { description: defectData.description, symptom: defectData.symptom, model: defectData.model, supplier: defectData.supplier }, availableCategories: categories.map((c: any) => c.name), historicalDefects: similar.slice(0, 10) }) }
+                  ],
+                  response_format: { type: "json_schema" as const, json_schema: { name: "root_cause_suggestion", strict: true, schema: { type: "object", properties: { category: { type: "string" }, confidence: { type: "number" }, reasoning: { type: "string" }, suggestedActions: { type: "array", items: { type: "string" } }, similarDefectIds: { type: "array", items: { type: "number" } } }, required: ["category","confidence","reasoning","suggestedActions","similarDefectIds"], additionalProperties: false } } }
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("LLM timeout")), 30000)),
+              ]) as any;
+              const parsed = JSON.parse(response.choices[0].message.content);
+              await createAiSuggestion({
+                defectId: id, type: "ROOT_CAUSE", suggestion: parsed.reasoning,
+                confidence: String(parsed.confidence), suggestedCategory: parsed.category,
+                metadata: { suggestedActions: parsed.suggestedActions, similarDefectIds: parsed.similarDefectIds, promptVersion: "1.0", autoTriggered: true },
+              });
+            }
+          } catch (_e) { /* graceful fallback - RN-IA-06 */ }
+        })();
+      }
+
       return defect;
     }),
 
@@ -419,7 +494,13 @@ const defectRouter = router({
       owner: z.string().optional(),
     }).optional())
     .mutation(async ({ input }) => {
-      const { data } = await getDefects({ ...input, pageSize: 10000 });
+      // RN-FLT-06: Limit export to 10,000 records
+      const MAX_EXPORT = 10000;
+      const { data, total } = await getDefects({ ...input, pageSize: MAX_EXPORT });
+      if (total > MAX_EXPORT) {
+        // Still export first 10k but warn in metadata
+        console.warn(`Export truncated: ${total} records, exporting first ${MAX_EXPORT}`);
+      }
       const XLSX = await import("xlsx");
       const rows = data.map((d: any) => ({
         "Doc N\u00ba": d.docNumber,
@@ -452,7 +533,7 @@ const defectRouter = router({
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Defeitos");
       const buf = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
-      return { base64: buf, filename: `QTrack_Defeitos_${new Date().toISOString().slice(0,10)}.xlsx` };
+      return { base64: buf, filename: `QTrack_Defeitos_${new Date().toISOString().slice(0,10)}.xlsx`, totalRecords: total, truncated: total > MAX_EXPORT };
     }),
 });
 
@@ -1364,8 +1445,9 @@ const aiRouter = router({
 // RBAC ROUTER
 // =====================================================
 const rbacRouter = router({
-  seed: protectedProcedure.mutation(async () => {
+  seed: authorizedProcedure("rbac", "manage").mutation(async ({ ctx }) => {
     await seedRbacDefaults();
+    await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "System", action: "RBAC_SEED", fieldName: "rbac", oldValue: null, newValue: "seeded" });
     return { success: true };
   }),
   roles: protectedProcedure.query(async () => getAllRoles()),
@@ -1373,26 +1455,29 @@ const rbacRouter = router({
   rolePermissions: protectedProcedure
     .input(z.object({ roleId: z.number() }))
     .query(async ({ input }) => getRolePermissions(input.roleId)),
-  setRolePermissions: protectedProcedure
+  setRolePermissions: authorizedProcedure("rbac", "manage")
     .input(z.object({ roleId: z.number(), permissionIds: z.array(z.number()) }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       await setRolePermissions(input.roleId, input.permissionIds);
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "RBAC_SET_PERMISSIONS", fieldName: "rolePermissions", oldValue: null, newValue: JSON.stringify({ roleId: input.roleId, permissionIds: input.permissionIds }) });
       return { success: true };
     }),
   userRoles: protectedProcedure
     .input(z.object({ userId: z.number() }))
     .query(async ({ input }) => getUserRolesWithPermissions(input.userId)),
   myRoles: protectedProcedure.query(async ({ ctx }) => getUserRolesWithPermissions(ctx.user.id)),
-  assignRole: protectedProcedure
+  assignRole: authorizedProcedure("rbac", "manage")
     .input(z.object({ userId: z.number(), roleId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       await assignRoleToUser(input.userId, input.roleId);
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "RBAC_ASSIGN_ROLE", fieldName: "userRole", oldValue: null, newValue: JSON.stringify({ targetUserId: input.userId, roleId: input.roleId }) });
       return { success: true };
     }),
-  removeRole: protectedProcedure
+  removeRole: authorizedProcedure("rbac", "manage")
     .input(z.object({ userId: z.number(), roleId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       await removeRoleFromUser(input.userId, input.roleId);
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "RBAC_REMOVE_ROLE", fieldName: "userRole", oldValue: JSON.stringify({ targetUserId: input.userId, roleId: input.roleId }), newValue: null });
       return { success: true };
     }),
   check: protectedProcedure
@@ -1407,15 +1492,16 @@ const rbacRouter = router({
 // WORKFLOW ROUTER
 // =====================================================
 const workflowRouter = router({
-  seed: protectedProcedure.mutation(async () => {
+  seed: authorizedProcedure("workflow", "manage").mutation(async ({ ctx }) => {
     const result = await seedDefaultWorkflow();
+    await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "System", action: "WORKFLOW_CREATE", fieldName: "workflow", oldValue: null, newValue: "seeded" });
     return result;
   }),
   definitions: protectedProcedure.query(async () => getWorkflowDefinitions()),
   definitionById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => getWorkflowDefinitionById(input.id)),
-  create: protectedProcedure
+  create: authorizedProcedure("workflow", "manage")
     .input(z.object({
       name: z.string().min(1),
       description: z.string().optional(),
@@ -1430,8 +1516,12 @@ const workflowRouter = router({
       })),
       metadata: z.any().optional(),
     }))
-    .mutation(async ({ input, ctx }) => createWorkflowDefinition({ ...input, createdBy: ctx.user.id })),
-  newVersion: protectedProcedure
+    .mutation(async ({ input, ctx }) => {
+      const result = await createWorkflowDefinition({ ...input, createdBy: ctx.user.id });
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "WORKFLOW_CREATE", fieldName: "workflowDefinition", oldValue: null, newValue: JSON.stringify({ name: input.name }) });
+      return result;
+    }),
+  newVersion: authorizedProcedure("workflow", "manage")
     .input(z.object({
       definitionId: z.number(),
       steps: z.array(z.object({
@@ -1444,18 +1534,27 @@ const workflowRouter = router({
         conditions: z.array(z.string()), actions: z.array(z.string()),
       })),
     }))
-    .mutation(async ({ input }) => createNewVersion(input.definitionId, { steps: input.steps, transitions: input.transitions })),
+    .mutation(async ({ input, ctx }) => {
+      const result = await createNewVersion(input.definitionId, { steps: input.steps, transitions: input.transitions });
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "WORKFLOW_NEW_VERSION", fieldName: "workflowVersion", oldValue: null, newValue: JSON.stringify({ definitionId: input.definitionId }) });
+      return result;
+    }),
   instanceByDefect: protectedProcedure
     .input(z.object({ defectId: z.number() }))
     .query(async ({ input }) => getWorkflowInstanceByDefect(input.defectId)),
   createInstance: protectedProcedure
     .input(z.object({ defectId: z.number(), definitionId: z.number(), initialStepId: z.string() }))
-    .mutation(async ({ input }) => createWorkflowInstance(input.defectId, input.definitionId, input.initialStepId)),
+    .mutation(async ({ input, ctx }) => {
+      const result = await createWorkflowInstance(input.defectId, input.definitionId, input.initialStepId);
+      await createAuditLog({ defectId: input.defectId, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "WORKFLOW_CREATE_INSTANCE", fieldName: "workflowInstance", oldValue: null, newValue: JSON.stringify({ definitionId: input.definitionId, stepId: input.initialStepId }) });
+      return result;
+    }),
   advance: protectedProcedure
     .input(z.object({ instanceId: z.number(), newStepId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       await advanceWorkflowInstance(input.instanceId, input.newStepId, ctx.user.id);
       await fireWebhook("workflow.step_changed", { instanceId: input.instanceId, newStepId: input.newStepId, userId: ctx.user.id });
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "WORKFLOW_ADVANCE", fieldName: "workflowStep", oldValue: null, newValue: JSON.stringify({ instanceId: input.instanceId, newStepId: input.newStepId }) });
       return { success: true };
     }),
 });
@@ -1464,32 +1563,39 @@ const workflowRouter = router({
 // TENANT ROUTER
 // =====================================================
 const tenantRouter = router({
-  seed: protectedProcedure.mutation(async () => {
+  seed: authorizedProcedure("tenant", "manage").mutation(async ({ ctx }) => {
     const result = await seedDefaultTenant();
+    await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "System", action: "TENANT_CREATE", fieldName: "tenant", oldValue: null, newValue: "seeded" });
     return result;
   }),
   list: protectedProcedure.query(async () => getTenants()),
   byId: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => getTenantById(input.id)),
-  create: protectedProcedure
+  create: authorizedProcedure("tenant", "manage")
     .input(z.object({
       name: z.string().min(1), slug: z.string().min(1),
       plan: z.string().optional(), maxUsers: z.number().optional(), maxDefects: z.number().optional(),
       settings: z.any().optional(),
     }))
-    .mutation(async ({ input }) => createTenant(input)),
+    .mutation(async ({ input, ctx }) => {
+      const result = await createTenant(input);
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "TENANT_CREATE", fieldName: "tenant", oldValue: null, newValue: JSON.stringify({ name: input.name, slug: input.slug }) });
+      return result;
+    }),
   myTenants: protectedProcedure.query(async ({ ctx }) => getTenantsForUser(ctx.user.id)),
-  addUser: protectedProcedure
+  addUser: authorizedProcedure("tenant", "manage")
     .input(z.object({ userId: z.number(), tenantId: z.number(), role: z.string().optional() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       await addUserToTenant(input.userId, input.tenantId, input.role);
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "TENANT_ADD_USER", fieldName: "tenantUser", oldValue: null, newValue: JSON.stringify({ targetUserId: input.userId, tenantId: input.tenantId }) });
       return { success: true };
     }),
-  removeUser: protectedProcedure
+  removeUser: authorizedProcedure("tenant", "manage")
     .input(z.object({ userId: z.number(), tenantId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       await removeUserFromTenant(input.userId, input.tenantId);
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "TENANT_REMOVE_USER", fieldName: "tenantUser", oldValue: JSON.stringify({ targetUserId: input.userId, tenantId: input.tenantId }), newValue: null });
       return { success: true };
     }),
 });
@@ -1501,26 +1607,32 @@ const webhookRouter = router({
   list: protectedProcedure
     .input(z.object({ tenantId: z.number().optional() }).optional())
     .query(async ({ input }) => getWebhookConfigs(input?.tenantId)),
-  create: protectedProcedure
+  create: authorizedProcedure("webhook", "manage")
     .input(z.object({
       name: z.string().min(1), url: z.string().url(),
       events: z.array(z.string()), tenantId: z.number().optional(),
       headers: z.any().optional(),
     }))
-    .mutation(async ({ input }) => createWebhookConfig(input)),
-  delete: protectedProcedure
+    .mutation(async ({ input, ctx }) => {
+      const result = await createWebhookConfig(input);
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "WEBHOOK_CREATE", fieldName: "webhookConfig", oldValue: null, newValue: JSON.stringify({ name: input.name, url: input.url }) });
+      return result;
+    }),
+  delete: authorizedProcedure("webhook", "manage")
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       await deleteWebhookConfig(input.id);
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "WEBHOOK_DELETE", fieldName: "webhookConfig", oldValue: JSON.stringify({ id: input.id }), newValue: null });
       return { success: true };
     }),
   logs: protectedProcedure
     .input(z.object({ configId: z.number(), limit: z.number().optional() }))
     .query(async ({ input }) => getWebhookLogs(input.configId, input.limit)),
-  test: protectedProcedure
+  test: authorizedProcedure("webhook", "manage")
     .input(z.object({ configId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       await fireWebhook("test.ping", { message: "Test webhook from QTrack", timestamp: new Date().toISOString(), configId: input.configId });
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "WEBHOOK_TEST", fieldName: "webhookTest", oldValue: null, newValue: JSON.stringify({ configId: input.configId }) });
       return { success: true };
     }),
 });
@@ -1545,17 +1657,22 @@ const documentRouter = router({
   byId: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => getDocumentById(input.id)),
-  create: protectedProcedure
+  create: authorizedProcedure("document", "create")
     .input(z.object({
       title: z.string().min(1), category: z.string(),
       tags: z.array(z.string()).optional(), expiresAt: z.string().optional(),
     }))
-    .mutation(async ({ input, ctx }) => createDocument({ ...input, ownerId: ctx.user.id })),
-  updateStatus: protectedProcedure
+    .mutation(async ({ input, ctx }) => {
+      const result = await createDocument({ ...input, ownerId: ctx.user.id });
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "DOCUMENT_CREATE", fieldName: "document", oldValue: null, newValue: JSON.stringify({ title: input.title, category: input.category }) });
+      return result;
+    }),
+  updateStatus: authorizedProcedure("document", "approve")
     .input(z.object({ id: z.number(), status: z.string() }))
     .mutation(async ({ input, ctx }) => {
       await updateDocumentStatus(input.id, input.status, ctx.user.id);
       await fireWebhook("document.status_changed", { documentId: input.id, status: input.status, userId: ctx.user.id });
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "DOCUMENT_STATUS_CHANGE", fieldName: "documentStatus", oldValue: null, newValue: JSON.stringify({ documentId: input.id, status: input.status }) });
       return { success: true };
     }),
   versions: protectedProcedure
@@ -1571,12 +1688,15 @@ const documentRouter = router({
       const doc = await getDocumentById(input.documentId);
       if (!doc) throw new TRPCError({ code: "NOT_FOUND" });
       const newVersion = (doc.currentVersion || 0) + 1;
-      return addDocumentVersion({ ...input, version: newVersion, uploadedBy: ctx.user.id });
+      const result = await addDocumentVersion({ ...input, version: newVersion, uploadedBy: ctx.user.id });
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "DOCUMENT_ADD_VERSION", fieldName: "documentVersion", oldValue: String(doc.currentVersion || 0), newValue: String(newVersion) });
+      return result;
     }),
-  delete: protectedProcedure
+  delete: authorizedProcedure("document", "delete")
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       await softDeleteDocument(input.id);
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "DOCUMENT_DELETE", fieldName: "document", oldValue: JSON.stringify({ id: input.id }), newValue: null });
       return { success: true };
     }),
 });

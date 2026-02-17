@@ -330,3 +330,18 @@
 - [x] Corrigir sobreposição de itens e label ADMINISTRAÇÃO
 - [x] Corrigir truncamento do título "QTrack System"
 - [x] Garantir hierarquia visual clara entre grupos
+
+## SDD Roadmap - Refinamentos Finais e Hardening
+- [x] 5.3 IA: Trigger automático ao atingir step "Aguardando Causa Raiz" (RN-IA-01)
+- [x] 5.4 Filtros: Persistir filtros na URL (query params) (RN-FLT-03)
+- [x] 5.4 Filtros: Limite 10.000 registros na exportação (RN-FLT-06)
+- [x] 5.2 Scorecard: Radar chart funcional no frontend
+- [x] SDD-R8: Audit trail em todas as operações de escrita das novas entidades (30 pontos de auditoria)
+- [x] SDD-R8: Soft delete (deletedAt) em novas entidades que faltam
+- [x] 6.2 RBAC: authorizedProcedure middleware integrado nas procedures sensíveis
+- [x] 6.2 RBAC: Componente <Can> integrado nas páginas admin
+- [x] 6.1 Workflow: Integrar engine com fluxo de defeitos (step transitions via engine)
+- [x] 6.1 Workflow: Templates SCAR e Fast Track além do 8D
+- [ ] 4.6 BI Embeddido: Dashboard customizável com widgets drag-and-drop
+- [ ] 7.3 Push Notifications: Web Push via service worker (notificação browser)
+- [x] Testes: Cobertura completa das novas features (target 220+ testes) - 268 testes passando

@@ -144,7 +144,7 @@ export const auditLogs = mysqlTable("audit_logs", {
   defectId: int("defectId").notNull(),
   userId: int("userId"),
   userName: varchar("userName", { length: 100 }),
-  action: mysqlEnum("action", ["CREATE", "UPDATE", "DELETE", "ADVANCE_STEP", "RESTORE"]).notNull(),
+  action: mysqlEnum("action", ["CREATE", "UPDATE", "DELETE", "ADVANCE_STEP", "RESTORE", "RBAC_SEED", "RBAC_SET_PERMISSIONS", "RBAC_ASSIGN_ROLE", "RBAC_REMOVE_ROLE", "WORKFLOW_CREATE", "WORKFLOW_NEW_VERSION", "WORKFLOW_CREATE_INSTANCE", "WORKFLOW_ADVANCE", "TENANT_CREATE", "TENANT_ADD_USER", "TENANT_REMOVE_USER", "WEBHOOK_CREATE", "WEBHOOK_DELETE", "WEBHOOK_TEST", "DOCUMENT_CREATE", "DOCUMENT_STATUS_CHANGE", "DOCUMENT_ADD_VERSION", "DOCUMENT_DELETE"]).notNull(),
   fieldName: varchar("fieldName", { length: 100 }),
   oldValue: text("oldValue"),
   newValue: text("newValue"),
@@ -475,6 +475,7 @@ export const roles = mysqlTable("roles", {
   name: varchar("name", { length: 100 }).notNull().unique(),
   description: text("description"),
   isSystem: boolean("isSystem").default(false),
+  deletedAt: timestamp("deletedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -518,6 +519,7 @@ export const workflowDefinitions = mysqlTable("workflow_definitions", {
   transitions: json("transitions").notNull(),
   metadata: json("metadata"),
   createdBy: int("createdBy"),
+  deletedAt: timestamp("deletedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -551,6 +553,7 @@ export const tenants = mysqlTable("tenants", {
   maxDefects: int("maxDefects").default(500),
   isActive: boolean("isActive").default(true),
   settings: json("settings"),
+  deletedAt: timestamp("deletedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -582,6 +585,7 @@ export const webhookConfigs = mysqlTable("webhook_configs", {
   isActive: boolean("isActive").default(true),
   retryPolicy: json("retryPolicy"),
   failCount: int("failCount").default(0),
+  deletedAt: timestamp("deletedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

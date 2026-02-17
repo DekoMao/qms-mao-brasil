@@ -46,11 +46,12 @@ import {
   Key,
   type LucideIcon,
 } from "lucide-react";
-import { CSSProperties, useEffect, useRef, useState, useCallback } from "react";
+import { CSSProperties, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { useTranslation } from 'react-i18next';
+import { usePermissions } from "@/hooks/usePermissions";
 
 // ─── Language Switcher ───────────────────────────────────────────────
 const LANGS = ['pt-BR', 'en', 'es'] as const;
@@ -86,6 +87,8 @@ type MenuItem = {
   iconColor: string;
   hidden?: boolean;
   external?: boolean;
+  /** Optional permission requirement: { resource, action } */
+  permission?: { resource: string; action: string };
 };
 
 // ─── Menu Groups ─────────────────────────────────────────────────────
@@ -140,8 +143,8 @@ const menuGroups: MenuGroup[] = [
     collapsible: true,
     defaultOpen: false,
     items: [
-      { icon: Key, label: "RBAC", path: "/rbac", iconColor: "text-yellow-400" },
-      { icon: Webhook, label: "Webhooks", path: "/webhooks", iconColor: "text-pink-400" },
+      { icon: Key, label: "RBAC", path: "/rbac", iconColor: "text-yellow-400", permission: { resource: "rbac", action: "manage" } },
+      { icon: Webhook, label: "Webhooks", path: "/webhooks", iconColor: "text-pink-400", permission: { resource: "webhook", action: "manage" } },
     ],
   },
 ];
@@ -172,6 +175,7 @@ function CollapsibleGroup({
   collapsedGroups,
   toggleGroup,
   onNavigate,
+  canAccess,
 }: {
   group: MenuGroup;
   location: string;
@@ -179,6 +183,7 @@ function CollapsibleGroup({
   collapsedGroups: Record<string, boolean>;
   toggleGroup: (id: string) => void;
   onNavigate: (path: string) => void;
+  canAccess: (item: MenuItem) => boolean;
 }) {
   const isGroupCollapsed = collapsedGroups[group.id] ?? false;
   const hasActiveItem = group.items.some(item =>
@@ -218,7 +223,7 @@ function CollapsibleGroup({
       >
         <SidebarMenu className="space-y-0.5 mt-0.5">
           {group.items
-            .filter(item => !item.hidden)
+            .filter(item => !item.hidden && canAccess(item))
             .map(item => {
               const isActive =
                 item.path === "/"
@@ -342,6 +347,14 @@ function DashboardLayoutContent({
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const { can: canPermission, isAdmin: isRbacAdmin } = usePermissions();
+
+  // Permission-based menu item visibility
+  const canAccess = useCallback((item: MenuItem): boolean => {
+    if (!item.permission) return true; // No permission required
+    if (isRbacAdmin || user?.role === "admin") return true; // Admin bypass
+    return canPermission(item.permission.resource, item.permission.action);
+  }, [canPermission, isRbacAdmin, user?.role]);
 
   // Collapsible group state
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(getInitialCollapsedState);
@@ -452,6 +465,7 @@ function DashboardLayoutContent({
                   collapsedGroups={collapsedGroups}
                   toggleGroup={toggleGroup}
                   onNavigate={setLocation}
+                  canAccess={canAccess}
                 />
               </div>
             ))}

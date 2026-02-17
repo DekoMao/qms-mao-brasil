@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { Search, Filter, Plus, RefreshCw, X, ChevronDown, MoreHorizontal, CalendarIcon, Download, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -42,29 +42,54 @@ function getSeverityBadge(mg: string | null) {
   }
 }
 
+// RN-FLT-03: Parse URL query params into initial filter state
+function parseUrlFilters(search: string) {
+  const params = new URLSearchParams(search);
+  return {
+    year: params.get("year") ? parseInt(params.get("year")!) : undefined,
+    month: params.get("month") || undefined,
+    weekKey: params.get("weekKey") || undefined,
+    supplier: params.get("supplier") || undefined,
+    symptom: params.get("symptom") || undefined,
+    status: params.get("status") || undefined,
+    step: params.get("step") || undefined,
+    bucketAging: params.get("bucketAging") || undefined,
+    search: params.get("search") || "",
+    dateFrom: params.get("dateFrom") || undefined,
+    dateTo: params.get("dateTo") || undefined,
+    mg: params.get("mg") || undefined,
+    model: params.get("model") || undefined,
+    customer: params.get("customer") || undefined,
+    owner: params.get("owner") || undefined,
+  };
+}
+
 export default function DefectList() {
   const [, setLocation] = useLocation();
-  const [filters, setFilters] = useState({
-    year: undefined as number | undefined,
-    month: undefined as string | undefined,
-    weekKey: undefined as string | undefined,
-    supplier: undefined as string | undefined,
-    symptom: undefined as string | undefined,
-    status: undefined as string | undefined,
-    step: undefined as string | undefined,
-    bucketAging: undefined as string | undefined,
-    search: "",
-    dateFrom: undefined as string | undefined,
-    dateTo: undefined as string | undefined,
-    mg: undefined as string | undefined,
-    model: undefined as string | undefined,
-    customer: undefined as string | undefined,
-    owner: undefined as string | undefined,
-  });
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const searchString = useSearch();
+  const initialFilters = useRef(parseUrlFilters(searchString));
+  const [filters, setFilters] = useState(initialFilters.current);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(
+    initialFilters.current.dateFrom ? new Date(initialFilters.current.dateFrom + "T00:00:00") : undefined
+  );
+  const [dateTo, setDateTo] = useState<Date | undefined>(
+    initialFilters.current.dateTo ? new Date(initialFilters.current.dateTo + "T00:00:00") : undefined
+  );
   const [showFilters, setShowFilters] = useState(true);
   const [exporting, setExporting] = useState(false);
+
+  // RN-FLT-03: Sync filters to URL query params
+  useEffect(() => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== "") {
+        params.set(key, String(value));
+      }
+    });
+    const qs = params.toString();
+    const newUrl = qs ? `/defects?${qs}` : "/defects";
+    window.history.replaceState(null, "", newUrl);
+  }, [filters]);
 
   const { data: defectsResult, isLoading, refetch } = trpc.defect.list.useQuery(
     Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== undefined && v !== ""))
@@ -146,7 +171,11 @@ export default function DefectList() {
                 a.download = result.filename;
                 a.click();
                 URL.revokeObjectURL(url);
-                toast.success("Excel exportado com sucesso!");
+                if (result.truncated) {
+                  toast.warning(`Excel exportado com ${result.totalRecords.toLocaleString()} registros (limite: 10.000). Aplique filtros para refinar.`);
+                } else {
+                  toast.success(`Excel exportado com ${result.totalRecords.toLocaleString()} registros!`);
+                }
               } catch (_e) {
                 toast.error("Erro ao exportar Excel");
               } finally {
