@@ -36,6 +36,7 @@ import {
   Bell,
   Settings,
   ChevronRight,
+  ChevronDown,
   DollarSign,
   Award,
   GitBranch,
@@ -43,14 +44,15 @@ import {
   Brain,
   FileText,
   Key,
+  type LucideIcon,
 } from "lucide-react";
-import { CSSProperties, useEffect, useRef, useState } from "react";
+import { CSSProperties, useEffect, useRef, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { useTranslation } from 'react-i18next';
 
-// Language Switcher Component
+// ─── Language Switcher ───────────────────────────────────────────────
 const LANGS = ['pt-BR', 'en', 'es'] as const;
 const LANG_LABELS: Record<string, string> = { 'pt-BR': 'PT', en: 'EN', es: 'ES' };
 
@@ -76,32 +78,192 @@ function LanguageSwitcher() {
   );
 }
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/", iconColor: "text-sky-400" },
-  { icon: List, label: "Defeitos", path: "/defects", iconColor: "text-amber-400" },
-  { icon: List, label: "Lista de Defeitos", path: "/defects", iconColor: "text-amber-400", hidden: true },
-  { icon: Kanban, label: "Kanban", path: "/kanban", iconColor: "text-violet-400" },
-  { icon: DollarSign, label: "COPQ", path: "/copq", iconColor: "text-red-400" },
-  { icon: Award, label: "Scorecard", path: "/scorecard", iconColor: "text-green-400" },
-  { icon: Upload, label: "Importação", path: "/import", iconColor: "text-emerald-400" },
-  { icon: FileBarChart, label: "Relatórios", path: "/reports", iconColor: "text-rose-400" },
+// ─── Menu Item Type ──────────────────────────────────────────────────
+type MenuItem = {
+  icon: LucideIcon;
+  label: string;
+  path: string;
+  iconColor: string;
+  hidden?: boolean;
+  external?: boolean;
+};
+
+// ─── Menu Groups ─────────────────────────────────────────────────────
+type MenuGroup = {
+  id: string;
+  label: string;
+  collapsible: boolean;
+  defaultOpen: boolean;
+  items: MenuItem[];
+};
+
+const menuGroups: MenuGroup[] = [
+  {
+    id: "operacional",
+    label: "Operacional",
+    collapsible: false,
+    defaultOpen: true,
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", path: "/", iconColor: "text-sky-400" },
+      { icon: List, label: "Defeitos", path: "/defects", iconColor: "text-amber-400" },
+      { icon: Kanban, label: "Kanban", path: "/kanban", iconColor: "text-violet-400" },
+      { icon: Upload, label: "Importação", path: "/import", iconColor: "text-emerald-400" },
+    ],
+  },
+  {
+    id: "analise",
+    label: "Análise",
+    collapsible: true,
+    defaultOpen: true,
+    items: [
+      { icon: DollarSign, label: "COPQ", path: "/copq", iconColor: "text-red-400" },
+      { icon: Award, label: "Scorecard", path: "/scorecard", iconColor: "text-green-400" },
+      { icon: FileBarChart, label: "Relatórios", path: "/reports", iconColor: "text-rose-400" },
+      { icon: Brain, label: "IA Predição", path: "/prediction", iconColor: "text-purple-400" },
+    ],
+  },
+  {
+    id: "gestao",
+    label: "Gestão",
+    collapsible: true,
+    defaultOpen: true,
+    items: [
+      { icon: Building2, label: "Fornecedores", path: "/suppliers", iconColor: "text-orange-400" },
+      { icon: FileText, label: "Documentos", path: "/documents", iconColor: "text-blue-400" },
+      { icon: GitBranch, label: "Workflows", path: "/workflow", iconColor: "text-teal-400" },
+      { icon: Clock, label: "SLA", path: "/sla-settings", iconColor: "text-cyan-400" },
+    ],
+  },
+  {
+    id: "configuracao",
+    label: "Configuração",
+    collapsible: true,
+    defaultOpen: false,
+    items: [
+      { icon: Key, label: "RBAC", path: "/rbac", iconColor: "text-yellow-400" },
+      { icon: Webhook, label: "Webhooks", path: "/webhooks", iconColor: "text-pink-400" },
+    ],
+  },
 ];
 
-const adminMenuItems = [
-  { icon: Building2, label: "Fornecedores", path: "/suppliers", iconColor: "text-orange-400" },
-  { icon: Clock, label: "SLA", path: "/sla-settings", iconColor: "text-cyan-400" },
-  { icon: Brain, label: "IA Predição", path: "/prediction", iconColor: "text-purple-400" },
-  { icon: FileText, label: "Documentos", path: "/documents", iconColor: "text-blue-400" },
-  { icon: GitBranch, label: "Workflows", path: "/workflow", iconColor: "text-teal-400" },
-  { icon: Key, label: "RBAC", path: "/rbac", iconColor: "text-yellow-400" },
-  { icon: Webhook, label: "Webhooks", path: "/webhooks", iconColor: "text-pink-400" },
+const externalLinks: MenuItem[] = [
+  { icon: ExternalLink, label: "Portal do Fornecedor", path: "/supplier-portal", iconColor: "text-pink-400", external: true },
 ];
 
+// ─── Collapsible Group Component ─────────────────────────────────────
+const COLLAPSED_GROUPS_KEY = "sidebar-collapsed-groups";
+
+function getInitialCollapsedState(): Record<string, boolean> {
+  try {
+    const saved = localStorage.getItem(COLLAPSED_GROUPS_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  const state: Record<string, boolean> = {};
+  menuGroups.forEach(g => {
+    state[g.id] = !g.defaultOpen;
+  });
+  return state;
+}
+
+function CollapsibleGroup({
+  group,
+  location,
+  isCollapsed: isSidebarCollapsed,
+  collapsedGroups,
+  toggleGroup,
+  onNavigate,
+}: {
+  group: MenuGroup;
+  location: string;
+  isCollapsed: boolean;
+  collapsedGroups: Record<string, boolean>;
+  toggleGroup: (id: string) => void;
+  onNavigate: (path: string) => void;
+}) {
+  const isGroupCollapsed = collapsedGroups[group.id] ?? false;
+  const hasActiveItem = group.items.some(item =>
+    item.path === "/" ? location === "/" : location.startsWith(item.path)
+  );
+
+  return (
+    <div className="mb-1">
+      {/* Group Header */}
+      {!isSidebarCollapsed && (
+        <button
+          onClick={() => group.collapsible && toggleGroup(group.id)}
+          className={`w-full flex items-center justify-between px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors rounded-md ${
+            group.collapsible
+              ? "cursor-pointer hover:bg-sidebar-accent/50 text-sidebar-foreground/50 hover:text-sidebar-foreground/70"
+              : "cursor-default text-sidebar-foreground/50"
+          } ${hasActiveItem && isGroupCollapsed ? "text-sidebar-primary" : ""}`}
+        >
+          <span>{group.label}</span>
+          {group.collapsible && (
+            <span className={`transition-transform duration-200 ${isGroupCollapsed ? "" : "rotate-0"}`}>
+              {isGroupCollapsed ? (
+                <ChevronRight className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5" />
+              )}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* Group Items with animation */}
+      <div
+        className={`overflow-hidden transition-all duration-200 ease-in-out ${
+          isGroupCollapsed && !isSidebarCollapsed ? "max-h-0 opacity-0" : "max-h-[500px] opacity-100"
+        }`}
+      >
+        <SidebarMenu className="space-y-0.5 mt-0.5">
+          {group.items
+            .filter(item => !item.hidden)
+            .map(item => {
+              const isActive =
+                item.path === "/"
+                  ? location === "/"
+                  : location.startsWith(item.path);
+              return (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton
+                    isActive={isActive}
+                    onClick={() => onNavigate(item.path)}
+                    tooltip={item.label}
+                    className={`h-10 rounded-xl transition-all font-medium ${
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    }`}
+                  >
+                    <item.icon
+                      className={`h-[18px] w-[18px] ${isActive ? "text-white" : item.iconColor}`}
+                    />
+                    <span className="ml-1 text-[13px]">{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+        </SidebarMenu>
+      </div>
+
+      {/* Active indicator dot when group is collapsed */}
+      {isGroupCollapsed && hasActiveItem && !isSidebarCollapsed && (
+        <div className="flex justify-center py-1">
+          <div className="h-1 w-6 rounded-full bg-sidebar-primary/60" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Sidebar Width Constants ─────────────────────────────────────────
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 240;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 320;
 
+// ─── Main Layout ─────────────────────────────────────────────────────
 export default function DashboardLayout({
   children,
 }: {
@@ -163,6 +325,7 @@ export default function DashboardLayout({
   );
 }
 
+// ─── Layout Content ──────────────────────────────────────────────────
 type DashboardLayoutContentProps = {
   children: React.ReactNode;
   setSidebarWidth: (width: number) => void;
@@ -178,10 +341,30 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => 
-    item.path === "/" ? location === "/" : location.startsWith(item.path)
-  );
   const isMobile = useIsMobile();
+
+  // Collapsible group state
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(getInitialCollapsedState);
+
+  const toggleGroup = useCallback((id: string) => {
+    setCollapsedGroups(prev => {
+      const next = { ...prev, [id]: !prev[id] };
+      localStorage.setItem(COLLAPSED_GROUPS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  // Find active page label for header
+  const activeLabel = (() => {
+    for (const group of menuGroups) {
+      for (const item of group.items) {
+        if (item.path === "/" ? location === "/" : location.startsWith(item.path)) {
+          return item.label;
+        }
+      }
+    }
+    return "Dashboard";
+  })();
 
   useEffect(() => {
     if (isCollapsed) {
@@ -243,8 +426,11 @@ function DashboardLayoutContent({
                     <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/YCDEzlwkgDTTmqGn.png" alt="QTrack" className="h-9 w-9 object-contain" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-sidebar-foreground tracking-tight truncate">
+                    <span className="font-bold text-sidebar-foreground tracking-tight text-sm leading-tight">
                       QTrack System
+                    </span>
+                    <span className="text-[10px] text-sidebar-foreground/40 leading-tight">
+                      Quality Management
                     </span>
                   </div>
                 </div>
@@ -252,78 +438,40 @@ function DashboardLayoutContent({
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0 px-3 py-4">
-            {/* Main Menu */}
-            <SidebarMenu className="space-y-1">
-              {menuItems.filter(item => !item.hidden).map(item => {
-                const isActive = item.path === "/" 
-                  ? location === "/" 
-                  : location.startsWith(item.path);
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => setLocation(item.path)}
-                      tooltip={item.label}
-                      className={`h-11 rounded-xl transition-all font-medium ${
-                        isActive 
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" 
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                      }`}
-                    >
-                      <item.icon
-                        className={`h-5 w-5 ${isActive ? "text-white" : item.iconColor}`}
-                      />
-                      <span className="ml-1">{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+          {/* Scrollable Content */}
+          <SidebarContent className="gap-0 px-3 py-3 overflow-y-auto">
+            {menuGroups.map((group, idx) => (
+              <div key={group.id}>
+                {idx > 0 && (
+                  <div className="mx-2 my-2 border-t border-sidebar-border/50" />
+                )}
+                <CollapsibleGroup
+                  group={group}
+                  location={location}
+                  isCollapsed={isCollapsed}
+                  collapsedGroups={collapsedGroups}
+                  toggleGroup={toggleGroup}
+                  onNavigate={setLocation}
+                />
+              </div>
+            ))}
 
-            {/* Admin Section */}
-            <div className="mt-6 pt-4 border-t border-sidebar-border">
-              {!isCollapsed && (
-                <p className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
-                  Administração
-                </p>
-              )}
-              <SidebarMenu className="space-y-1 mt-1">
-                {adminMenuItems.map(item => {
-                  const isActive = location.startsWith(item.path);
-                  return (
-                    <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        onClick={() => setLocation(item.path)}
-                        tooltip={item.label}
-                        className={`h-11 rounded-xl transition-all font-medium ${
-                          isActive 
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" 
-                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                        }`}
-                      >
-                        <item.icon
-                          className={`h-5 w-5 ${isActive ? "text-white" : item.iconColor}`}
-                        />
-                        <span className="ml-1">{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-                {/* Link to Supplier Portal */}
-                <SidebarMenuItem>
+            {/* External Links */}
+            <div className="mx-2 my-2 border-t border-sidebar-border/50" />
+            <SidebarMenu className="space-y-0.5">
+              {externalLinks.map(item => (
+                <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
-                    onClick={() => window.open("/supplier-portal", "_blank")}
-                    tooltip="Portal do Fornecedor"
-                    className="h-11 rounded-xl transition-all font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    onClick={() => window.open(item.path, "_blank")}
+                    tooltip={item.label}
+                    className="h-10 rounded-xl transition-all font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                   >
-                    <ExternalLink className="h-5 w-5 text-pink-400" />
-                    <span className="ml-1">Portal do Fornecedor</span>
+                    <item.icon className={`h-[18px] w-[18px] ${item.iconColor}`} />
+                    <span className="ml-1 text-[13px]">{item.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              </SidebarMenu>
-            </div>
+              ))}
+            </SidebarMenu>
           </SidebarContent>
 
           {/* User Footer */}
@@ -375,7 +523,7 @@ function DashboardLayoutContent({
           <div className="flex items-center gap-4">
             {isMobile && <SidebarTrigger className="h-9 w-9 rounded-lg" />}
             <h1 className="text-lg font-semibold text-foreground">
-              {activeMenuItem?.label ?? "Dashboard"}
+              {activeLabel}
             </h1>
           </div>
           <div className="flex items-center gap-3">

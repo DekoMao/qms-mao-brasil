@@ -322,3 +322,11 @@
 - [x] 7.1 i18n Espanhol - Tradução completa es (3 idiomas: PT-BR, EN, ES)
 - [x] 7.2 Dark Mode - Toggle no Settings + ThemeProvider switchable
 - [x] 7.3 PWA + Service Worker (cache offline, manifest, ícones CDN)
+
+## Sidebar UX Fix
+- [x] Criar wireframe da nova sidebar com grupos colapsáveis
+- [x] Reorganizar itens em grupos lógicos (Operacional, Análise, Gestão, Configuração)
+- [x] Implementar grupos colapsáveis com animação suave
+- [x] Corrigir sobreposição de itens e label ADMINISTRAÇÃO
+- [x] Corrigir truncamento do título "QTrack System"
+- [x] Garantir hierarquia visual clara entre grupos
