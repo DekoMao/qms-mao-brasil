@@ -138,6 +138,10 @@ export interface DefectFilters {
   search?: string;
   dateFrom?: string;
   dateTo?: string;
+  mg?: string;
+  model?: string;
+  customer?: string;
+  owner?: string;
   // Pagination
   page?: number;
   pageSize?: number;
@@ -161,10 +165,21 @@ export async function getDefects(filters?: DefectFilters) {
   if (filters?.status) {
     conditions.push(eq(defects.status, filters.status as any));
   }
-  if (filters?.step) {
+   if (filters?.step) {
     conditions.push(eq(defects.step, filters.step as any));
   }
-
+  if (filters?.mg) {
+    conditions.push(eq(defects.mg, filters.mg as any));
+  }
+  if (filters?.model) {
+    conditions.push(eq(defects.model, filters.model));
+  }
+  if (filters?.customer) {
+    conditions.push(eq(defects.customer, filters.customer));
+  }
+  if (filters?.owner) {
+    conditions.push(eq(defects.owner, filters.owner));
+  }
   const result = conditions.length > 0 
     ? await db.select().from(defects).where(and(...conditions)).orderBy(desc(defects.openDate))
     : await db.select().from(defects).orderBy(desc(defects.openDate));
@@ -562,6 +577,10 @@ export async function getFilterOptions() {
       "CLOSED"
     ],
     bucketAgings: ["<=4", "5-14", "15-29", "30-59", ">60"],
+    models: Array.from(new Set(allDefects.map(d => d.model).filter((m): m is string => m !== null && m !== ""))).sort(),
+    customers: Array.from(new Set(allDefects.map(d => d.customer).filter((c): c is string => c !== null && c !== ""))).sort(),
+    owners: Array.from(new Set(allDefects.map(d => d.owner).filter((o): o is string => o !== null && o !== ""))).sort(),
+    severities: ["S", "A", "B", "C"],
   };
 }
 
@@ -1004,4 +1023,361 @@ export async function mergeSuppliers(
     mergedSuppliers: sources.map(s => s.name),
     totalDefectsUnderTarget: Number(finalCount[0]?.count || 0),
   };
+}
+
+
+// =====================================================
+// COPQ (Cost of Poor Quality) FUNCTIONS
+// =====================================================
+import {
+  defectCosts, InsertDefectCost,
+  costDefaults, InsertCostDefault,
+  supplierScoreConfigs, InsertSupplierScoreConfig,
+  supplierScoreHistory, InsertSupplierScoreHistory,
+  aiSuggestions, InsertAiSuggestion,
+} from "../drizzle/schema";
+
+// costType → costCategory mapping (RN-COPQ-02)
+const COST_TYPE_CATEGORY_MAP: Record<string, string> = {
+  SCRAP: "INTERNAL_FAILURE",
+  REWORK: "INTERNAL_FAILURE",
+  REINSPECTION: "INTERNAL_FAILURE",
+  DOWNTIME: "INTERNAL_FAILURE",
+  WARRANTY: "EXTERNAL_FAILURE",
+  RETURN: "EXTERNAL_FAILURE",
+  RECALL: "EXTERNAL_FAILURE",
+  COMPLAINT: "EXTERNAL_FAILURE",
+  INSPECTION: "APPRAISAL",
+  TESTING: "APPRAISAL",
+  AUDIT: "APPRAISAL",
+  TRAINING: "PREVENTION",
+  PLANNING: "PREVENTION",
+  QUALIFICATION: "PREVENTION",
+  OTHER: "INTERNAL_FAILURE",
+};
+
+export function inferCostCategory(costType: string): string {
+  return COST_TYPE_CATEGORY_MAP[costType] || "INTERNAL_FAILURE";
+}
+
+export async function getCostsByDefect(defectId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(defectCosts)
+    .where(and(eq(defectCosts.defectId, defectId), isNull(defectCosts.deletedAt)))
+    .orderBy(desc(defectCosts.createdAt));
+}
+
+export async function addDefectCost(data: InsertDefectCost) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(defectCosts).values(data);
+  return result[0].insertId;
+}
+
+export async function updateDefectCost(id: number, data: Partial<InsertDefectCost>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(defectCosts).set(data).where(eq(defectCosts.id, id));
+}
+
+export async function softDeleteDefectCost(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(defectCosts).set({ deletedAt: new Date() }).where(eq(defectCosts.id, id));
+}
+
+export async function getCopqDashboard(filters?: { startDate?: string; endDate?: string; supplierId?: number }) {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Get all non-deleted costs
+  let allCosts = await db.select().from(defectCosts).where(isNull(defectCosts.deletedAt));
+
+  // Join with defects for supplier info
+  const allDefectsResult = await getDefects({ pageSize: 10000 });
+  const defectMap = new Map(allDefectsResult.data.map((d: any) => [d.id, d]));
+
+  // Apply filters
+  if (filters?.startDate) {
+    const start = new Date(filters.startDate);
+    allCosts = allCosts.filter(c => c.createdAt >= start);
+  }
+  if (filters?.endDate) {
+    const end = new Date(filters.endDate);
+    allCosts = allCosts.filter(c => c.createdAt <= end);
+  }
+  if (filters?.supplierId) {
+    allCosts = allCosts.filter(c => {
+      const defect = defectMap.get(c.defectId);
+      return defect && defect.supplierId === filters.supplierId;
+    });
+  }
+
+  // Total by category
+  const totalByCategory: Record<string, number> = {
+    INTERNAL_FAILURE: 0, EXTERNAL_FAILURE: 0, APPRAISAL: 0, PREVENTION: 0,
+  };
+  let totalCost = 0;
+  const defectsWithCostSet = new Set<number>();
+
+  for (const cost of allCosts) {
+    const amount = parseFloat(cost.amount);
+    totalByCategory[cost.costCategory] = (totalByCategory[cost.costCategory] || 0) + amount;
+    totalCost += amount;
+    defectsWithCostSet.add(cost.defectId);
+  }
+
+  // Top suppliers by cost (RN-COPQ-05)
+  const supplierCosts: Record<string, { name: string; total: number }> = {};
+  for (const cost of allCosts) {
+    const defect = defectMap.get(cost.defectId);
+    const supplierName = defect?.supplier || "Desconhecido";
+    if (!supplierCosts[supplierName]) supplierCosts[supplierName] = { name: supplierName, total: 0 };
+    supplierCosts[supplierName].total += parseFloat(cost.amount);
+  }
+  const topSuppliers = Object.values(supplierCosts)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+
+  // Monthly trend (RN-COPQ-06) - last 12 months
+  const monthlyTrend: Array<{ month: number; year: number; label: string; total: number; byCategory: Record<string, number> }> = [];
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const label = `${year}-${String(month).padStart(2, "0")}`;
+    const monthlyCosts = allCosts.filter(c => {
+      const cd = c.createdAt;
+      return cd.getFullYear() === year && cd.getMonth() + 1 === month;
+    });
+    const byCategory: Record<string, number> = { INTERNAL_FAILURE: 0, EXTERNAL_FAILURE: 0, APPRAISAL: 0, PREVENTION: 0 };
+    let monthTotal = 0;
+    for (const mc of monthlyCosts) {
+      const amt = parseFloat(mc.amount);
+      byCategory[mc.costCategory] += amt;
+      monthTotal += amt;
+    }
+    monthlyTrend.push({ month, year, label, total: monthTotal, byCategory });
+  }
+
+  const defectsWithCost = defectsWithCostSet.size;
+  const defectsWithoutCost = allDefectsResult.total - defectsWithCost;
+  const avgCostPerDefect = defectsWithCost > 0 ? totalCost / defectsWithCost : 0;
+
+  return {
+    totalByCategory,
+    topSuppliers,
+    monthlyTrend,
+    totalCost,
+    avgCostPerDefect,
+    defectsWithCost,
+    defectsWithoutCost,
+  };
+}
+
+export async function getCostDefaults() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(costDefaults).where(eq(costDefaults.isActive, true));
+}
+
+export async function upsertCostDefault(data: InsertCostDefault) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(costDefaults).values(data);
+  return result[0].insertId;
+}
+
+// =====================================================
+// SUPPLIER SCORECARD FUNCTIONS
+// =====================================================
+export async function getScoreConfigs() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(supplierScoreConfigs).where(eq(supplierScoreConfigs.isActive, true));
+}
+
+export async function updateScoreConfig(id: number, data: Partial<InsertSupplierScoreConfig>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(supplierScoreConfigs).set(data).where(eq(supplierScoreConfigs.id, id));
+}
+
+export async function saveScoreHistory(data: InsertSupplierScoreHistory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(supplierScoreHistory).values(data);
+  return result[0].insertId;
+}
+
+export async function getScoreHistory(supplierId: number, limit = 12) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(supplierScoreHistory)
+    .where(eq(supplierScoreHistory.supplierId, supplierId))
+    .orderBy(desc(supplierScoreHistory.periodKey))
+    .limit(limit);
+}
+
+export async function calculateSupplierScore(supplierId: number) {
+  const allDefectsResult = await getDefects({ pageSize: 10000 });
+  const supplierDefects = allDefectsResult.data.filter((d: any) => d.supplierId === supplierId);
+  const configs = await getScoreConfigs();
+  const slaConfigs = await getSlaConfigs();
+
+  const totalDefects = supplierDefects.length;
+  if (totalDefects === 0) return { overallScore: 100, grade: "A" as const, metrics: {} };
+
+  // PPM Score (RN-SC-01): 0 defeitos=100, >10=0, linear
+  const ppmScore = Math.max(0, Math.min(100, 100 - (totalDefects * 10)));
+
+  // SLA Compliance (RN-SC-02)
+  let withinSla = 0;
+  for (const d of supplierDefects) {
+    const sla = slaConfigs.find((s: any) => s.step === d.step && s.severityMg === d.mg)
+      || slaConfigs.find((s: any) => s.step === d.step && !s.severityMg);
+    const maxDays = sla?.maxDays || 7;
+    if ((d.agingTotal || 0) <= maxDays) withinSla++;
+  }
+  const slaScore = totalDefects > 0 ? (withinSla / totalDefects) * 100 : 100;
+
+  // Corrective Action Effectiveness (RN-SC-03)
+  const withCA = supplierDefects.filter((d: any) => d.correctiveActions);
+  const closedWithCA = withCA.filter((d: any) => d.status === "CLOSED");
+  const caScore = withCA.length > 0 ? (closedWithCA.length / withCA.length) * 100 : 100;
+
+  // Average Resolution Time (RN-SC-04): <=7d=100, >=60d=0
+  const avgAging = supplierDefects.reduce((sum: number, d: any) => sum + (d.agingTotal || 0), 0) / totalDefects;
+  const resolutionScore = Math.max(0, Math.min(100, 100 - ((avgAging - 7) / 53) * 100));
+
+  // Response Rate (RN-SC-05)
+  const withFeedback = supplierDefects.filter((d: any) => d.supplyFeedback);
+  const responseScore = totalDefects > 0 ? (withFeedback.length / totalDefects) * 100 : 0;
+
+  // Weighted composite score (RN-SC-06)
+  const metricWeights: Record<string, number> = {};
+  const metricScores: Record<string, number> = {
+    ppm: ppmScore,
+    slaCompliance: slaScore,
+    correctiveEffectiveness: caScore,
+    resolutionTime: resolutionScore,
+    responseRate: responseScore,
+  };
+
+  for (const config of configs) {
+    metricWeights[config.metricKey] = parseFloat(config.weight as string);
+  }
+
+  // Default weights if no config
+  const defaultWeights: Record<string, number> = { ppm: 3, slaCompliance: 2, correctiveEffectiveness: 2, resolutionTime: 1, responseRate: 1 };
+  let totalWeightedScore = 0;
+  let totalWeight = 0;
+  for (const [key, score] of Object.entries(metricScores)) {
+    const weight = metricWeights[key] ?? defaultWeights[key] ?? 1;
+    totalWeightedScore += score * weight;
+    totalWeight += weight;
+  }
+  const overallScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+
+  // Grade (RN-SC-07)
+  let grade: "A" | "B" | "C" | "D";
+  if (overallScore >= 80) grade = "A";
+  else if (overallScore >= 60) grade = "B";
+  else if (overallScore >= 40) grade = "C";
+  else grade = "D";
+
+  return {
+    overallScore: Math.round(overallScore * 100) / 100,
+    grade,
+    metrics: metricScores,
+    totalDefects,
+  };
+}
+
+export async function getAllSupplierScores() {
+  const allSuppliers = await getSuppliers();
+  const scores = [];
+  for (const supplier of allSuppliers) {
+    const score = await calculateSupplierScore(supplier.id);
+    const history = await getScoreHistory(supplier.id, 6);
+    const historyScores = history.map((h: any) => parseFloat(h.overallScore));
+    const avgLast3 = historyScores.length >= 3
+      ? historyScores.slice(0, 3).reduce((a: number, b: number) => a + b, 0) / 3
+      : null;
+    let trend: "UP" | "DOWN" | "STABLE" = "STABLE";
+    if (avgLast3 !== null) {
+      if (score.overallScore > avgLast3 + 5) trend = "UP";
+      else if (score.overallScore < avgLast3 - 5) trend = "DOWN";
+    }
+    scores.push({
+      supplierId: supplier.id,
+      name: supplier.name,
+      ...score,
+      trend,
+      history: historyScores,
+    });
+  }
+  return scores.sort((a, b) => b.overallScore - a.overallScore);
+}
+
+// =====================================================
+// AI SUGGESTIONS FUNCTIONS
+// =====================================================
+export async function getAiSuggestions(defectId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(aiSuggestions)
+    .where(eq(aiSuggestions.defectId, defectId))
+    .orderBy(desc(aiSuggestions.createdAt));
+}
+
+export async function createAiSuggestion(data: InsertAiSuggestion) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(aiSuggestions).values(data);
+  return result[0].insertId;
+}
+
+export async function updateAiSuggestion(id: number, data: Partial<InsertAiSuggestion>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(aiSuggestions).set(data).where(eq(aiSuggestions.id, id));
+}
+
+export async function getSimilarDefects(params: { supplier?: string; model?: string; category?: string }, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: ReturnType<typeof eq>[] = [isNull(defects.deletedAt)];
+  if (params.supplier) conditions.push(eq(defects.supplier, params.supplier));
+  const result = await db.select().from(defects)
+    .where(and(...conditions))
+    .orderBy(desc(defects.createdAt))
+    .limit(limit);
+  return result.map(d => ({
+    id: d.id,
+    description: d.description || "",
+    cause: d.cause || "",
+    correctiveActions: d.correctiveActions || "",
+    category: d.category || "",
+    symptom: d.symptom || "",
+  }));
+}
+
+export async function initializeScoreConfigs() {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await db.select().from(supplierScoreConfigs);
+  if (existing.length > 0) return;
+  const defaults = [
+    { metricKey: "ppm", metricName: "PPM (Parts Per Million)", weight: "3.00", description: "Taxa de defeitos por milhão de peças" },
+    { metricKey: "slaCompliance", metricName: "Conformidade SLA", weight: "2.00", description: "Percentual de defeitos resolvidos dentro do SLA" },
+    { metricKey: "correctiveEffectiveness", metricName: "Eficácia de Ação Corretiva", weight: "2.00", description: "Percentual de defeitos sem recorrência após ação corretiva" },
+    { metricKey: "resolutionTime", metricName: "Tempo de Resolução", weight: "1.00", description: "Tempo médio de resolução normalizado" },
+    { metricKey: "responseRate", metricName: "Taxa de Resposta", weight: "1.00", description: "Percentual de defeitos com feedback do fornecedor" },
+  ];
+  for (const d of defaults) {
+    await db.insert(supplierScoreConfigs).values(d as any);
+  }
 }

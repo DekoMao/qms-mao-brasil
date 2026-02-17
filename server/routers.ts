@@ -49,8 +49,30 @@ import {
   getRootCauseAnalysis,
   // Supplier Merge
   mergeSuppliers,
+  // COPQ
+  getCostsByDefect,
+  addDefectCost,
+  updateDefectCost,
+  softDeleteDefectCost,
+  getCopqDashboard,
+  getCostDefaults,
+  inferCostCategory,
+  // Scorecard
+  getAllSupplierScores,
+  calculateSupplierScore,
+  getScoreConfigs,
+  updateScoreConfig,
+  getScoreHistory,
+  saveScoreHistory,
+  initializeScoreConfigs,
+  // AI
+  getAiSuggestions,
+  createAiSuggestion,
+  updateAiSuggestion,
+  getSimilarDefects,
 } from "./db";
 import { calculateStep, calculateResponsible } from "../shared/defectLogic";
+import { notifyOwner } from "./_core/notification";
 
 // =====================================================
 // DEFECT ROUTER
@@ -70,6 +92,10 @@ const defectRouter = router({
       search: z.string().optional(),
       dateFrom: z.string().optional(),
       dateTo: z.string().optional(),
+      mg: z.string().optional(),
+      model: z.string().optional(),
+      customer: z.string().optional(),
+      owner: z.string().optional(),
     }).optional())
     .query(async ({ input }) => {
       return getDefects(input);
@@ -328,6 +354,62 @@ const defectRouter = router({
   filterOptions: publicProcedure.query(async () => {
     return getFilterOptions();
   }),
+
+  // Export filtered defects to Excel (base64)
+  exportExcel: protectedProcedure
+    .input(z.object({
+      year: z.number().optional(),
+      month: z.string().optional(),
+      weekKey: z.string().optional(),
+      supplier: z.string().optional(),
+      symptom: z.string().optional(),
+      status: z.string().optional(),
+      step: z.string().optional(),
+      bucketAging: z.string().optional(),
+      search: z.string().optional(),
+      dateFrom: z.string().optional(),
+      dateTo: z.string().optional(),
+      mg: z.string().optional(),
+      model: z.string().optional(),
+      customer: z.string().optional(),
+      owner: z.string().optional(),
+    }).optional())
+    .mutation(async ({ input }) => {
+      const { data } = await getDefects({ ...input, pageSize: 10000 });
+      const XLSX = await import("xlsx");
+      const rows = data.map((d: any) => ({
+        "Doc N\u00ba": d.docNumber,
+        "Data Abertura": d.openDate,
+        "Ano": d.year,
+        "Semana": d.weekKey,
+        "Severidade": d.mg,
+        "Categoria": d.category,
+        "Modelo": d.model,
+        "Cliente": d.customer,
+        "PN": d.pn,
+        "Material": d.material,
+        "Sintoma": d.symptom,
+        "Detec\u00e7\u00e3o": d.detection,
+        "Qtd": d.qty,
+        "Descri\u00e7\u00e3o": d.description,
+        "Fornecedor": d.supplier,
+        "Status": d.status,
+        "Etapa": d.step,
+        "Respons\u00e1vel": d.currentResponsible,
+        "Aging (dias)": d.aging,
+        "Dias Atraso": d.daysLate,
+        "Bucket Aging": d.bucketAging,
+        "Causa": d.cause,
+        "A\u00e7\u00f5es Corretivas": d.correctiveActions,
+        "Owner": d.owner,
+        "Data Alvo": d.targetDate,
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Defeitos");
+      const buf = XLSX.write(wb, { type: "base64", bookType: "xlsx" });
+      return { base64: buf, filename: `QTrack_Defeitos_${new Date().toISOString().slice(0,10)}.xlsx` };
+    }),
 });
 
 // =====================================================
@@ -842,34 +924,30 @@ const notificationRouter = router({
       return { success: true };
     }),
 
-  // Send SLA notifications (called by cron job or manually)
+   // Send SLA notifications (called by cron job or manually)
   sendSlaAlerts: protectedProcedure.mutation(async () => {
     const violations = await checkSlaViolations();
     const recipients = await getNotificationRecipients();
     const sentNotifications: number[] = [];
-
+    const ownerNotifications: string[] = [];
     for (const violation of violations) {
       const notificationType = violation.violationType === "EXCEEDED" ? "SLA_EXCEEDED" : "SLA_WARNING";
       const relevantRecipients = recipients.filter(
-        r => r.notificationType === notificationType || r.notificationType === "ALL"
+        (r: any) => r.notificationType === notificationType || r.notificationType === "ALL"
       );
-
+      const subject = violation.violationType === "EXCEEDED"
+        ? `[URGENTE] SLA Excedido - Caso ${violation.defect.docNumber}`
+        : `[AVISO] SLA Próximo do Limite - Caso ${violation.defect.docNumber}`;
+      const body = [
+        `Caso: ${violation.defect.docNumber}`,
+        `Fornecedor: ${violation.defect.supplier || "N/A"}`,
+        `Etapa Atual: ${violation.defect.step}`,
+        `Dias na Etapa: ${violation.daysInStep}`,
+        `SLA Máximo: ${violation.slaConfig.maxDays} dias`,
+        `Status: ${violation.violationType === "EXCEEDED" ? "EXCEDIDO" : "AVISO"}`,
+        `Por favor, tome as ações necessárias.`,
+      ].join("\n");
       for (const recipient of relevantRecipients) {
-        const subject = violation.violationType === "EXCEEDED"
-          ? `[URGENTE] SLA Excedido - Caso ${violation.defect.docNumber}`
-          : `[AVISO] SLA Próximo do Limite - Caso ${violation.defect.docNumber}`;
-
-        const body = `
-Caso: ${violation.defect.docNumber}
-Fornecedor: ${violation.defect.supplier || "N/A"}
-Etapa Atual: ${violation.defect.step}
-Dias na Etapa: ${violation.daysInStep}
-SLA Máximo: ${violation.slaConfig.maxDays} dias
-Status: ${violation.violationType === "EXCEEDED" ? "EXCEDIDO" : "AVISO"}
-
-Por favor, tome as ações necessárias.
-        `.trim();
-
         const notificationId = await createNotification({
           defectId: violation.defect.id,
           type: notificationType,
@@ -878,16 +956,100 @@ Por favor, tome as ações necessárias.
           subject,
           body,
         });
-
         sentNotifications.push(notificationId);
+        // Mark as SENT
+        await updateNotificationStatus(notificationId, "SENT");
       }
+      ownerNotifications.push(`${subject}\n${body}`);
     }
-
-    return { 
-      violationsFound: violations.length, 
-      notificationsCreated: sentNotifications.length 
+    // Dispatch aggregated notification to project owner
+    if (ownerNotifications.length > 0) {
+      try {
+        await notifyOwner({
+          title: `QTrack: ${violations.length} violações de SLA detectadas`,
+          content: ownerNotifications.slice(0, 10).join("\n\n---\n\n"),
+        });
+      } catch (_e) { /* notifyOwner is best-effort */ }
+    }
+    return {
+      violationsFound: violations.length,
+      notificationsCreated: sentNotifications.length,
     };
   }),
+
+  // Send notification on step change
+  notifyStepChange: protectedProcedure
+    .input(z.object({
+      defectId: z.number(),
+      docNumber: z.string(),
+      oldStep: z.string(),
+      newStep: z.string(),
+      supplier: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const recipients = await getNotificationRecipients();
+      const stepRecipients = recipients.filter(
+        (r: any) => r.notificationType === "STEP_CHANGE" || r.notificationType === "ALL"
+      );
+      const subject = `[QTrack] Avanço de Etapa - Caso ${input.docNumber}`;
+      const body = [
+        `Caso: ${input.docNumber}`,
+        `Fornecedor: ${input.supplier || "N/A"}`,
+        `Etapa Anterior: ${input.oldStep}`,
+        `Nova Etapa: ${input.newStep}`,
+      ].join("\n");
+      for (const recipient of stepRecipients) {
+        const nId = await createNotification({
+          defectId: input.defectId,
+          type: "STEP_CHANGE",
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+          subject,
+          body,
+        });
+        await updateNotificationStatus(nId, "SENT");
+      }
+      try {
+        await notifyOwner({ title: subject, content: body });
+      } catch (_e) { /* best-effort */ }
+      return { sent: stepRecipients.length };
+    }),
+
+  // Send notification on supplier feedback update
+  notifySupplierUpdate: protectedProcedure
+    .input(z.object({
+      defectId: z.number(),
+      docNumber: z.string(),
+      supplier: z.string().optional(),
+      updateType: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const recipients = await getNotificationRecipients();
+      const relevantRecipients = recipients.filter(
+        (r: any) => r.notificationType === "SUPPLIER_UPDATE" || r.notificationType === "ALL"
+      );
+      const subject = `[QTrack] Atualização do Fornecedor - Caso ${input.docNumber}`;
+      const body = [
+        `Caso: ${input.docNumber}`,
+        `Fornecedor: ${input.supplier || "N/A"}`,
+        `Tipo de Atualização: ${input.updateType}`,
+      ].join("\n");
+      for (const recipient of relevantRecipients) {
+        const nId = await createNotification({
+          defectId: input.defectId,
+          type: "SUPPLIER_UPDATE",
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+          subject,
+          body,
+        });
+        await updateNotificationStatus(nId, "SENT");
+      }
+      try {
+        await notifyOwner({ title: subject, content: body });
+      } catch (_e) { /* best-effort */ }
+      return { sent: relevantRecipients.length };
+    }),
 });
 
 // =====================================================
@@ -921,6 +1083,239 @@ const rcaRouter = router({
     }),
 });
 
+/// =====================================================
+// COPQ (Cost of Poor Quality) ROUTER
+// =====================================================
+const copqRouter = router({
+  byDefect: protectedProcedure
+    .input(z.object({ defectId: z.number() }))
+    .query(async ({ input }) => {
+      return getCostsByDefect(input.defectId);
+    }),
+
+  addCost: protectedProcedure
+    .input(z.object({
+      defectId: z.number(),
+      costType: z.enum(["SCRAP","REWORK","REINSPECTION","DOWNTIME","WARRANTY","RETURN","RECALL","COMPLAINT","INSPECTION","TESTING","AUDIT","TRAINING","PLANNING","QUALIFICATION","OTHER"]),
+      amount: z.number().positive(),
+      currency: z.string().length(3).default("BRL"),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const costCategory = inferCostCategory(input.costType) as any;
+      const id = await addDefectCost({
+        defectId: input.defectId,
+        costType: input.costType,
+        costCategory,
+        amount: input.amount.toFixed(2),
+        currency: input.currency,
+        description: input.description || null,
+        createdBy: ctx.user?.id || null,
+      });
+      await createAuditLog({
+        defectId: input.defectId,
+        userId: ctx.user?.id || null,
+        userName: ctx.user?.name || "Sistema",
+        action: "CREATE",
+        fieldName: "cost",
+        oldValue: null,
+        newValue: `${input.costType}: R$ ${input.amount.toFixed(2)}`,
+      });
+      return { id };
+    }),
+
+  updateCost: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      amount: z.number().positive().optional(),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const data: any = {};
+      if (input.amount !== undefined) data.amount = input.amount.toFixed(2);
+      if (input.description !== undefined) data.description = input.description;
+      await updateDefectCost(input.id, data);
+      return { success: true };
+    }),
+
+  deleteCost: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await softDeleteDefectCost(input.id);
+      return { success: true };
+    }),
+
+  dashboard: protectedProcedure
+    .input(z.object({
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      supplierId: z.number().optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      return getCopqDashboard(input);
+    }),
+
+  defaults: protectedProcedure.query(async () => {
+    return getCostDefaults();
+  }),
+});
+
+// =====================================================
+// SUPPLIER SCORECARD ROUTER
+// =====================================================
+const scorecardRouter = router({
+  list: protectedProcedure.query(async () => {
+    await initializeScoreConfigs();
+    return getAllSupplierScores();
+  }),
+
+  bySupplier: protectedProcedure
+    .input(z.object({ supplierId: z.number() }))
+    .query(async ({ input }) => {
+      const current = await calculateSupplierScore(input.supplierId);
+      const history = await getScoreHistory(input.supplierId, 12);
+      const historyScores = history.map((h: any) => parseFloat(h.overallScore));
+      const avgLast3 = historyScores.length >= 3
+        ? historyScores.slice(0, 3).reduce((a: number, b: number) => a + b, 0) / 3
+        : null;
+      let trend: "UP" | "DOWN" | "STABLE" = "STABLE";
+      if (avgLast3 !== null) {
+        if (current.overallScore > avgLast3 + 5) trend = "UP";
+        else if (current.overallScore < avgLast3 - 5) trend = "DOWN";
+      }
+      return { current, history, trend };
+    }),
+
+  recalculate: protectedProcedure.mutation(async () => {
+    const allSuppliers = await getSuppliers();
+    const now = new Date();
+    const periodKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    for (const supplier of allSuppliers) {
+      const score = await calculateSupplierScore(supplier.id);
+      await saveScoreHistory({
+        supplierId: supplier.id,
+        periodKey,
+        overallScore: score.overallScore.toFixed(2),
+        grade: score.grade,
+        metrics: score.metrics,
+      });
+    }
+    return { recalculated: allSuppliers.length };
+  }),
+
+  configs: protectedProcedure.query(async () => {
+    await initializeScoreConfigs();
+    return getScoreConfigs();
+  }),
+
+  updateConfig: protectedProcedure
+    .input(z.object({ id: z.number(), weight: z.number().min(0).max(10) }))
+    .mutation(async ({ input }) => {
+      await updateScoreConfig(input.id, { weight: input.weight.toFixed(2) });
+      return { success: true };
+    }),
+});
+
+// =====================================================
+// AI ROUTER
+// =====================================================
+const aiRouter = router({
+  suggestRootCause: protectedProcedure
+    .input(z.object({ defectId: z.number(), force: z.boolean().optional() }))
+    .mutation(async ({ input, ctx }) => {
+      // Check cache (RN-IA-05)
+      if (!input.force) {
+        const existing = await getAiSuggestions(input.defectId);
+        const rootCauseSuggestion = existing.find((s: any) => s.type === "ROOT_CAUSE");
+        if (rootCauseSuggestion) return rootCauseSuggestion;
+      }
+      // Get defect data
+      const defect = await getDefectById(input.defectId);
+      if (!defect) throw new TRPCError({ code: "NOT_FOUND", message: "Defeito não encontrado" });
+      // Get categories and similar defects
+      const categories = await getRootCauseCategories();
+      const similar = await getSimilarDefects({
+        supplier: defect.supplier || undefined,
+        model: defect.model || undefined,
+      });
+      try {
+        const { invokeLLM } = await import("./_core/llm");
+        const response = await Promise.race([
+          invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `Você é um engenheiro de qualidade especialista em análise de causa raiz (RCA) para defeitos de fornecedores na indústria de manufatura. Analise o defeito descrito e:\n1. Sugira a categoria de causa raiz mais provável\n2. Explique seu raciocínio em 2-3 frases\n3. Sugira 2-3 ações corretivas baseadas em defeitos similares\n4. Avalie sua confiança de 0.0 a 1.0\nResponda APENAS em JSON válido.`
+              },
+              {
+                role: "user",
+                content: JSON.stringify({
+                  defect: { description: defect.description, symptom: defect.symptom, model: defect.model, supplier: defect.supplier },
+                  availableCategories: categories.map((c: any) => c.name),
+                  historicalDefects: similar.slice(0, 10),
+                })
+              }
+            ],
+            response_format: {
+              type: "json_schema" as const,
+              json_schema: {
+                name: "root_cause_suggestion",
+                strict: true,
+                schema: {
+                  type: "object",
+                  properties: {
+                    category: { type: "string" },
+                    confidence: { type: "number" },
+                    reasoning: { type: "string" },
+                    suggestedActions: { type: "array", items: { type: "string" } },
+                    similarDefectIds: { type: "array", items: { type: "number" } },
+                  },
+                  required: ["category","confidence","reasoning","suggestedActions","similarDefectIds"],
+                  additionalProperties: false,
+                }
+              }
+            }
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("LLM timeout")), 30000)),
+        ]) as any;
+        const parsed = JSON.parse(response.choices[0].message.content);
+        const suggestionId = await createAiSuggestion({
+          defectId: input.defectId,
+          type: "ROOT_CAUSE",
+          suggestion: parsed.reasoning,
+          confidence: String(parsed.confidence),
+          suggestedCategory: parsed.category,
+          metadata: {
+            suggestedActions: parsed.suggestedActions,
+            similarDefectIds: parsed.similarDefectIds,
+            promptVersion: "1.0",
+          },
+        });
+        const suggestions = await getAiSuggestions(input.defectId);
+        return suggestions[0];
+      } catch (_err) {
+        return { error: "timeout", suggestion: null };
+      }
+    }),
+
+  respondToSuggestion: protectedProcedure
+    .input(z.object({ suggestionId: z.number(), accepted: z.boolean() }))
+    .mutation(async ({ input, ctx }) => {
+      await updateAiSuggestion(input.suggestionId, {
+        accepted: input.accepted,
+        acceptedBy: ctx.user?.id || null,
+        acceptedAt: new Date(),
+      });
+      return { success: true };
+    }),
+
+  byDefect: protectedProcedure
+    .input(z.object({ defectId: z.number() }))
+    .query(async ({ input }) => {
+      return getAiSuggestions(input.defectId);
+    }),
+});
+
 // =====================================================
 // MAIN ROUTER
 // =====================================================
@@ -942,6 +1337,8 @@ export const appRouter = router({
   sla: slaRouter,
   notification: notificationRouter,
   rca: rcaRouter,
+  copq: copqRouter,
+  scorecard: scorecardRouter,
+  ai: aiRouter,
 });
-
 export type AppRouter = typeof appRouter;

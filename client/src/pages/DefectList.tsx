@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useLocation } from "wouter";
-import { Search, Filter, Plus, RefreshCw, X, ChevronDown, MoreHorizontal, CalendarIcon } from "lucide-react";
+import { Search, Filter, Plus, RefreshCw, X, ChevronDown, MoreHorizontal, CalendarIcon, Download, FileSpreadsheet } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -55,16 +56,23 @@ export default function DefectList() {
     search: "",
     dateFrom: undefined as string | undefined,
     dateTo: undefined as string | undefined,
+    mg: undefined as string | undefined,
+    model: undefined as string | undefined,
+    customer: undefined as string | undefined,
+    owner: undefined as string | undefined,
   });
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showFilters, setShowFilters] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   const { data: defectsResult, isLoading, refetch } = trpc.defect.list.useQuery(
     Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== undefined && v !== ""))
   );
   const defects = defectsResult?.data;
   const { data: filterOptions } = trpc.defect.filterOptions.useQuery();
+
+  const exportExcel = trpc.defect.exportExcel.useMutation();
 
   const clearFilters = () => {
     setFilters({
@@ -79,6 +87,10 @@ export default function DefectList() {
       search: "",
       dateFrom: undefined,
       dateTo: undefined,
+      mg: undefined,
+      model: undefined,
+      customer: undefined,
+      owner: undefined,
     });
     setDateFrom(undefined);
     setDateTo(undefined);
@@ -112,6 +124,38 @@ export default function DefectList() {
           <Button variant="outline" size="sm" onClick={() => refetch()} className="h-9">
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9"
+            disabled={exporting}
+            onClick={async () => {
+              setExporting(true);
+              try {
+                const result = await exportExcel.mutateAsync(
+                  Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== undefined && v !== "")) as any
+                );
+                const byteChars = atob(result.base64);
+                const byteNums = new Array(byteChars.length);
+                for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+                const blob = new Blob([new Uint8Array(byteNums)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = result.filename;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast.success("Excel exportado com sucesso!");
+              } catch (_e) {
+                toast.error("Erro ao exportar Excel");
+              } finally {
+                setExporting(false);
+              }
+            }}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            {exporting ? "Exportando..." : "Exportar Excel"}
           </Button>
           <Button size="sm" onClick={() => setLocation("/defects/new")} className="h-9">
             <Plus className="h-4 w-4 mr-2" />
@@ -228,6 +272,78 @@ export default function DefectList() {
                 <SelectItem value="all">Todos Buckets</SelectItem>
                 {filterOptions.bucketAgings.map((b) => (
                   <SelectItem key={b} value={b}>{b} dias</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.mg || "all"}
+              onValueChange={(v) => setFilters({ ...filters, mg: v === "all" ? undefined : v })}
+            >
+              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+                <span className="flex items-center gap-2">
+                  Severidade
+                  <ChevronDown className="h-3 w-3" />
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas Severidades</SelectItem>
+                {(filterOptions.severities || []).map((s: string) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.model || "all"}
+              onValueChange={(v) => setFilters({ ...filters, model: v === "all" ? undefined : v })}
+            >
+              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+                <span className="flex items-center gap-2">
+                  Modelo
+                  <ChevronDown className="h-3 w-3" />
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Modelos</SelectItem>
+                {(filterOptions.models || []).map((m: string) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.customer || "all"}
+              onValueChange={(v) => setFilters({ ...filters, customer: v === "all" ? undefined : v })}
+            >
+              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+                <span className="flex items-center gap-2">
+                  Cliente
+                  <ChevronDown className="h-3 w-3" />
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Clientes</SelectItem>
+                {(filterOptions.customers || []).map((c: string) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.owner || "all"}
+              onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? undefined : v })}
+            >
+              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+                <span className="flex items-center gap-2">
+                  Owner
+                  <ChevronDown className="h-3 w-3" />
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Owners</SelectItem>
+                {(filterOptions.owners || []).map((o: string) => (
+                  <SelectItem key={o} value={o}>{o}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

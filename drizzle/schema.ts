@@ -343,3 +343,125 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
     references: [defects.id],
   }),
 }));
+
+
+// =====================================================
+// COPQ (Cost of Poor Quality) TABLES
+// =====================================================
+export const defectCosts = mysqlTable("defect_costs", {
+  id: int("id").autoincrement().primaryKey(),
+  defectId: int("defectId").notNull(),
+  costType: mysqlEnum("costType", [
+    "SCRAP","REWORK","REINSPECTION","DOWNTIME","WARRANTY","RETURN",
+    "RECALL","COMPLAINT","INSPECTION","TESTING","AUDIT","TRAINING",
+    "PLANNING","QUALIFICATION","OTHER"
+  ]).notNull(),
+  costCategory: mysqlEnum("costCategory", [
+    "INTERNAL_FAILURE","EXTERNAL_FAILURE","APPRAISAL","PREVENTION"
+  ]).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("BRL"),
+  description: text("description"),
+  evidenceUrl: text("evidenceUrl"),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
+}, (table) => [
+  index("idx_defect_costs_defectId").on(table.defectId),
+  index("idx_defect_costs_category").on(table.costCategory),
+]);
+
+export type InsertDefectCost = typeof defectCosts.$inferInsert;
+export type DefectCost = typeof defectCosts.$inferSelect;
+
+export const costDefaults = mysqlTable("cost_defaults", {
+  id: int("id").autoincrement().primaryKey(),
+  costType: mysqlEnum("costType", [
+    "SCRAP","REWORK","REINSPECTION","DOWNTIME","WARRANTY","RETURN",
+    "RECALL","COMPLAINT","INSPECTION","TESTING","AUDIT","TRAINING",
+    "PLANNING","QUALIFICATION","OTHER"
+  ]).notNull(),
+  costCategory: mysqlEnum("costCategory", [
+    "INTERNAL_FAILURE","EXTERNAL_FAILURE","APPRAISAL","PREVENTION"
+  ]).notNull(),
+  defaultAmount: decimal("defaultAmount", { precision: 12, scale: 2 }),
+  unitType: mysqlEnum("unitType", ["PER_UNIT","PER_HOUR","PER_INCIDENT","FIXED"]).default("PER_INCIDENT"),
+  description: text("description"),
+  isActive: boolean("isActive").default(true),
+});
+
+export type InsertCostDefault = typeof costDefaults.$inferInsert;
+export type CostDefault = typeof costDefaults.$inferSelect;
+
+// =====================================================
+// SUPPLIER SCORECARD TABLES
+// =====================================================
+export const supplierScoreConfigs = mysqlTable("supplier_score_configs", {
+  id: int("id").autoincrement().primaryKey(),
+  metricKey: varchar("metricKey", { length: 50 }).notNull().unique(),
+  metricName: varchar("metricName", { length: 200 }).notNull(),
+  description: text("description"),
+  weight: decimal("weight", { precision: 5, scale: 2 }).notNull().default("1.00"),
+  isActive: boolean("isActive").default(true),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type InsertSupplierScoreConfig = typeof supplierScoreConfigs.$inferInsert;
+export type SupplierScoreConfig = typeof supplierScoreConfigs.$inferSelect;
+
+export const supplierScoreHistory = mysqlTable("supplier_score_history", {
+  id: int("id").autoincrement().primaryKey(),
+  supplierId: int("supplierId").notNull(),
+  periodKey: varchar("periodKey", { length: 7 }).notNull(),
+  overallScore: decimal("overallScore", { precision: 5, scale: 2 }).notNull(),
+  grade: mysqlEnum("grade", ["A", "B", "C", "D"]).notNull(),
+  metrics: json("metrics").notNull(),
+  calculatedAt: timestamp("calculatedAt").defaultNow().notNull(),
+}, (table) => [
+  index("idx_score_supplier").on(table.supplierId),
+  index("idx_score_period").on(table.periodKey),
+]);
+
+export type InsertSupplierScoreHistory = typeof supplierScoreHistory.$inferInsert;
+export type SupplierScoreHistory = typeof supplierScoreHistory.$inferSelect;
+
+// =====================================================
+// AI SUGGESTIONS TABLE
+// =====================================================
+export const aiSuggestions = mysqlTable("ai_suggestions", {
+  id: int("id").autoincrement().primaryKey(),
+  defectId: int("defectId").notNull(),
+  type: mysqlEnum("type", ["ROOT_CAUSE","CORRECTIVE_ACTION","RECURRENCE_RISK"]).notNull(),
+  suggestion: text("suggestion").notNull(),
+  confidence: decimal("confidence", { precision: 3, scale: 2 }),
+  suggestedCategory: varchar("suggestedCategory", { length: 200 }),
+  accepted: boolean("accepted"),
+  acceptedBy: int("acceptedBy"),
+  acceptedAt: timestamp("acceptedAt"),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("idx_ai_suggestions_defect").on(table.defectId),
+  index("idx_ai_suggestions_type").on(table.type),
+]);
+
+export type InsertAiSuggestion = typeof aiSuggestions.$inferInsert;
+export type AiSuggestion = typeof aiSuggestions.$inferSelect;
+
+// =====================================================
+// COPQ RELATIONS
+// =====================================================
+export const defectCostsRelations = relations(defectCosts, ({ one }) => ({
+  defect: one(defects, {
+    fields: [defectCosts.defectId],
+    references: [defects.id],
+  }),
+}));
+
+export const aiSuggestionsRelations = relations(aiSuggestions, ({ one }) => ({
+  defect: one(defects, {
+    fields: [aiSuggestions.defectId],
+    references: [defects.id],
+  }),
+}));

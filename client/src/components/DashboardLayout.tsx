@@ -35,7 +35,9 @@ import {
   ExternalLink,
   Bell,
   Settings,
-  ChevronRight
+  ChevronRight,
+  DollarSign,
+  Award,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -70,6 +72,8 @@ const menuItems = [
   { icon: List, label: "Defeitos", path: "/defects", iconColor: "text-amber-400" },
   { icon: List, label: "Lista de Defeitos", path: "/defects", iconColor: "text-amber-400", hidden: true },
   { icon: Kanban, label: "Kanban", path: "/kanban", iconColor: "text-violet-400" },
+  { icon: DollarSign, label: "COPQ", path: "/copq", iconColor: "text-red-400" },
+  { icon: Award, label: "Scorecard", path: "/scorecard", iconColor: "text-green-400" },
   { icon: Upload, label: "Importação", path: "/import", iconColor: "text-emerald-400" },
   { icon: FileBarChart, label: "Relatórios", path: "/reports", iconColor: "text-rose-400" },
 ];

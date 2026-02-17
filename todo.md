@@ -239,17 +239,17 @@
 - [x] 2.3 Normalizar coluna supplier → supplierId (FK)
 - [x] 2.4 Implementar cache para dados estáticos (getDefectsFlat wrapper)
 - [x] 2.5 Mover cálculo de RCA/Pareto para query SQL
-- [x] 2.6 Adicionar testes de integração (113 testes passando)
+- [x] 2.6 Adicionar testes de integração (151 testes passando)
 - [x] 2.7 Adicionar testes para importação Excel
 
 ## Roadmap - Fase 3 (Evolução)
 - [x] 3.1 Dashboard com filtros de período
 - [x] 3.2 Gráfico de Pareto interativo
-- [ ] 3.3 Notificações por e-mail (integração SMTP)
+- [x] 3.3 Notificações por e-mail (integração via notifyOwner)
 - [x] 3.4 Internacionalização (i18n) pt-BR/en
 - [x] 3.5 Exportação PDF de relatório 8D
 - [x] 3.6 Merge de fornecedores duplicados
-- [ ] 3.7 Histórico de alterações por campo (diff visual)
+- [x] 3.7 Histórico de alterações por campo (diff visual)
 - [x] 3.8 Upload de fotos/evidências nos defeitos
 - [x] 3.9 Remover ComponentShowcase.tsx
 
@@ -260,3 +260,19 @@
 - [ ] 4.4 Integração com ERP (API pública REST)
 - [ ] 4.5 Mobile app (PWA)
 - [ ] 4.6 BI embeddido (dashboards customizáveis)
+
+## SDD Roadmap - Fase 5 Quick Wins
+- [x] 3.7 Histórico de alterações com diff visual (aba Histórico no DefectDetail)
+- [x] 3.3 Notificações por e-mail (integração via notifyOwner)
+- [x] 5.4 Filtros avançados + Exportação Excel na lista de defeitos
+- [x] 5.1 COPQ Dashboard - Schema (defect_costs, cost_defaults)
+- [x] 5.1 COPQ Dashboard - Backend (copqRouter, db helpers)
+- [x] 5.1 COPQ Dashboard - Frontend (página, gráficos, aba custos no DefectDetail)
+- [x] 5.2 Supplier Scorecard - Schema (supplier_score_configs, supplier_score_history)
+- [x] 5.2 Supplier Scorecard - Backend (cálculo de score, scorecardRouter)
+- [x] 5.2 Supplier Scorecard - Frontend (página, radar chart, tabela)
+- [x] 5.3 IA Auto-categorização RCA - Schema (ai_suggestions)
+- [x] 5.3 IA Auto-categorização RCA - Backend (suggestRootCause, aiRouter)
+- [x] 5.3 IA Auto-categorização RCA - Frontend (aba IA no DefectDetail)
+- [x] i18n: Chaves pt-BR/en para COPQ, Scorecard e IA
+- [x] Testes: 38 testes para features SDD (151 total)

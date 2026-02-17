@@ -43,6 +43,13 @@
       "when": 1771216798492,
       "tag": "0005_wet_grandmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1771295051318,
+      "tag": "0006_abandoned_archangel",
+      "breakpoints": true
     }
   ]
 }

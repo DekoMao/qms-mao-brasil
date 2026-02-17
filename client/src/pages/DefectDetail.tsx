@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useRoute, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +12,196 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { 
   ArrowLeft, Save, ChevronRight, Clock, User, Calendar, 
-  FileText, MessageSquare, History, AlertTriangle, X, Pause, Download
+  FileText, MessageSquare, History, AlertTriangle, X, Pause, Download,
+  Filter, GitCommitHorizontal, Plus, Trash2, RotateCcw, ArrowRightLeft, Search
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { generateDefect8DReport } from "@/lib/pdfExport";
+
+// =====================================================
+// AUDIT HISTORY TAB — Diff Visual Component
+// =====================================================
+const ACTION_CONFIG: Record<string, { icon: any; label: string; color: string; bg: string }> = {
+  CREATE: { icon: Plus, label: "Criação", color: "text-green-600", bg: "bg-green-100" },
+  UPDATE: { icon: ArrowRightLeft, label: "Alteração", color: "text-blue-600", bg: "bg-blue-100" },
+  DELETE: { icon: Trash2, label: "Exclusão", color: "text-red-600", bg: "bg-red-100" },
+  ADVANCE_STEP: { icon: ChevronRight, label: "Avanço de Etapa", color: "text-purple-600", bg: "bg-purple-100" },
+  RESTORE: { icon: RotateCcw, label: "Restauração", color: "text-amber-600", bg: "bg-amber-100" },
+};
+
+function DiffDisplay({ oldValue, newValue }: { oldValue: string | null; newValue: string | null }) {
+  const old = oldValue || "(vazio)";
+  const nw = newValue || "(vazio)";
+  if (old === nw) return <span className="text-xs text-muted-foreground">{nw}</span>;
+  return (
+    <div className="flex flex-col gap-1 text-xs mt-1">
+      <div className="flex items-start gap-2">
+        <span className="shrink-0 px-1.5 py-0.5 rounded bg-red-50 text-red-700 font-mono line-through">
+          {old.length > 120 ? old.slice(0, 120) + "..." : old}
+        </span>
+      </div>
+      <div className="flex items-start gap-2">
+        <span className="shrink-0 px-1.5 py-0.5 rounded bg-green-50 text-green-700 font-mono">
+          {nw.length > 120 ? nw.slice(0, 120) + "..." : nw}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function AuditHistoryTab({ auditLogs }: { auditLogs: any[] }) {
+  const [filterField, setFilterField] = useState("");
+  const [filterUser, setFilterUser] = useState("");
+  const [filterAction, setFilterAction] = useState("");
+  const [searchText, setSearchText] = useState("");
+
+  const uniqueFields = useMemo(() => {
+    const fields = new Set(auditLogs.map((l: any) => l.fieldName).filter(Boolean));
+    return Array.from(fields).sort();
+  }, [auditLogs]);
+
+  const uniqueUsers = useMemo(() => {
+    const users = new Set(auditLogs.map((l: any) => l.userName).filter(Boolean));
+    return Array.from(users).sort();
+  }, [auditLogs]);
+
+  const filteredLogs = useMemo(() => {
+    return auditLogs.filter((log: any) => {
+      if (filterField && filterField !== "all_fields" && log.fieldName !== filterField) return false;
+      if (filterUser && filterUser !== "all_users" && log.userName !== filterUser) return false;
+      if (filterAction && filterAction !== "all_actions" && log.action !== filterAction) return false;
+      if (searchText) {
+        const s = searchText.toLowerCase();
+        const matches = [
+          log.fieldName, log.oldValue, log.newValue, log.userName, log.action
+        ].some(v => v && String(v).toLowerCase().includes(s));
+        if (!matches) return false;
+      }
+      return true;
+    });
+  }, [auditLogs, filterField, filterUser, filterAction, searchText]);
+
+  const hasFilters = filterField || filterUser || filterAction || searchText;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Histórico de Alterações
+            <Badge variant="secondary" className="ml-2">{filteredLogs.length}</Badge>
+          </CardTitle>
+          {hasFilters && (
+            <Button variant="ghost" size="sm" onClick={() => { setFilterField(""); setFilterUser(""); setFilterAction(""); setSearchText(""); }}>
+              Limpar filtros
+            </Button>
+          )}
+        </div>
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <div className="relative flex-1 min-w-[180px]">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="pl-8 h-9 text-sm"
+            />
+          </div>
+          <Select value={filterField} onValueChange={setFilterField}>
+            <SelectTrigger className="w-[160px] h-9 text-sm">
+              <SelectValue placeholder="Campo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_fields">Todos os campos</SelectItem>
+              {uniqueFields.map((f: string) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterUser} onValueChange={setFilterUser}>
+            <SelectTrigger className="w-[160px] h-9 text-sm">
+              <SelectValue placeholder="Usuário" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_users">Todos os usuários</SelectItem>
+              {uniqueUsers.map((u: string) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterAction} onValueChange={setFilterAction}>
+            <SelectTrigger className="w-[140px] h-9 text-sm">
+              <SelectValue placeholder="Ação" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_actions">Todas as ações</SelectItem>
+              {Object.entries(ACTION_CONFIG).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {filteredLogs.length > 0 ? (
+          <div className="relative">
+            {/* Timeline line */}
+            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+            <div className="space-y-0">
+              {filteredLogs.map((log: any, idx: number) => {
+                const config = ACTION_CONFIG[log.action] || ACTION_CONFIG.UPDATE;
+                const IconComp = config.icon;
+                return (
+                  <div key={log.id} className="relative pl-10 pb-4 last:pb-0">
+                    {/* Timeline dot */}
+                    <div className={`absolute left-2 top-1 w-5 h-5 rounded-full ${config.bg} flex items-center justify-center ring-2 ring-background`}>
+                      <IconComp className={`h-3 w-3 ${config.color}`} />
+                    </div>
+                    {/* Content */}
+                    <div className="bg-muted/30 rounded-lg p-3 border border-border/50 hover:border-border transition-colors">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={`text-[10px] ${config.color} border-current`}>
+                            {config.label}
+                          </Badge>
+                          {log.fieldName && (
+                            <span className="text-sm font-medium text-foreground">{log.fieldName}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <User className="h-3 w-3" />
+                          <span>{log.userName || "Sistema"}</span>
+                          <span>•</span>
+                          <Clock className="h-3 w-3" />
+                          <span>{new Date(log.timestamp).toLocaleString("pt-BR")}</span>
+                        </div>
+                      </div>
+                      {(log.oldValue || log.newValue) && log.action !== "CREATE" && (
+                        <DiffDisplay oldValue={log.oldValue} newValue={log.newValue} />
+                      )}
+                      {log.action === "CREATE" && log.newValue && (
+                        <div className="text-xs mt-1">
+                          <span className="px-1.5 py-0.5 rounded bg-green-50 text-green-700 font-mono">
+                            {String(log.newValue).length > 120 ? String(log.newValue).slice(0, 120) + "..." : log.newValue}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <History className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
+            <p className="text-muted-foreground">
+              {hasFilters ? "Nenhuma alteração encontrada com os filtros aplicados" : "Nenhuma alteração registrada"}
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 const WORKFLOW_STEPS = [
   { id: 1, label: "Disposição", shortLabel: "Disp." },
@@ -347,6 +533,12 @@ export default function DefectDetail() {
           </TabsTrigger>
           <TabsTrigger value="history" disabled={isNew} className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
             Auditoria
+          </TabsTrigger>
+          <TabsTrigger value="costs" disabled={isNew} className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            Custos
+          </TabsTrigger>
+          <TabsTrigger value="ai" disabled={isNew} className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            IA
           </TabsTrigger>
         </TabsList>
 
@@ -806,43 +998,263 @@ export default function DefectDetail() {
 
         {/* History Tab */}
         <TabsContent value="history">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Auditoria</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {auditLogs && auditLogs.length > 0 ? (
-                <div className="space-y-3">
-                  {auditLogs.map((log: any) => (
-                    <div key={log.id} className="flex items-start gap-3 p-3 border-b last:border-0">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                        <History className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm">
-                          <span className="font-medium">{log.userName || "Sistema"}</span>
-                          {" alterou "}
-                          <span className="font-medium">{log.field}</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {log.oldValue || "(vazio)"} → {log.newValue || "(vazio)"}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(log.createdAt).toLocaleString("pt-BR")}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhuma alteração registrada
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <AuditHistoryTab auditLogs={auditLogs || []} />
+        </TabsContent>
+
+        {/* Costs Tab (COPQ) */}
+        <TabsContent value="costs">
+          {!isNew && defectId && <CostsTab defectId={defectId} />}
+        </TabsContent>
+
+        {/* AI Suggestions Tab */}
+        <TabsContent value="ai">
+          {!isNew && defectId && <AiSuggestionsTab defectId={defectId} defectStep={defect?.step || ""} />}
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// =====================================================
+// COSTS TAB (COPQ)
+// =====================================================
+const COST_TYPES = [
+  "SCRAP","REWORK","REINSPECTION","DOWNTIME","WARRANTY","RETURN",
+  "RECALL","COMPLAINT","INSPECTION","TESTING","AUDIT","TRAINING",
+  "PLANNING","QUALIFICATION","OTHER"
+] as const;
+
+const COST_TYPE_LABELS: Record<string, string> = {
+  SCRAP: "Sucata", REWORK: "Retrabalho", REINSPECTION: "Reinspeção",
+  DOWNTIME: "Parada", WARRANTY: "Garantia", RETURN: "Devolução",
+  RECALL: "Recall", COMPLAINT: "Reclamação", INSPECTION: "Inspeção",
+  TESTING: "Teste", AUDIT: "Auditoria", TRAINING: "Treinamento",
+  PLANNING: "Planejamento", QUALIFICATION: "Qualificação", OTHER: "Outro",
+};
+
+function CostsTab({ defectId }: { defectId: number }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [costType, setCostType] = useState<string>("SCRAP");
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const utils = trpc.useUtils();
+
+  const { data: costs, isLoading } = trpc.copq.byDefect.useQuery({ defectId });
+
+  const addCost = trpc.copq.addCost.useMutation({
+    onSuccess: () => {
+      toast.success("Custo adicionado!");
+      utils.copq.byDefect.invalidate({ defectId });
+      setShowAdd(false);
+      setAmount("");
+      setDescription("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deleteCost = trpc.copq.deleteCost.useMutation({
+    onSuccess: () => {
+      toast.success("Custo removido!");
+      utils.copq.byDefect.invalidate({ defectId });
+    },
+  });
+
+  const totalCost = costs?.reduce((sum: number, c: any) => sum + parseFloat(c.amount), 0) || 0;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <span className="text-red-500">R$</span> Custos COPQ
+            <Badge variant="secondary">{costs?.length || 0}</Badge>
+          </CardTitle>
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-bold text-red-600">
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totalCost)}
+            </span>
+            <Button size="sm" onClick={() => setShowAdd(!showAdd)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Adicionar
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {showAdd && (
+          <div className="p-3 border rounded-lg bg-muted/30 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Select value={costType} onValueChange={setCostType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {COST_TYPES.map(ct => (
+                    <SelectItem key={ct} value={ct}>{COST_TYPE_LABELS[ct] || ct}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input type="number" placeholder="Valor (R$)" value={amount} onChange={(e) => setAmount(e.target.value)} min="0.01" step="0.01" />
+              <Input placeholder="Descrição (opcional)" value={description} onChange={(e) => setDescription(e.target.value)} />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => {
+                if (!amount || parseFloat(amount) <= 0) { toast.error("Valor deve ser positivo"); return; }
+                addCost.mutate({ defectId, costType: costType as any, amount: parseFloat(amount), description: description || undefined });
+              }} disabled={addCost.isPending}>
+                {addCost.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowAdd(false)}>Cancelar</Button>
+            </div>
+          </div>
+        )}
+        {isLoading ? (
+          <div className="space-y-2">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
+        ) : costs && costs.length > 0 ? (
+          <div className="space-y-2">
+            {costs.map((cost: any) => (
+              <div key={cost.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="text-xs">{COST_TYPE_LABELS[cost.costType] || cost.costType}</Badge>
+                  <span className="font-medium">
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: cost.currency || "BRL" }).format(parseFloat(cost.amount))}
+                  </span>
+                  {cost.description && <span className="text-sm text-muted-foreground">{cost.description}</span>}
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => deleteCost.mutate({ id: cost.id })} className="text-red-500 hover:text-red-700">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <span className="text-3xl">R$</span>
+            <p className="mt-2">Nenhum custo registrado para este defeito</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// =====================================================
+// AI SUGGESTIONS TAB
+// =====================================================
+import { Sparkles, Check, XCircle, RefreshCw } from "lucide-react";
+
+function AiSuggestionsTab({ defectId, defectStep }: { defectId: number; defectStep: string }) {
+  const utils = trpc.useUtils();
+  const { data: suggestions, isLoading } = trpc.ai.byDefect.useQuery({ defectId });
+
+  const suggestMutation = trpc.ai.suggestRootCause.useMutation({
+    onSuccess: () => {
+      toast.success("Sugestão de IA gerada!");
+      utils.ai.byDefect.invalidate({ defectId });
+    },
+    onError: (e) => toast.error(`Erro na IA: ${e.message}`),
+  });
+
+  const respondMutation = trpc.ai.respondToSuggestion.useMutation({
+    onSuccess: () => {
+      toast.success("Resposta registrada!");
+      utils.ai.byDefect.invalidate({ defectId });
+    },
+  });
+
+  const rootCauseSuggestion = suggestions?.find((s: any) => s.type === "ROOT_CAUSE");
+  const metadata = rootCauseSuggestion?.metadata as any;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-purple-500" />
+            Sugestões de IA
+          </CardTitle>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => suggestMutation.mutate({ defectId, force: !!rootCauseSuggestion })}
+            disabled={suggestMutation.isPending}
+          >
+            <RefreshCw className={`h-4 w-4 mr-1 ${suggestMutation.isPending ? "animate-spin" : ""}`} />
+            {rootCauseSuggestion ? "Regenerar" : "Gerar Sugestão"}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {suggestMutation.isPending ? (
+          <div className="space-y-3 animate-pulse">
+            <div className="h-4 bg-muted rounded w-3/4" />
+            <div className="h-4 bg-muted rounded w-1/2" />
+            <div className="h-20 bg-muted rounded" />
+            <p className="text-sm text-muted-foreground text-center mt-4">Analisando defeito com IA... (pode levar até 30s)</p>
+          </div>
+        ) : rootCauseSuggestion ? (
+          <div className="space-y-4">
+            {/* Confidence Badge */}
+            <div className="flex items-center gap-3">
+              <Badge className={`${
+                parseFloat(rootCauseSuggestion.confidence || "0") >= 0.7 ? "bg-green-500" :
+                parseFloat(rootCauseSuggestion.confidence || "0") >= 0.5 ? "bg-yellow-500" : "bg-red-500"
+              } text-white`}>
+                Confiança: {(parseFloat(rootCauseSuggestion.confidence || "0") * 100).toFixed(0)}%
+              </Badge>
+              {rootCauseSuggestion.accepted === true && <Badge className="bg-green-100 text-green-700"><Check className="h-3 w-3 mr-1" /> Aceita</Badge>}
+              {rootCauseSuggestion.accepted === false && <Badge className="bg-red-100 text-red-700"><XCircle className="h-3 w-3 mr-1" /> Rejeitada</Badge>}
+            </div>
+
+            {/* Suggested Category */}
+            {rootCauseSuggestion.suggestedCategory && (
+              <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <p className="text-sm font-medium text-purple-800">Categoria Sugerida</p>
+                <p className="text-lg font-bold text-purple-900">{rootCauseSuggestion.suggestedCategory}</p>
+              </div>
+            )}
+
+            {/* Reasoning */}
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-sm font-medium mb-1">Raciocínio</p>
+              <p className="text-sm text-muted-foreground">{rootCauseSuggestion.suggestion}</p>
+            </div>
+
+            {/* Suggested Actions */}
+            {metadata?.suggestedActions && metadata.suggestedActions.length > 0 && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-medium text-blue-800 mb-2">Ações Corretivas Sugeridas</p>
+                <ul className="space-y-1">
+                  {metadata.suggestedActions.map((action: string, i: number) => (
+                    <li key={i} className="text-sm text-blue-700 flex items-start gap-2">
+                      <ChevronRight className="h-4 w-4 mt-0.5 shrink-0" />
+                      {action}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Accept/Reject Buttons */}
+            {rootCauseSuggestion.accepted === null && (
+              <div className="flex gap-2">
+                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => respondMutation.mutate({ suggestionId: rootCauseSuggestion.id, accepted: true })}>
+                  <Check className="h-4 w-4 mr-1" /> Aceitar
+                </Button>
+                <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => respondMutation.mutate({ suggestionId: rootCauseSuggestion.id, accepted: false })}>
+                  <XCircle className="h-4 w-4 mr-1" /> Rejeitar
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Sparkles className="h-12 w-12 mx-auto text-purple-300 mb-3" />
+            <p className="text-muted-foreground mb-2">Nenhuma sugestão de IA disponível</p>
+            <p className="text-sm text-muted-foreground">
+              Clique em "Gerar Sugestão" para obter uma análise de causa raiz assistida por IA
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
