@@ -70,6 +70,50 @@ import {
   createAiSuggestion,
   updateAiSuggestion,
   getSimilarDefects,
+  // RBAC
+  seedRbacDefaults,
+  hasPermission,
+  getUserRolesWithPermissions,
+  assignRoleToUser,
+  removeRoleFromUser,
+  getAllRoles,
+  getAllPermissions,
+  getRolePermissions,
+  setRolePermissions,
+  // Workflow
+  seedDefaultWorkflow,
+  getWorkflowDefinitions,
+  getWorkflowDefinitionById,
+  createWorkflowDefinition,
+  createNewVersion,
+  getWorkflowInstanceByDefect,
+  createWorkflowInstance,
+  advanceWorkflowInstance,
+  // Multi-tenancy
+  seedDefaultTenant,
+  getTenants,
+  getTenantById,
+  createTenant,
+  getTenantsForUser,
+  addUserToTenant,
+  removeUserFromTenant,
+  // Webhooks
+  getWebhookConfigs,
+  createWebhookConfig,
+  deleteWebhookConfig,
+  fireWebhook,
+  getWebhookLogs,
+  // AI Prediction
+  detectRecurrencePatterns,
+  getRecurrenceHeatmap,
+  // Document Control
+  getDocuments,
+  getDocumentById,
+  createDocument,
+  updateDocumentStatus,
+  getDocumentVersions,
+  addDocumentVersion,
+  softDeleteDocument,
 } from "./db";
 import { calculateStep, calculateResponsible } from "../shared/defectLogic";
 import { notifyOwner } from "./_core/notification";
@@ -1317,6 +1361,227 @@ const aiRouter = router({
 });
 
 // =====================================================
+// RBAC ROUTER
+// =====================================================
+const rbacRouter = router({
+  seed: protectedProcedure.mutation(async () => {
+    await seedRbacDefaults();
+    return { success: true };
+  }),
+  roles: protectedProcedure.query(async () => getAllRoles()),
+  permissions: protectedProcedure.query(async () => getAllPermissions()),
+  rolePermissions: protectedProcedure
+    .input(z.object({ roleId: z.number() }))
+    .query(async ({ input }) => getRolePermissions(input.roleId)),
+  setRolePermissions: protectedProcedure
+    .input(z.object({ roleId: z.number(), permissionIds: z.array(z.number()) }))
+    .mutation(async ({ input }) => {
+      await setRolePermissions(input.roleId, input.permissionIds);
+      return { success: true };
+    }),
+  userRoles: protectedProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => getUserRolesWithPermissions(input.userId)),
+  myRoles: protectedProcedure.query(async ({ ctx }) => getUserRolesWithPermissions(ctx.user.id)),
+  assignRole: protectedProcedure
+    .input(z.object({ userId: z.number(), roleId: z.number() }))
+    .mutation(async ({ input }) => {
+      await assignRoleToUser(input.userId, input.roleId);
+      return { success: true };
+    }),
+  removeRole: protectedProcedure
+    .input(z.object({ userId: z.number(), roleId: z.number() }))
+    .mutation(async ({ input }) => {
+      await removeRoleFromUser(input.userId, input.roleId);
+      return { success: true };
+    }),
+  check: protectedProcedure
+    .input(z.object({ resource: z.string(), action: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const allowed = await hasPermission(ctx.user.id, input.resource, input.action);
+      return { allowed };
+    }),
+});
+
+// =====================================================
+// WORKFLOW ROUTER
+// =====================================================
+const workflowRouter = router({
+  seed: protectedProcedure.mutation(async () => {
+    const result = await seedDefaultWorkflow();
+    return result;
+  }),
+  definitions: protectedProcedure.query(async () => getWorkflowDefinitions()),
+  definitionById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => getWorkflowDefinitionById(input.id)),
+  create: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      description: z.string().optional(),
+      steps: z.array(z.object({
+        id: z.string(), name: z.string(), order: z.number(),
+        responsible: z.enum(["SQA", "SUPPLIER", "BOTH"]),
+        requiredFields: z.array(z.string()), slaDefault: z.number(),
+      })),
+      transitions: z.array(z.object({
+        fromStepId: z.string(), toStepId: z.string(),
+        conditions: z.array(z.string()), actions: z.array(z.string()),
+      })),
+      metadata: z.any().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => createWorkflowDefinition({ ...input, createdBy: ctx.user.id })),
+  newVersion: protectedProcedure
+    .input(z.object({
+      definitionId: z.number(),
+      steps: z.array(z.object({
+        id: z.string(), name: z.string(), order: z.number(),
+        responsible: z.enum(["SQA", "SUPPLIER", "BOTH"]),
+        requiredFields: z.array(z.string()), slaDefault: z.number(),
+      })),
+      transitions: z.array(z.object({
+        fromStepId: z.string(), toStepId: z.string(),
+        conditions: z.array(z.string()), actions: z.array(z.string()),
+      })),
+    }))
+    .mutation(async ({ input }) => createNewVersion(input.definitionId, { steps: input.steps, transitions: input.transitions })),
+  instanceByDefect: protectedProcedure
+    .input(z.object({ defectId: z.number() }))
+    .query(async ({ input }) => getWorkflowInstanceByDefect(input.defectId)),
+  createInstance: protectedProcedure
+    .input(z.object({ defectId: z.number(), definitionId: z.number(), initialStepId: z.string() }))
+    .mutation(async ({ input }) => createWorkflowInstance(input.defectId, input.definitionId, input.initialStepId)),
+  advance: protectedProcedure
+    .input(z.object({ instanceId: z.number(), newStepId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      await advanceWorkflowInstance(input.instanceId, input.newStepId, ctx.user.id);
+      await fireWebhook("workflow.step_changed", { instanceId: input.instanceId, newStepId: input.newStepId, userId: ctx.user.id });
+      return { success: true };
+    }),
+});
+
+// =====================================================
+// TENANT ROUTER
+// =====================================================
+const tenantRouter = router({
+  seed: protectedProcedure.mutation(async () => {
+    const result = await seedDefaultTenant();
+    return result;
+  }),
+  list: protectedProcedure.query(async () => getTenants()),
+  byId: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => getTenantById(input.id)),
+  create: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1), slug: z.string().min(1),
+      plan: z.string().optional(), maxUsers: z.number().optional(), maxDefects: z.number().optional(),
+      settings: z.any().optional(),
+    }))
+    .mutation(async ({ input }) => createTenant(input)),
+  myTenants: protectedProcedure.query(async ({ ctx }) => getTenantsForUser(ctx.user.id)),
+  addUser: protectedProcedure
+    .input(z.object({ userId: z.number(), tenantId: z.number(), role: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      await addUserToTenant(input.userId, input.tenantId, input.role);
+      return { success: true };
+    }),
+  removeUser: protectedProcedure
+    .input(z.object({ userId: z.number(), tenantId: z.number() }))
+    .mutation(async ({ input }) => {
+      await removeUserFromTenant(input.userId, input.tenantId);
+      return { success: true };
+    }),
+});
+
+// =====================================================
+// WEBHOOK ROUTER
+// =====================================================
+const webhookRouter = router({
+  list: protectedProcedure
+    .input(z.object({ tenantId: z.number().optional() }).optional())
+    .query(async ({ input }) => getWebhookConfigs(input?.tenantId)),
+  create: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1), url: z.string().url(),
+      events: z.array(z.string()), tenantId: z.number().optional(),
+      headers: z.any().optional(),
+    }))
+    .mutation(async ({ input }) => createWebhookConfig(input)),
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await deleteWebhookConfig(input.id);
+      return { success: true };
+    }),
+  logs: protectedProcedure
+    .input(z.object({ configId: z.number(), limit: z.number().optional() }))
+    .query(async ({ input }) => getWebhookLogs(input.configId, input.limit)),
+  test: protectedProcedure
+    .input(z.object({ configId: z.number() }))
+    .mutation(async ({ input }) => {
+      await fireWebhook("test.ping", { message: "Test webhook from QTrack", timestamp: new Date().toISOString(), configId: input.configId });
+      return { success: true };
+    }),
+});
+
+// =====================================================
+// AI PREDICTION ROUTER
+// =====================================================
+const predictionRouter = router({
+  recurrencePatterns: protectedProcedure
+    .input(z.object({ supplierId: z.number().optional() }).optional())
+    .query(async ({ input }) => detectRecurrencePatterns(input?.supplierId)),
+  heatmap: protectedProcedure.query(async () => getRecurrenceHeatmap()),
+});
+
+// =====================================================
+// DOCUMENT CONTROL ROUTER
+// =====================================================
+const documentRouter = router({
+  list: protectedProcedure
+    .input(z.object({ status: z.string().optional(), category: z.string().optional(), search: z.string().optional() }).optional())
+    .query(async ({ input }) => getDocuments(input || undefined)),
+  byId: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => getDocumentById(input.id)),
+  create: protectedProcedure
+    .input(z.object({
+      title: z.string().min(1), category: z.string(),
+      tags: z.array(z.string()).optional(), expiresAt: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => createDocument({ ...input, ownerId: ctx.user.id })),
+  updateStatus: protectedProcedure
+    .input(z.object({ id: z.number(), status: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      await updateDocumentStatus(input.id, input.status, ctx.user.id);
+      await fireWebhook("document.status_changed", { documentId: input.id, status: input.status, userId: ctx.user.id });
+      return { success: true };
+    }),
+  versions: protectedProcedure
+    .input(z.object({ documentId: z.number() }))
+    .query(async ({ input }) => getDocumentVersions(input.documentId)),
+  addVersion: protectedProcedure
+    .input(z.object({
+      documentId: z.number(), fileUrl: z.string(),
+      fileSize: z.number().optional(), mimeType: z.string().optional(),
+      changeDescription: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const doc = await getDocumentById(input.documentId);
+      if (!doc) throw new TRPCError({ code: "NOT_FOUND" });
+      const newVersion = (doc.currentVersion || 0) + 1;
+      return addDocumentVersion({ ...input, version: newVersion, uploadedBy: ctx.user.id });
+    }),
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await softDeleteDocument(input.id);
+      return { success: true };
+    }),
+});
+
+// =====================================================
 // MAIN ROUTER
 // =====================================================
 export const appRouter = router({
@@ -1340,5 +1605,11 @@ export const appRouter = router({
   copq: copqRouter,
   scorecard: scorecardRouter,
   ai: aiRouter,
+  rbac: rbacRouter,
+  workflow: workflowRouter,
+  tenant: tenantRouter,
+  webhook: webhookRouter,
+  prediction: predictionRouter,
+  document: documentRouter,
 });
 export type AppRouter = typeof appRouter;

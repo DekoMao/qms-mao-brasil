@@ -275,4 +275,50 @@
 - [x] 5.3 IA Auto-categorização RCA - Backend (suggestRootCause, aiRouter)
 - [x] 5.3 IA Auto-categorização RCA - Frontend (aba IA no DefectDetail)
 - [x] i18n: Chaves pt-BR/en para COPQ, Scorecard e IA
-- [x] Testes: 38 testes para features SDD (151 total)
+- [x] Testes: 68 testes para features SDD (181 total)
+
+## SDD Roadmap - Gaps Parciais (Refinamentos)
+- [ ] 5.3 IA: Trigger automático ao atingir step "Aguardando Causa Raiz" (RN-IA-01)
+- [ ] 5.3 IA: Procedure recurrenceAnalysis + página RecurrenceAnalysis.tsx
+- [ ] 5.4 Filtros: Persistir filtros na URL (query params) (RN-FLT-03)
+- [ ] 5.4 Filtros: Limite 10.000 registros na exportação (RN-FLT-06)
+- [ ] 5.2 Scorecard: Radar chart e trend sparklines no frontend
+
+## SDD Roadmap - Fase 5 Restante
+- [x] 5.5 PWA Mobile - manifest.json, service worker, ícones
+- [x] 5.5 PWA Mobile - Responsividade 320px-768px
+- [x] 5.5 PWA Mobile - Install prompt e offline banner
+
+## SDD Roadmap - Fase 6 Estratégico
+- [x] 6.2 RBAC - Schema (roles, permissions, role_permissions, user_roles)
+- [x] 6.2 RBAC - Backend (seed, roles, permissions, check, assign/remove)
+- [x] 6.2 RBAC - Seed 5 roles predefinidos
+- [x] 6.2 RBAC - Componente <Can> frontend
+- [x] 6.2 RBAC - Página RbacAdmin.tsx
+- [x] 6.1 Workflow Engine - Schema (workflow_definitions, workflow_instances)
+- [x] 6.1 Workflow Engine - Engine logic (transições, validações)
+- [x] 6.1 Workflow Engine - Seed default workflow (8D)
+- [x] 6.1 Workflow Engine - Frontend WorkflowEditor.tsx
+- [x] 6.1 Workflow Engine - Templates predefinidos (8D seed)
+- [x] 6.3 Multi-tenancy - Schema (tenants, tenant_users)
+- [x] 6.3 Multi-tenancy - tenantId em tabelas principais
+- [x] 6.3 Multi-tenancy - Backend (CRUD, myTenants, addUser/removeUser)
+- [x] 6.3 Multi-tenancy - Seed default tenant
+- [x] 6.4 Webhooks - Schema (webhook_configs, webhook_logs)
+- [x] 6.4 Webhooks - Event Bus (fireWebhook helper)
+- [x] 6.4 Webhooks - HMAC signing + retry policy
+- [x] 6.4 Webhooks - tRPC endpoints (list, create, update, delete, logs, test)
+- [x] 6.4 Webhooks - Frontend WebhooksAdmin.tsx
+- [x] 6.5 IA Predição - Procedure recurrencePatterns
+- [x] 6.5 IA Predição - Heatmap fornecedor × componente
+- [x] 6.5 IA Predição - LLM sugestão sistêmica
+- [x] 6.6 DMS - Schema (documents, document_versions)
+- [x] 6.6 DMS - Workflow aprovação (DRAFT→IN_REVIEW→APPROVED→OBSOLETE)
+- [x] 6.6 DMS - Versionamento e upload S3
+- [x] 6.6 DMS - Frontend DocumentControl.tsx
+- [x] 6.6 DMS - Busca full-text e filtros
+
+## SDD Roadmap - Fase 7 Preenchimento
+- [x] 7.1 i18n Espanhol - Tradução completa es (3 idiomas: PT-BR, EN, ES)
+- [x] 7.2 Dark Mode - Toggle no Settings + ThemeProvider switchable
+- [x] 7.3 PWA + Service Worker (cache offline, manifest, ícones CDN)

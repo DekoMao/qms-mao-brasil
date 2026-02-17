@@ -38,6 +38,11 @@ import {
   ChevronRight,
   DollarSign,
   Award,
+  GitBranch,
+  Webhook,
+  Brain,
+  FileText,
+  Key,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -46,23 +51,27 @@ import { Button } from "./ui/button";
 import { useTranslation } from 'react-i18next';
 
 // Language Switcher Component
+const LANGS = ['pt-BR', 'en', 'es'] as const;
+const LANG_LABELS: Record<string, string> = { 'pt-BR': 'PT', en: 'EN', es: 'ES' };
+
 function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const currentLang = i18n.language;
   
-  const toggleLanguage = () => {
-    const newLang = currentLang === 'pt-BR' ? 'en' : 'pt-BR';
-    i18n.changeLanguage(newLang);
+  const cycleLanguage = () => {
+    const idx = LANGS.indexOf(currentLang as any);
+    const next = LANGS[(idx + 1) % LANGS.length];
+    i18n.changeLanguage(next);
   };
   
   return (
     <button
-      onClick={toggleLanguage}
+      onClick={cycleLanguage}
       className="h-9 px-2 rounded-lg hover:bg-muted flex items-center gap-1.5 transition-colors text-sm font-medium text-muted-foreground hover:text-foreground"
-      title={currentLang === 'pt-BR' ? 'Switch to English' : 'Mudar para Português'}
+      title="Mudar idioma / Change language / Cambiar idioma"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-      <span className="hidden sm:inline">{currentLang === 'pt-BR' ? 'PT' : 'EN'}</span>
+      <span className="hidden sm:inline">{LANG_LABELS[currentLang] || 'PT'}</span>
     </button>
   );
 }
@@ -81,6 +90,11 @@ const menuItems = [
 const adminMenuItems = [
   { icon: Building2, label: "Fornecedores", path: "/suppliers", iconColor: "text-orange-400" },
   { icon: Clock, label: "SLA", path: "/sla-settings", iconColor: "text-cyan-400" },
+  { icon: Brain, label: "IA Predição", path: "/prediction", iconColor: "text-purple-400" },
+  { icon: FileText, label: "Documentos", path: "/documents", iconColor: "text-blue-400" },
+  { icon: GitBranch, label: "Workflows", path: "/workflow", iconColor: "text-teal-400" },
+  { icon: Key, label: "RBAC", path: "/rbac", iconColor: "text-yellow-400" },
+  { icon: Webhook, label: "Webhooks", path: "/webhooks", iconColor: "text-pink-400" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

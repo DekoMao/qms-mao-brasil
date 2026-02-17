@@ -1,0 +1,26 @@
+{
+  "name": "QTrack System - Quality Defect Tracking",
+  "short_name": "QTrack",
+  "description": "Sistema de rastreamento de defeitos de qualidade e workflow 8D",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a5f",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/CCqiPwbKcdGqSkrr.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/eXCqVNpWGTnRLaku.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "pt-BR"
+}

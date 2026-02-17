@@ -19,6 +19,11 @@ import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import CopqDashboard from "./pages/CopqDashboard";
 import SupplierScorecard from "./pages/SupplierScorecard";
+import RbacAdmin from "./pages/RbacAdmin";
+import WorkflowEditor from "./pages/WorkflowEditor";
+import WebhooksAdmin from "./pages/WebhooksAdmin";
+import DocumentControl from "./pages/DocumentControl";
+import AiPrediction from "./pages/AiPrediction";
 
 // Main app router with dashboard layout
 function MainRouter() {
@@ -38,6 +43,11 @@ function MainRouter() {
         <Route path="/settings" component={Settings} />
         <Route path="/copq" component={CopqDashboard} />
         <Route path="/scorecard" component={SupplierScorecard} />
+        <Route path="/rbac" component={RbacAdmin} />
+        <Route path="/workflow" component={WorkflowEditor} />
+        <Route path="/webhooks" component={WebhooksAdmin} />
+        <Route path="/documents" component={DocumentControl} />
+        <Route path="/prediction" component={AiPrediction} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
@@ -49,7 +59,7 @@ function MainRouter() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="light" switchable>
         <TooltipProvider>
           <Toaster />
           <Switch>

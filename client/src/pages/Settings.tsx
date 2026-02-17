@@ -19,21 +19,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useTranslation } from "react-i18next";
 
 export default function Settings() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { t, i18n } = useTranslation();
   
   // Preferences state
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [slaAlerts, setSlaAlerts] = useState(true);
   const [updateAlerts, setUpdateAlerts] = useState(true);
-  const [theme, setTheme] = useState("light");
-  const [language, setLanguage] = useState("pt-BR");
 
   const handleSave = () => {
-    // In a real app, this would save to the backend
     toast.success("Configurações salvas com sucesso!");
+  };
+
+  const handleThemeChange = (value: string) => {
+    if ((value === "dark" && theme === "light") || (value === "light" && theme === "dark")) {
+      toggleTheme?.();
+    }
+  };
+
+  const handleLanguageChange = (value: string) => {
+    i18n.changeLanguage(value);
   };
 
   return (
@@ -44,24 +55,24 @@ export default function Settings() {
           <Button 
             variant="ghost" 
             onClick={() => setLocation("/")}
-            className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-all duration-200 shadow-sm hover:shadow group"
+            className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium transition-all duration-200 shadow-sm hover:shadow group"
           >
             <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
-            Voltar
+            {t('common.back')}
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
               <SettingsIcon className="h-6 w-6 text-primary" />
-              Configurações
+              {t('settings.title')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Gerencie suas preferências e configurações do sistema
+              {t('settings.subtitle')}
             </p>
           </div>
         </div>
         <Button onClick={handleSave}>
           <Save className="h-4 w-4 mr-2" />
-          Salvar Alterações
+          {t('common.save')}
         </Button>
       </div>
 
@@ -79,7 +90,7 @@ export default function Settings() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="name">{t('common.name')}</Label>
               <Input 
                 id="name" 
                 value={user?.name || ""} 
@@ -108,7 +119,7 @@ export default function Settings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-primary" />
-            Notificações
+            {t('notification.title')}
           </CardTitle>
           <CardDescription>
             Configure como você deseja receber alertas
@@ -172,8 +183,8 @@ export default function Settings() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Tema</Label>
-              <Select value={theme} onValueChange={setTheme}>
+              <Label>{t('settings.theme')}</Label>
+              <Select value={theme} onValueChange={handleThemeChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -181,28 +192,27 @@ export default function Settings() {
                   <SelectItem value="light">
                     <div className="flex items-center gap-2">
                       <Sun className="h-4 w-4" />
-                      Claro
+                      {t('settings.light')}
                     </div>
                   </SelectItem>
                   <SelectItem value="dark">
                     <div className="flex items-center gap-2">
                       <Moon className="h-4 w-4" />
-                      Escuro
+                      {t('settings.dark')}
                     </div>
                   </SelectItem>
-                  <SelectItem value="system">Sistema</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Idioma</Label>
-              <Select value={language} onValueChange={setLanguage}>
+              <Label>{t('common.language')}</Label>
+              <Select value={i18n.language} onValueChange={handleLanguageChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                  <SelectItem value="en-US">English (US)</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
                   <SelectItem value="es">Español</SelectItem>
                 </SelectContent>
               </Select>

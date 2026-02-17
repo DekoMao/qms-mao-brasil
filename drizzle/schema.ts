@@ -465,3 +465,214 @@ export const aiSuggestionsRelations = relations(aiSuggestions, ({ one }) => ({
     references: [defects.id],
   }),
 }));
+
+
+// =====================================================
+// 6.2 RBAC TABLES
+// =====================================================
+export const roles = mysqlTable("roles", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  isSystem: boolean("isSystem").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const permissions = mysqlTable("permissions", {
+  id: int("id").autoincrement().primaryKey(),
+  resource: varchar("resource", { length: 100 }).notNull(),
+  action: varchar("action", { length: 50 }).notNull(),
+  description: text("description"),
+});
+
+export const rolePermissions = mysqlTable("role_permissions", {
+  id: int("id").autoincrement().primaryKey(),
+  roleId: int("roleId").notNull(),
+  permissionId: int("permissionId").notNull(),
+}, (table) => [
+  index("idx_rp_role").on(table.roleId),
+]);
+
+export const userRoles = mysqlTable("user_roles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  roleId: int("roleId").notNull(),
+}, (table) => [
+  index("idx_ur_user").on(table.userId),
+]);
+
+export type Role = typeof roles.$inferSelect;
+export type Permission = typeof permissions.$inferSelect;
+
+// =====================================================
+// 6.1 WORKFLOW ENGINE TABLES
+// =====================================================
+export const workflowDefinitions = mysqlTable("workflow_definitions", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  version: int("version").notNull().default(1),
+  isDefault: boolean("isDefault").default(false),
+  isActive: boolean("isActive").default(true),
+  steps: json("steps").notNull(),
+  transitions: json("transitions").notNull(),
+  metadata: json("metadata"),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const workflowInstances = mysqlTable("workflow_instances", {
+  id: int("id").autoincrement().primaryKey(),
+  definitionId: int("definitionId").notNull(),
+  defectId: int("defectId").notNull(),
+  currentStepId: varchar("currentStepId", { length: 50 }).notNull(),
+  stepHistory: json("stepHistory").notNull(),
+  status: mysqlEnum("status", ["ACTIVE", "COMPLETED", "CANCELLED", "ON_HOLD"]).default("ACTIVE"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("idx_wf_instance_defect").on(table.defectId),
+  index("idx_wf_instance_definition").on(table.definitionId),
+]);
+
+export type WorkflowDefinition = typeof workflowDefinitions.$inferSelect;
+export type WorkflowInstance = typeof workflowInstances.$inferSelect;
+
+// =====================================================
+// 6.3 MULTI-TENANCY TABLES
+// =====================================================
+export const tenants = mysqlTable("tenants", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  plan: mysqlEnum("plan", ["FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE"]).default("FREE"),
+  maxUsers: int("maxUsers").default(10),
+  maxDefects: int("maxDefects").default(500),
+  isActive: boolean("isActive").default(true),
+  settings: json("settings"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const tenantUsers = mysqlTable("tenant_users", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  userId: int("userId").notNull(),
+  role: varchar("role", { length: 100 }).default("user"),
+  isActive: boolean("isActive").default(true),
+}, (table) => [
+  index("idx_tu_tenant").on(table.tenantId),
+  index("idx_tu_user").on(table.userId),
+]);
+
+export type Tenant = typeof tenants.$inferSelect;
+
+// =====================================================
+// 6.4 WEBHOOKS TABLES
+// =====================================================
+export const webhookConfigs = mysqlTable("webhook_configs", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId"),
+  name: varchar("name", { length: 200 }).notNull(),
+  url: text("url").notNull(),
+  secret: varchar("secret", { length: 200 }).notNull(),
+  events: json("events").notNull(),
+  headers: json("headers"),
+  isActive: boolean("isActive").default(true),
+  retryPolicy: json("retryPolicy"),
+  failCount: int("failCount").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const webhookLogs = mysqlTable("webhook_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  configId: int("configId").notNull(),
+  event: varchar("event", { length: 100 }).notNull(),
+  payload: json("payload").notNull(),
+  responseStatus: int("responseStatus"),
+  responseBody: text("responseBody"),
+  attempts: int("attempts").default(0),
+  status: mysqlEnum("status", ["PENDING", "SUCCESS", "FAILED", "RETRYING"]).default("PENDING"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+}, (table) => [
+  index("idx_whl_config").on(table.configId),
+  index("idx_whl_status").on(table.status),
+]);
+
+export type WebhookConfig = typeof webhookConfigs.$inferSelect;
+
+// =====================================================
+// 6.6 DOCUMENT CONTROL / DMS TABLES
+// =====================================================
+export const documents = mysqlTable("documents", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId"),
+  title: varchar("title", { length: 300 }).notNull(),
+  documentNumber: varchar("documentNumber", { length: 50 }).notNull(),
+  category: mysqlEnum("category", [
+    "PROCEDURE", "WORK_INSTRUCTION", "FORM", "TEMPLATE", "SPECIFICATION",
+    "REPORT", "CERTIFICATE", "OTHER"
+  ]).notNull(),
+  currentVersion: int("currentVersion").default(1),
+  status: mysqlEnum("status", ["DRAFT", "IN_REVIEW", "APPROVED", "OBSOLETE"]).default("DRAFT"),
+  ownerId: int("ownerId").notNull(),
+  approvedBy: int("approvedBy"),
+  approvedAt: timestamp("approvedAt"),
+  expiresAt: timestamp("expiresAt"),
+  tags: json("tags"),
+  deletedAt: timestamp("deletedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("idx_doc_tenant").on(table.tenantId),
+  index("idx_doc_status").on(table.status),
+  index("idx_doc_number").on(table.documentNumber),
+]);
+
+export const documentVersions = mysqlTable("document_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  documentId: int("documentId").notNull(),
+  version: int("version").notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileSize: int("fileSize"),
+  mimeType: varchar("mimeType", { length: 100 }),
+  changeDescription: text("changeDescription"),
+  uploadedBy: int("uploadedBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("idx_dv_document").on(table.documentId),
+]);
+
+export type Document = typeof documents.$inferSelect;
+export type DocumentVersion = typeof documentVersions.$inferSelect;
+
+// =====================================================
+// NEW RELATIONS
+// =====================================================
+export const rolesRelations = relations(roles, ({ many }) => ({
+  rolePermissions: many(rolePermissions),
+}));
+
+export const workflowInstancesRelations = relations(workflowInstances, ({ one }) => ({
+  definition: one(workflowDefinitions, {
+    fields: [workflowInstances.definitionId],
+    references: [workflowDefinitions.id],
+  }),
+  defect: one(defects, {
+    fields: [workflowInstances.defectId],
+    references: [defects.id],
+  }),
+}));
+
+export const documentsRelations = relations(documents, ({ many }) => ({
+  versions: many(documentVersions),
+}));
+
+export const documentVersionsRelations = relations(documentVersions, ({ one }) => ({
+  document: one(documents, {
+    fields: [documentVersions.documentId],
+    references: [documents.id],
+  }),
+}));
