@@ -8,8 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { 
-  Settings as SettingsIcon, User, Bell, Shield, Palette, 
-  ArrowLeft, Save, Moon, Sun
+  Settings as SettingsIcon, User, Bell, Shield, Globe,
+  ArrowLeft, Save
 } from "lucide-react";
 import { useLocation } from "wouter";
 import {
@@ -19,13 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
 
 export default function Settings() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const { t, i18n } = useTranslation();
   
   // Preferences state
@@ -35,12 +33,6 @@ export default function Settings() {
 
   const handleSave = () => {
     toast.success("Configurações salvas com sucesso!");
-  };
-
-  const handleThemeChange = (value: string) => {
-    if ((value === "dark" && theme === "light") || (value === "light" && theme === "dark")) {
-      toggleTheme?.();
-    }
   };
 
   const handleLanguageChange = (value: string) => {
@@ -169,54 +161,30 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Appearance Section */}
+      {/* Language Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Palette className="h-5 w-5 text-primary" />
-            Aparência
+            <Globe className="h-5 w-5 text-primary" />
+            {t('common.language')}
           </CardTitle>
           <CardDescription>
-            Personalize a interface do sistema
+            Selecione o idioma da interface
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{t('settings.theme')}</Label>
-              <Select value={theme} onValueChange={handleThemeChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">
-                    <div className="flex items-center gap-2">
-                      <Sun className="h-4 w-4" />
-                      {t('settings.light')}
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="dark">
-                    <div className="flex items-center gap-2">
-                      <Moon className="h-4 w-4" />
-                      {t('settings.dark')}
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('common.language')}</Label>
-              <Select value={i18n.language} onValueChange={handleLanguageChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="es">Español</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <CardContent>
+          <div className="max-w-xs space-y-2">
+            <Label>{t('common.language')}</Label>
+            <Select value={i18n.language} onValueChange={handleLanguageChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="es">Español</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

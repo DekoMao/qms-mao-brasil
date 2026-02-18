@@ -67,7 +67,7 @@ function MainRouter() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark" switchable>
+      <ThemeProvider>
         <TooltipProvider>
           <Toaster />
           <Switch>

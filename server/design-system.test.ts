@@ -232,3 +232,35 @@ describe("Design System - No Light Theme Artifacts", () => {
     expect(content).toContain("severity-a");
   });
 });
+
+describe("Design System - Permanent Dark Mode (No Theme Toggle)", () => {
+  it("ThemeContext should not expose toggleTheme or switchable", () => {
+    const ctxPath = resolve(__dirname, "../client/src/contexts/ThemeContext.tsx");
+    const content = readFileSync(ctxPath, "utf-8");
+    // Should not contain switchable prop or toggleTheme function
+    expect(content).not.toContain("switchable");
+    expect(content).not.toContain("toggleTheme");
+    // Should always set dark class
+    expect(content).toContain('classList.add("dark")');
+    // Theme type should be fixed to dark
+    expect(content).toContain('theme: "dark"');
+  });
+
+  it("App.tsx should not pass switchable or defaultTheme to ThemeProvider", () => {
+    const appPath = resolve(__dirname, "../client/src/App.tsx");
+    const content = readFileSync(appPath, "utf-8");
+    expect(content).not.toContain("switchable");
+    expect(content).not.toContain("defaultTheme");
+    expect(content).toContain("<ThemeProvider>");
+  });
+
+  it("Settings.tsx should not contain theme toggle or Aparência section", () => {
+    const settingsPath = resolve(__dirname, "../client/src/pages/Settings.tsx");
+    const content = readFileSync(settingsPath, "utf-8");
+    expect(content).not.toContain("toggleTheme");
+    expect(content).not.toContain("handleThemeChange");
+    expect(content).not.toContain("Aparência");
+    // Should still have language selector
+    expect(content).toContain("handleLanguageChange");
+  });
+});

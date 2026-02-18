@@ -444,3 +444,11 @@
 - [x] SupplierPortal: Login com login-container dark
 - [x] NotFound: bg-background dark, botão primary
 - [x] Testes: 362 testes passando com novos testes de hierarquia de contraste
+
+## Remover Toggle de Tema (Dark Mode Permanente)
+- [x] Remover seção Aparência/Tema da página Settings
+- [x] Simplificar ThemeProvider para forçar dark mode permanente
+- [x] Remover referências ao toggle de tema no código (App.tsx, Home.tsx)
+- [x] Reorganizar Settings: Idioma em card separado com ícone Globe
+- [x] Validar que o sistema funciona corretamente sem o toggle
+- [x] Atualizar testes: 3 novos testes (ThemeContext, App.tsx, Settings.tsx) — 365 total
