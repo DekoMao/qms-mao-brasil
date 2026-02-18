@@ -190,7 +190,7 @@ export default function CopqDashboard() {
                       <Cell key={i} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ background: '#1A2942', border: '1px solid #2A4A6B', borderRadius: 8, color: '#E0E8F0' }} />
                   <Legend />
                 </RechartsPie>
               </ResponsiveContainer>
@@ -215,9 +215,9 @@ export default function CopqDashboard() {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={paretoData} layout="vertical" margin={{ left: 10, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
-                  <XAxis type="number" tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
-                  <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <XAxis type="number" tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} tick={{ fill: '#8BA3BF' }} />
+                  <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12, fill: '#8BA3BF' }} />
+                  <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ background: '#1A2942', border: '1px solid #2A4A6B', borderRadius: 8, color: '#E0E8F0' }} />
                   <Bar dataKey="total" fill="#ef4444" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -242,9 +242,9 @@ export default function CopqDashboard() {
           <ResponsiveContainer width="100%" height={350}>
             <RechartsLine data={trendData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#8BA3BF' }} />
+              <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} tick={{ fill: '#8BA3BF' }} />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ background: '#1A2942', border: '1px solid #2A4A6B', borderRadius: 8, color: '#E0E8F0' }} />
               <Legend />
               <Line type="monotone" dataKey="internalFailure" name={catLabels.INTERNAL_FAILURE} stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
               <Line type="monotone" dataKey="externalFailure" name={catLabels.EXTERNAL_FAILURE} stroke="#f97316" strokeWidth={2} dot={{ r: 3 }} />

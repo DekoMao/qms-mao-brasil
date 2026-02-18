@@ -90,15 +90,15 @@ export default function Kanban() {
               </div>
 
               {/* Column Content */}
-              <ScrollArea className="flex-1 bg-muted/30 rounded-b-lg border border-t-0 min-h-[500px] max-h-[calc(100vh-250px)]">
+              <ScrollArea className="flex-1 kanban-column rounded-b-lg border-t-0 min-h-[500px] max-h-[calc(100vh-250px)]">
                 <div className="p-2 space-y-2">
                   {columnDefects.map(defect => (
-                    <Card 
+                    <div 
                       key={defect.id} 
-                      className="kanban-card cursor-pointer hover:border-primary/50"
+                      className="kanban-card"
                       onClick={() => setLocation(`/defects/${defect.id}`)}
                     >
-                      <CardContent className="p-3">
+                      <div>
                         {/* Header */}
                         <div className="flex justify-between items-start mb-2">
                           <span className="font-medium text-primary text-sm">{defect.docNumber}</span>
@@ -145,8 +145,8 @@ export default function Kanban() {
                             </span>
                           </div>
                         )}
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   ))}
 
                   {columnDefects.length === 0 && (

@@ -46,9 +46,9 @@
   /* Custom enterprise colors */
   --color-teal: oklch(0.78 0.15 170);
   --color-gold: oklch(0.75 0.15 80);
-  --color-navy-deep: oklch(0.12 0.03 250);
-  --color-navy-card: oklch(0.17 0.03 250);
-  --color-navy-elevated: oklch(0.20 0.035 250);
+  --color-navy-deep: oklch(0.10 0.025 250);
+  --color-navy-card: oklch(0.20 0.03 250);
+  --color-navy-elevated: oklch(0.24 0.03 250);
   --color-success: oklch(0.70 0.17 160);
   --color-warning: oklch(0.75 0.15 80);
   --color-danger: oklch(0.65 0.22 25);
@@ -64,16 +64,16 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  /* Dark Navy Background Layers */
-  --background: oklch(0.13 0.03 250);
+  /* Dark Navy Background Layers — increased contrast hierarchy */
+  --background: oklch(0.12 0.025 250);
   --foreground: oklch(0.95 0.005 250);
 
-  /* Cards - Slightly lighter navy */
-  --card: oklch(0.17 0.035 250);
+  /* Cards - Visibly lighter than background for clear separation */
+  --card: oklch(0.20 0.03 250);
   --card-foreground: oklch(0.95 0.005 250);
 
-  /* Popover */
-  --popover: oklch(0.19 0.035 250);
+  /* Popover - Slightly brighter than card */
+  --popover: oklch(0.22 0.03 250);
   --popover-foreground: oklch(0.95 0.005 250);
 
   /* Primary = Teal accent */
@@ -81,12 +81,12 @@
   --primary-foreground: oklch(0.15 0.03 250);
 
   /* Secondary = Elevated navy */
-  --secondary: oklch(0.20 0.035 250);
-  --secondary-foreground: oklch(0.85 0.01 250);
+  --secondary: oklch(0.24 0.03 250);
+  --secondary-foreground: oklch(0.88 0.01 250);
 
-  /* Muted */
-  --muted: oklch(0.22 0.03 250);
-  --muted-foreground: oklch(0.60 0.02 250);
+  /* Muted - Clearly visible layer */
+  --muted: oklch(0.26 0.025 250);
+  --muted-foreground: oklch(0.65 0.02 250);
 
   /* Accent = Gold */
   --accent: oklch(0.75 0.15 80);
@@ -96,9 +96,9 @@
   --destructive: oklch(0.60 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  /* Borders - Subtle navy */
-  --border: oklch(0.25 0.04 250);
-  --input: oklch(0.22 0.04 250);
+  /* Borders - More visible for card edges */
+  --border: oklch(0.30 0.035 250);
+  --input: oklch(0.26 0.035 250);
   --ring: oklch(0.75 0.14 170);
 
   /* Charts - Enterprise palette */
@@ -108,14 +108,14 @@
   --chart-4: oklch(0.65 0.22 25);
   --chart-5: oklch(0.60 0.20 300);
 
-  /* Sidebar - Deepest navy */
-  --sidebar: oklch(0.11 0.03 250);
+  /* Sidebar - Deepest navy (darker than background) */
+  --sidebar: oklch(0.10 0.025 250);
   --sidebar-foreground: oklch(0.85 0.01 250);
   --sidebar-primary: oklch(0.75 0.14 170);
   --sidebar-primary-foreground: oklch(0.13 0.03 250);
-  --sidebar-accent: oklch(0.18 0.035 250);
+  --sidebar-accent: oklch(0.18 0.03 250);
   --sidebar-accent-foreground: oklch(0.95 0.005 250);
-  --sidebar-border: oklch(0.22 0.035 250);
+  --sidebar-border: oklch(0.25 0.03 250);
   --sidebar-ring: oklch(0.75 0.14 170);
 
   --radius: 0.75rem;
@@ -123,37 +123,37 @@
 
 /* Dark mode uses the same values (always dark) */
 .dark {
-  --background: oklch(0.13 0.03 250);
+  --background: oklch(0.12 0.025 250);
   --foreground: oklch(0.95 0.005 250);
-  --card: oklch(0.17 0.035 250);
+  --card: oklch(0.20 0.03 250);
   --card-foreground: oklch(0.95 0.005 250);
-  --popover: oklch(0.19 0.035 250);
+  --popover: oklch(0.22 0.03 250);
   --popover-foreground: oklch(0.95 0.005 250);
   --primary: oklch(0.75 0.14 170);
   --primary-foreground: oklch(0.15 0.03 250);
-  --secondary: oklch(0.20 0.035 250);
-  --secondary-foreground: oklch(0.85 0.01 250);
-  --muted: oklch(0.22 0.03 250);
-  --muted-foreground: oklch(0.60 0.02 250);
+  --secondary: oklch(0.24 0.03 250);
+  --secondary-foreground: oklch(0.88 0.01 250);
+  --muted: oklch(0.26 0.025 250);
+  --muted-foreground: oklch(0.65 0.02 250);
   --accent: oklch(0.75 0.15 80);
   --accent-foreground: oklch(0.15 0.03 250);
   --destructive: oklch(0.60 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.25 0.04 250);
-  --input: oklch(0.22 0.04 250);
+  --border: oklch(0.30 0.035 250);
+  --input: oklch(0.26 0.035 250);
   --ring: oklch(0.75 0.14 170);
   --chart-1: oklch(0.75 0.14 170);
   --chart-2: oklch(0.75 0.15 80);
   --chart-3: oklch(0.65 0.18 260);
   --chart-4: oklch(0.65 0.22 25);
   --chart-5: oklch(0.60 0.20 300);
-  --sidebar: oklch(0.11 0.03 250);
+  --sidebar: oklch(0.10 0.025 250);
   --sidebar-foreground: oklch(0.85 0.01 250);
   --sidebar-primary: oklch(0.75 0.14 170);
   --sidebar-primary-foreground: oklch(0.13 0.03 250);
-  --sidebar-accent: oklch(0.18 0.035 250);
+  --sidebar-accent: oklch(0.18 0.03 250);
   --sidebar-accent-foreground: oklch(0.95 0.005 250);
-  --sidebar-border: oklch(0.22 0.035 250);
+  --sidebar-border: oklch(0.25 0.03 250);
   --sidebar-ring: oklch(0.75 0.14 170);
 }
 
@@ -315,7 +315,7 @@
 }
 .kpi-card-label {
   @apply text-sm mt-1;
-  color: oklch(0.60 0.02 250);
+  color: oklch(0.65 0.02 250);
 }
 
 /* Teal KPI Card variant - Colored background */
@@ -349,32 +349,38 @@
   @apply w-full text-sm;
 }
 .data-table thead {
-  background: oklch(0.15 0.03 250);
+  background: oklch(0.16 0.025 250);
 }
 .data-table th {
   @apply px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider;
-  color: oklch(0.60 0.02 250);
+  color: oklch(0.65 0.02 250);
 }
 .data-table td {
   @apply px-4 py-3;
-  border-bottom: 1px solid oklch(0.22 0.03 250);
+  border-bottom: 1px solid oklch(0.26 0.025 250);
 }
 .data-table tbody tr {
   @apply transition-colors;
 }
 .data-table tbody tr:hover {
-  background: oklch(0.19 0.035 250);
+  background: oklch(0.22 0.03 250);
 }
 
-/* Kanban card styling - Dark */
+/* Kanban card styling - Dark with clear contrast */
 .kanban-card {
-  @apply bg-card rounded-lg border border-border p-4 transition-all cursor-pointer;
+  background: oklch(0.22 0.025 250);
+  border: 1px solid oklch(0.32 0.03 250);
+  @apply rounded-lg p-4 transition-all cursor-pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 .kanban-card:hover {
-  border-color: oklch(0.75 0.14 170 / 0.4);
+  border-color: oklch(0.75 0.14 170 / 0.5);
+  background: oklch(0.24 0.025 250);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 .kanban-column {
-  background: oklch(0.15 0.03 250);
+  background: oklch(0.14 0.02 250);
+  border: 1px solid oklch(0.25 0.03 250);
   @apply rounded-xl p-3 min-h-[500px];
 }
 .kanban-column-header {
@@ -431,27 +437,28 @@
 .icon-sla { color: oklch(0.72 0.14 200); }
 .icon-portal { color: oklch(0.60 0.20 300); }
 
-/* Chart container - Dark card */
+/* Chart container - Dark card with visible borders */
 .chart-container {
   @apply bg-card rounded-xl border border-border p-5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 .chart-title {
   @apply text-base font-semibold mb-1 text-foreground;
 }
 .chart-subtitle {
   @apply text-sm mb-4;
-  color: oklch(0.60 0.02 250);
+  color: oklch(0.65 0.02 250);
 }
 
 /* Login page - Deep navy gradient */
 .login-container {
   @apply min-h-screen flex items-center justify-center;
-  background: linear-gradient(135deg, oklch(0.10 0.03 250) 0%, oklch(0.16 0.04 250) 50%, oklch(0.12 0.03 250) 100%);
+  background: linear-gradient(135deg, oklch(0.08 0.02 250) 0%, oklch(0.14 0.03 250) 50%, oklch(0.10 0.025 250) 100%);
 }
 .login-card {
   @apply rounded-2xl p-8 w-full max-w-md;
-  background: oklch(0.17 0.035 250);
-  border: 1px solid oklch(0.25 0.04 250);
+  background: oklch(0.20 0.03 250);
+  border: 1px solid oklch(0.30 0.035 250);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 .login-logo {
@@ -463,19 +470,19 @@
 /* Header bar - Dark enterprise */
 .header-bar {
   @apply h-14 flex items-center justify-between px-6;
-  background: oklch(0.15 0.03 250 / 0.95);
+  background: oklch(0.14 0.025 250 / 0.95);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid oklch(0.22 0.035 250);
+  border-bottom: 1px solid oklch(0.28 0.03 250);
 }
 
 /* Filter chips - Dark */
 .filter-chip {
   @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors;
-  background: oklch(0.20 0.035 250);
-  color: oklch(0.70 0.02 250);
+  background: oklch(0.24 0.03 250);
+  color: oklch(0.75 0.02 250);
 }
 .filter-chip:hover {
-  background: oklch(0.25 0.04 250);
+  background: oklch(0.28 0.035 250);
 }
 .filter-chip.active {
   background: oklch(0.75 0.14 170);
@@ -517,7 +524,7 @@
 
 /* Section divider */
 .section-divider {
-  border-top: 1px solid oklch(0.22 0.03 250);
+  border-top: 1px solid oklch(0.28 0.025 250);
   @apply my-6;
 }
 
@@ -536,15 +543,15 @@
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: oklch(0.15 0.03 250);
+  background: oklch(0.14 0.025 250);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.30 0.04 250);
+  background: oklch(0.32 0.035 250);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.40 0.04 250);
+  background: oklch(0.42 0.035 250);
 }
 
 /* Animation utilities */
@@ -556,11 +563,12 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive table wrapper - Dark */
+/* Responsive table wrapper - Dark with visible border */
 .table-wrapper {
   @apply overflow-x-auto rounded-xl;
-  background: oklch(0.17 0.035 250);
-  border: 1px solid oklch(0.25 0.04 250);
+  background: oklch(0.20 0.03 250);
+  border: 1px solid oklch(0.30 0.035 250);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* =====================================================
@@ -592,8 +600,8 @@
 
 /* Code block - Terminal style */
 .code-block {
-  background: oklch(0.12 0.02 250);
-  border: 1px solid oklch(0.22 0.03 250);
+  background: oklch(0.10 0.02 250);
+  border: 1px solid oklch(0.28 0.025 250);
   border-radius: 12px;
   font-family: var(--font-mono);
   font-size: 13px;
@@ -606,8 +614,8 @@
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: oklch(0.10 0.02 250);
-  border-bottom: 1px solid oklch(0.22 0.03 250);
+  background: oklch(0.08 0.02 250);
+  border-bottom: 1px solid oklch(0.28 0.025 250);
   border-radius: 12px 12px 0 0;
 }
 .code-block-dot {
@@ -626,7 +634,7 @@
   padding: 8px 12px;
 }
 .permission-matrix th {
-  background: oklch(0.15 0.03 250);
+  background: oklch(0.16 0.025 250);
   color: oklch(0.75 0.15 80);
   font-weight: 600;
   text-transform: uppercase;
@@ -634,7 +642,7 @@
   letter-spacing: 0.05em;
 }
 .permission-matrix td {
-  background: oklch(0.17 0.035 250);
+  background: oklch(0.20 0.03 250);
   text-align: center;
 }
 
@@ -656,5 +664,5 @@
 }
 .page-subtitle {
   @apply text-sm mt-1;
-  color: oklch(0.60 0.02 250);
+  color: oklch(0.65 0.02 250);
 }

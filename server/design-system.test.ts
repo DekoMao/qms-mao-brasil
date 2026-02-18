@@ -15,8 +15,8 @@ describe("Design System - Dark Navy Enterprise Theme", () => {
   it("should use oklch color format for theme variables", () => {
     // The theme should use oklch colors as required by Tailwind CSS 4
     expect(cssContent).toContain("oklch(");
-    // Background should be dark navy
-    expect(cssContent).toContain("--background: oklch(0.13");
+    // Background should be dark navy (updated contrast hierarchy)
+    expect(cssContent).toContain("--background: oklch(0.12");
   });
 
   it("should define all required CSS custom properties", () => {
@@ -134,6 +134,58 @@ describe("Design System - Dark Navy Enterprise Theme", () => {
   it("should include glow effect utilities", () => {
     expect(cssContent).toContain(".glow-teal");
     expect(cssContent).toContain(".glow-gold");
+  });
+
+  it("should have proper contrast hierarchy: bg < card < secondary < muted", () => {
+    // Extract lightness values from oklch
+    const bgMatch = cssContent.match(/:root\s*\{[^}]*--background:\s*oklch\(([\d.]+)/s);
+    const cardMatch = cssContent.match(/:root\s*\{[^}]*--card:\s*oklch\(([\d.]+)/s);
+    const secondaryMatch = cssContent.match(/:root\s*\{[^}]*--secondary:\s*oklch\(([\d.]+)/s);
+    const mutedMatch = cssContent.match(/:root\s*\{[^}]*--muted:\s*oklch\(([\d.]+)/s);
+    const borderMatch = cssContent.match(/:root\s*\{[^}]*--border:\s*oklch\(([\d.]+)/s);
+
+    expect(bgMatch).toBeTruthy();
+    expect(cardMatch).toBeTruthy();
+    expect(secondaryMatch).toBeTruthy();
+    expect(mutedMatch).toBeTruthy();
+    expect(borderMatch).toBeTruthy();
+
+    const bgL = parseFloat(bgMatch![1]);
+    const cardL = parseFloat(cardMatch![1]);
+    const secondaryL = parseFloat(secondaryMatch![1]);
+    const mutedL = parseFloat(mutedMatch![1]);
+    const borderL = parseFloat(borderMatch![1]);
+
+    // Card must be visibly lighter than background (min 0.06 difference)
+    expect(cardL - bgL).toBeGreaterThanOrEqual(0.06);
+    // Secondary must be lighter than card
+    expect(secondaryL).toBeGreaterThan(cardL);
+    // Muted must be lighter than secondary
+    expect(mutedL).toBeGreaterThanOrEqual(secondaryL);
+    // Border must be visible (lighter than card)
+    expect(borderL).toBeGreaterThan(cardL);
+  });
+
+  it("should have kanban-card with explicit background and box-shadow for contrast", () => {
+    expect(cssContent).toContain(".kanban-card");
+    // Kanban card should have explicit background color
+    const kanbanSection = cssContent.match(/\.kanban-card\s*\{([^}]+)\}/s);
+    expect(kanbanSection).toBeTruthy();
+    expect(kanbanSection![1]).toContain("background:");
+    expect(kanbanSection![1]).toContain("box-shadow:");
+  });
+
+  it("should have kanban-column with explicit background darker than kanban-card", () => {
+    const columnSection = cssContent.match(/\.kanban-column\s*\{([^}]+)\}/s);
+    expect(columnSection).toBeTruthy();
+    expect(columnSection![1]).toContain("background:");
+    // Extract lightness values
+    const cardBgMatch = cssContent.match(/\.kanban-card\s*\{[^}]*background:\s*oklch\(([\d.]+)/s);
+    const colBgMatch = cssContent.match(/\.kanban-column\s*\{[^}]*background:\s*oklch\(([\d.]+)/s);
+    expect(cardBgMatch).toBeTruthy();
+    expect(colBgMatch).toBeTruthy();
+    // Card should be lighter than column
+    expect(parseFloat(cardBgMatch![1])).toBeGreaterThan(parseFloat(colBgMatch![1]));
   });
 });
 

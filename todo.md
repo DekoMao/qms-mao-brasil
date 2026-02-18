@@ -433,3 +433,14 @@
 - [x] ManusDialog: bg-card ao invés de bg-white
 - [x] Testes: 16 testes design-system.test.ts (tokens, componentes, sem artefatos light)
 - [x] Todos os 359 testes passando (15 arquivos de teste)
+
+## Fix Contraste Preto-sobre-Preto (Dark Theme)
+- [x] Kanban: Cards com bg oklch(0.22) + box-shadow + borda oklch(0.32) visível
+- [x] Kanban: Colunas com bg oklch(0.14) + borda — contraste claro card > coluna
+- [x] COPQ: KPI cards com bg-card oklch(0.20) + border oklch(0.30) visível
+- [x] COPQ: Tooltips dark (#1A2942), eixos com fill #8BA3BF, grid #1E3A5F
+- [x] index.css: Hierarquia bg(0.12) < sidebar(0.10) < card(0.20) < secondary(0.24) < muted(0.26) < border(0.30)
+- [x] SupplierScorecard: Tooltips dark corrigidos
+- [x] SupplierPortal: Login com login-container dark
+- [x] NotFound: bg-background dark, botão primary
+- [x] Testes: 362 testes passando com novos testes de hierarquia de contraste
