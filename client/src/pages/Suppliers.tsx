@@ -372,7 +372,7 @@ export default function Suppliers() {
                 {suppliers?.map((supplier) => (
                   <div
                     key={supplier.id}
-                    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    className="border rounded-lg p-4 hover:bg-muted transition-colors"
                   >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-2">
@@ -381,7 +381,7 @@ export default function Suppliers() {
                           {supplier.code && (
                             <Badge variant="outline">{supplier.code}</Badge>
                           )}
-                          <Badge className={supplier.isActive ? "bg-green-500" : "bg-gray-500"}>
+                          <Badge className={supplier.isActive ? "bg-green-500" : "bg-muted"}>
                             {supplier.isActive ? "Ativo" : "Inativo"}
                           </Badge>
                         </div>
@@ -407,7 +407,7 @@ export default function Suppliers() {
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                           <span className="text-xs text-muted-foreground">Código de Acesso:</span>
-                          <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
+                          <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
                             {supplier.accessCode || "N/A"}
                           </code>
                           {supplier.accessCode && (

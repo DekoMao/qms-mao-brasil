@@ -215,7 +215,7 @@ export default function SupplierScorecard() {
                     <PolarGrid />
                     <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11 }} />
                     <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 10 }} />
-                    <Radar name="Score" dataKey="score" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} />
+                    <Radar name="Score" dataKey="score" stroke="#00D4AA" fill="#00D4AA" fillOpacity={0.3} />
                     <Tooltip />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -258,7 +258,7 @@ export default function SupplierScorecard() {
               <h3 className="text-sm font-medium mb-2">{lang === "pt" ? "Histórico (últimos 12 meses)" : "History (last 12 months)"}</h3>
               <ResponsiveContainer width="100%" height={120}>
                 <LineChart data={supplierDetail.history.map((h: any) => ({ period: h.periodKey, score: parseFloat(h.overallScore) })).reverse()}>
-                  <Line type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="score" stroke="#00D4AA" strokeWidth={2} dot={{ r: 3 }} />
                   <Tooltip />
                 </LineChart>
               </ResponsiveContainer>

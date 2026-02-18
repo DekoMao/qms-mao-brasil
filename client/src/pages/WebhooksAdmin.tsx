@@ -145,7 +145,7 @@ export default function WebhooksAdmin() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`h-2 w-2 rounded-full ${config.isActive ? "bg-green-500" : "bg-gray-400"}`} />
+                  <div className={`h-2 w-2 rounded-full ${config.isActive ? "bg-green-500" : "bg-muted"}`} />
                   <div>
                     <CardTitle className="text-base">{config.name}</CardTitle>
                     <CardDescription className="font-mono text-xs mt-0.5">{config.url}</CardDescription>

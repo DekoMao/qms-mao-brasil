@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import { Clock, AlertTriangle, User } from "lucide-react";
 
 const KANBAN_COLUMNS = [
-  { id: "Aguardando Disposição", title: "Disposição", color: "bg-slate-500" },
+  { id: "Aguardando Disposição", title: "Disposição", color: "bg-muted" },
   { id: "Aguardando Análise Técnica", title: "Análise Técnica", color: "bg-blue-500" },
   { id: "Aguardando Causa Raiz", title: "Causa Raiz", color: "bg-purple-500" },
   { id: "Aguardando Ação Corretiva", title: "Ação Corretiva", color: "bg-orange-500" },
@@ -21,7 +21,7 @@ function getSeverityClass(mg: string | null) {
     case "A": return "bg-orange-500 text-white";
     case "B": return "bg-yellow-500 text-black";
     case "C": return "bg-green-500 text-white";
-    default: return "bg-gray-200 text-gray-700";
+    default: return "bg-muted text-muted-foreground";
   }
 }
 

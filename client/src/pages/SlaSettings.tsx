@@ -251,7 +251,7 @@ export default function SlaSettings() {
                               <span className="text-red-600">Máx: {config.maxDays}d</span>
                             </p>
                           </div>
-                          <Badge className={config.isActive ? "bg-green-500" : "bg-gray-500"}>
+                          <Badge className={config.isActive ? "bg-green-500" : "bg-muted"}>
                             {config.isActive ? "Ativo" : "Inativo"}
                           </Badge>
                         </div>

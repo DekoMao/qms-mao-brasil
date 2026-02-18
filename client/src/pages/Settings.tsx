@@ -55,7 +55,7 @@ export default function Settings() {
           <Button 
             variant="ghost" 
             onClick={() => setLocation("/")}
-            className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium transition-all duration-200 shadow-sm hover:shadow group"
+            className="h-10 px-4 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-medium transition-all duration-200 shadow-sm hover:shadow group"
           >
             <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
             {t('common.back')}

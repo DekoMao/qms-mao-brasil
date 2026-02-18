@@ -407,3 +407,29 @@
 - [ ] DOC.2 /docs/integrations/rest-api.md
 - [ ] DOC.3 /docs/push.md
 - [ ] DOC.4 /docs/bi.md
+
+## Redesign UX Dark Navy Enterprise (SDD Design UX)
+- [x] Design System: index.css com tokens oklch, dark navy #0A1628, teal #00D4AA, gold #F5A623
+- [x] Design System: Componentes CSS enterprise (kpi-card, data-table, chart-container, status badges, severity badges)
+- [x] Design System: Scrollbar dark, animações fade-in, gradientes teal/gold
+- [x] Dashboard: KPI cards com gradiente teal, donut chart dark, aging bars coloridas
+- [x] Dashboard: Recharts com tooltip dark (#1A2942), grid #1E3A5F, cores enterprise
+- [x] Dashboard: Carrossel critical cases com borda vermelha transparente
+- [x] Dashboard: Pareto RCA com tabela dark e cores enterprise
+- [x] DashboardLayout: Sidebar navy profundo (#0A1628) com ícones coloridos
+- [x] DashboardLayout: Header bar dark com backdrop-filter blur
+- [x] DashboardLayout: Login card dark com botão teal gradient
+- [x] DashboardLayout: Grupos colapsáveis com active indicator teal
+- [x] DashboardLayout: User footer com avatar teal gradient
+- [x] DefectList: Status badges dark (status-closed/ongoing/delayed/waiting)
+- [x] DefectList: Severity badges dark (severity-s/a/b/c)
+- [x] DefectList: Filtros com bg-card border-border (removido bg-white)
+- [x] DefectList: Tabela com table-wrapper dark
+- [x] Todas as páginas: Removido bg-white, bg-slate-*, bg-gray-*, text-slate-*, text-gray-*
+- [x] CopqDashboard: CartesianGrid com stroke #1E3A5F
+- [x] SupplierScorecard: Radar/Line charts com cor teal #00D4AA
+- [x] SupplierPortal: Background dark, badges muted
+- [x] NotFound: Cores foreground/muted-foreground
+- [x] ManusDialog: bg-card ao invés de bg-white
+- [x] Testes: 16 testes design-system.test.ts (tokens, componentes, sem artefatos light)
+- [x] Todos os 359 testes passando (15 arquivos de teste)

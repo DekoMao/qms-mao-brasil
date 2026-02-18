@@ -81,7 +81,7 @@ export default function Notifications() {
           <Button 
             variant="ghost" 
             onClick={() => setLocation("/")}
-            className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-all duration-200 shadow-sm hover:shadow group"
+            className="h-10 px-4 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-medium transition-all duration-200 shadow-sm hover:shadow group"
           >
             <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
             Voltar

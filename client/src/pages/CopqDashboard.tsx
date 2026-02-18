@@ -214,7 +214,7 @@ export default function CopqDashboard() {
             {paretoData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={paretoData} layout="vertical" margin={{ left: 10, right: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
                   <XAxis type="number" tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
@@ -241,7 +241,7 @@ export default function CopqDashboard() {
         <CardContent>
           <ResponsiveContainer width="100%" height={350}>
             <RechartsLine data={trendData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
               <XAxis dataKey="label" tick={{ fontSize: 11 }} />
               <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={(value: number) => formatCurrency(value)} />

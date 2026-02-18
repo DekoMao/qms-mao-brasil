@@ -24,71 +24,80 @@ import {
   ComposedChart,
   Line,
 } from "recharts";
-import { AlertTriangle, RefreshCw, CheckCircle, ChevronLeft, ChevronRight, Pause, Play, Calendar, X, Filter } from "lucide-react";
+import { AlertTriangle, RefreshCw, CheckCircle, ChevronLeft, ChevronRight, Pause, Play, Calendar, X, Filter, TrendingUp, Activity, Shield } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
+/* Enterprise dark chart colors */
 const STATUS_COLORS = {
-  CLOSED: "#22c55e",
-  ONGOING: "#3b82f6",
-  DELAYED: "#ef4444",
-  WAITING: "#f59e0b",
+  CLOSED: "#00D4AA",
+  ONGOING: "#3B82F6",
+  DELAYED: "#EF4444",
+  WAITING: "#F5A623",
 } as const;
 
 const BUCKET_COLORS = {
-  "<=4": "#3b82f6",
-  "5-14": "#f59e0b",
-  "15-29": "#f97316",
-  "30-59": "#ef4444",
-  ">60": "#ef4444",
+  "<=4": "#00D4AA",
+  "5-14": "#3B82F6",
+  "15-29": "#F5A623",
+  "30-59": "#F97316",
+  ">60": "#EF4444",
 } as const;
 
 type StatusKey = keyof typeof STATUS_COLORS;
 
+/* Dark tooltip style for Recharts */
+const CHART_TOOLTIP_STYLE = {
+  backgroundColor: "#1A2942",
+  border: "1px solid #1E3A5F",
+  borderRadius: "10px",
+  color: "#E2E8F0",
+  boxShadow: "0 10px 25px rgba(0,0,0,0.4)",
+};
+
 function CardSkeleton({ type }: { type: "kpi" | "chart" | "table" }) {
   if (type === "kpi") {
     return (
-      <Card className="kpi-card animate-pulse">
+      <div className="kpi-card animate-pulse">
         <div className="space-y-3">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-10 w-20" />
+          <Skeleton className="h-4 w-24 bg-muted" />
+          <Skeleton className="h-10 w-20 bg-muted" />
         </div>
-      </Card>
+      </div>
     );
   }
   if (type === "chart") {
     return (
-      <Card className="chart-container animate-pulse">
+      <div className="chart-container animate-pulse">
         <div className="space-y-4">
           <div className="flex justify-between">
             <div className="space-y-2">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-3 w-48" />
+              <Skeleton className="h-5 w-32 bg-muted" />
+              <Skeleton className="h-3 w-48 bg-muted" />
             </div>
-            <Skeleton className="h-8 w-8 rounded" />
           </div>
-          <Skeleton className="h-[200px] w-full rounded-lg" />
+          <Skeleton className="h-[200px] w-full rounded-lg bg-muted" />
         </div>
-      </Card>
+      </div>
     );
   }
   return (
-    <Card className="chart-container animate-pulse">
+    <div className="chart-container animate-pulse">
       <div className="space-y-4">
         <div className="flex justify-between">
           <div className="space-y-2">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-3 w-48" />
+            <Skeleton className="h-5 w-32 bg-muted" />
+            <Skeleton className="h-3 w-48 bg-muted" />
           </div>
         </div>
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+            <Skeleton key={i} className="h-12 w-full bg-muted" />
           ))}
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -102,34 +111,42 @@ function StatusRow({
     <TooltipProvider>
       <UITooltip>
         <TooltipTrigger asChild>
-          <div className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md ${
+          <div className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
             variant === "alert"
-              ? "flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50/60 px-4 py-3 shadow-sm hover:bg-rose-100/60"
-              : "flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm hover:bg-muted/50"
-          }`}>
+              ? "flex items-center justify-between rounded-xl px-4 py-3"
+              : "flex items-center justify-between rounded-xl px-4 py-3"
+          }`}
+          style={{
+            background: variant === "alert" 
+              ? "rgba(239, 68, 68, 0.1)" 
+              : "rgba(255,255,255,0.03)",
+            border: variant === "alert"
+              ? "1px solid rgba(239, 68, 68, 0.25)"
+              : "1px solid rgba(255,255,255,0.06)",
+          }}>
             <div className="flex items-center gap-3">
               {variant === "alert" ? (
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-white">
-                  <span className="text-xs font-bold">!</span>
+                <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: "rgba(239,68,68,0.2)" }}>
+                  <span className="text-xs font-bold text-red-400">!</span>
                 </div>
               ) : (
                 <div className="h-5 w-5 rounded-full" style={{ backgroundColor: color }} />
               )}
               <span className="text-sm font-semibold tracking-wide text-foreground">{label}</span>
             </div>
-            <span className={variant === "alert" ? "text-lg font-bold text-rose-600" : "text-lg font-bold text-foreground"}>
+            <span className={`text-lg font-bold ${variant === "alert" ? "text-red-400" : "text-foreground"}`}>
               {valuePct}%
             </span>
           </div>
         </TooltipTrigger>
-        <TooltipContent side="left" className="bg-slate-900 text-white border-slate-800">
+        <TooltipContent side="left" style={{ background: "#1A2942", border: "1px solid #1E3A5F", color: "#E2E8F0" }}>
           <div className="space-y-1 p-1">
             <p className="font-semibold">{label}</p>
             <p className="text-sm">
-              <span className="text-emerald-400 font-bold">{count}</span> {t('dashboard.cases')} de {total} total
+              <span style={{ color: "#00D4AA" }} className="font-bold">{count}</span> {t('dashboard.cases')} de {total} total
             </p>
-            <p className="text-sm text-slate-300">
-              Representa <span className="font-bold text-amber-400">{valuePct}%</span> do total
+            <p className="text-sm" style={{ color: "#94A3B8" }}>
+              Representa <span className="font-bold" style={{ color: "#F5A623" }}>{valuePct}%</span> do total
             </p>
           </div>
         </TooltipContent>
@@ -206,60 +223,65 @@ function CriticalCasesCarousel({ cases, onCaseClick }: { cases: any[]; onCaseCli
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevSlide} disabled={cases.length <= 1 || isAnimating}>
+          <Button variant="outline" size="icon" className="h-8 w-8 border-border bg-transparent hover:bg-muted" onClick={prevSlide} disabled={cases.length <= 1 || isAnimating}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setIsPlaying(!isPlaying)}>
+          <Button variant="outline" size="icon" className="h-8 w-8 border-border bg-transparent hover:bg-muted" onClick={() => setIsPlaying(!isPlaying)}>
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextSlide} disabled={cases.length <= 1 || isAnimating}>
+          <Button variant="outline" size="icon" className="h-8 w-8 border-border bg-transparent hover:bg-muted" onClick={nextSlide} disabled={cases.length <= 1 || isAnimating}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
         <div className="flex items-center gap-1">
           {cases.slice(0, 5).map((_, idx) => (
             <button key={idx} onClick={() => goToSlide(idx)} disabled={isAnimating}
-              className={`h-2 rounded-full transition-all duration-300 ${idx === currentIndex ? "w-6 bg-rose-500" : "w-2 bg-slate-300 hover:bg-slate-400"}`} />
+              className={`h-2 rounded-full transition-all duration-300 ${idx === currentIndex ? "w-6" : "w-2"}`}
+              style={{ background: idx === currentIndex ? "#EF4444" : "rgba(255,255,255,0.2)" }} />
           ))}
           {cases.length > 5 && <span className="text-xs text-muted-foreground ml-2">+{cases.length - 5}</span>}
         </div>
       </div>
 
       <div className="relative overflow-hidden">
-        <div className={`relative rounded-xl border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-white p-6 cursor-pointer transition-shadow duration-300 hover:shadow-lg hover:border-rose-300 ${getSlideClasses()}`}
+        <div className={`relative rounded-xl p-6 cursor-pointer transition-shadow duration-300 hover:shadow-lg ${getSlideClasses()}`}
+          style={{
+            background: "linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02))",
+            border: "1px solid rgba(239,68,68,0.25)",
+          }}
           onClick={() => onCaseClick(currentCase.id)}>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-100/50 rounded-full -mr-16 -mt-16" />
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16" style={{ background: "rgba(239,68,68,0.05)" }} />
           <div className="relative">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <Badge variant="destructive" className="mb-2 text-xs font-bold px-3 py-1">
+                <Badge className="mb-2 text-xs font-bold px-3 py-1" style={{ background: "rgba(239,68,68,0.2)", color: "#f87171", border: "1px solid rgba(239,68,68,0.3)" }}>
                   {t('dashboard.criticalCase')} #{currentIndex + 1}
                 </Badge>
-                <h4 className="text-lg font-bold text-slate-900">{currentCase.docNumber}</h4>
-                <p className="text-sm text-slate-600 mt-1">{currentCase.supplier}</p>
+                <h4 className="text-lg font-bold text-foreground">{currentCase.docNumber}</h4>
+                <p className="text-sm text-muted-foreground mt-1">{currentCase.supplier}</p>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-extrabold text-rose-600">{currentCase.agingTotal}</div>
-                <div className="text-xs text-slate-500 uppercase tracking-wide">{t('dashboard.days')}</div>
+                <div className="text-3xl font-extrabold text-red-400">{currentCase.agingTotal}</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">{t('dashboard.days')}</div>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4 mb-4">
               <div>
-                <p className="text-xs text-slate-500 uppercase">{t('dashboard.symptom')}</p>
-                <p className="text-sm font-medium text-slate-800 truncate">{currentCase.symptom || '-'}</p>
+                <p className="text-xs text-muted-foreground uppercase">{t('dashboard.symptom')}</p>
+                <p className="text-sm font-medium text-foreground truncate">{currentCase.symptom || '-'}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 uppercase">{t('defect.model')}</p>
-                <p className="text-sm font-medium text-slate-800 truncate">{currentCase.model || '-'}</p>
+                <p className="text-xs text-muted-foreground uppercase">{t('defect.model')}</p>
+                <p className="text-sm font-medium text-foreground truncate">{currentCase.model || '-'}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 uppercase">{t('defect.step')}</p>
-                <p className="text-sm font-medium text-slate-800 truncate">{currentCase.step}</p>
+                <p className="text-xs text-muted-foreground uppercase">{t('defect.step')}</p>
+                <p className="text-sm font-medium text-foreground truncate">{currentCase.step}</p>
               </div>
             </div>
-            <div className="flex items-center justify-between pt-4 border-t border-rose-100">
-              <p className="text-sm text-slate-500">{t('dashboard.clickForDetails')}</p>
-              <ChevronRight className="h-5 w-5 text-rose-400" />
+            <div className="flex items-center justify-between pt-3" style={{ borderTop: "1px solid rgba(239,68,68,0.15)" }}>
+              <p className="text-sm text-muted-foreground">{t('dashboard.clickForDetails')}</p>
+              <ChevronRight className="h-5 w-5 text-red-400" />
             </div>
           </div>
         </div>
@@ -278,9 +300,9 @@ function PeriodFilter({ dateFrom, dateTo, onDateFromChange, onDateToChange, onCl
         <Calendar className="h-4 w-4" />
         <span className="hidden sm:inline">{t('dashboard.periodFilter')}:</span>
       </div>
-      <Input type="date" value={dateFrom} onChange={(e) => onDateFromChange(e.target.value)} className="h-8 w-36 text-sm" />
+      <Input type="date" value={dateFrom} onChange={(e) => onDateFromChange(e.target.value)} className="h-8 w-36 text-sm bg-card border-border text-foreground" />
       <span className="text-muted-foreground text-sm">{t('dashboard.to')}</span>
-      <Input type="date" value={dateTo} onChange={(e) => onDateToChange(e.target.value)} className="h-8 w-36 text-sm" />
+      <Input type="date" value={dateTo} onChange={(e) => onDateToChange(e.target.value)} className="h-8 w-36 text-sm bg-card border-border text-foreground" />
       {hasFilter && (
         <Button variant="ghost" size="sm" onClick={onClear} className="h-8 px-2 text-muted-foreground hover:text-foreground">
           <X className="h-4 w-4 mr-1" />
@@ -312,8 +334,8 @@ export default function Dashboard() {
     return (
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-48" />
-          <div className="flex gap-3"><Skeleton className="h-10 w-28" /><Skeleton className="h-10 w-28" /></div>
+          <Skeleton className="h-8 w-48 bg-muted" />
+          <div className="flex gap-3"><Skeleton className="h-10 w-28 bg-muted" /><Skeleton className="h-10 w-28 bg-muted" /></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <CardSkeleton type="kpi" /><CardSkeleton type="kpi" /><CardSkeleton type="kpi" />
@@ -365,13 +387,18 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.title')}</h1>
+          <div>
+            <h1 className="page-title">{t('dashboard.title')}</h1>
+            <p className="page-subtitle">Visão geral em tempo real da qualidade operacional</p>
+          </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className={isFetching ? "animate-pulse" : ""}>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}
+              className={`border-border bg-transparent hover:bg-muted text-foreground ${isFetching ? "animate-pulse" : ""}`}>
               <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
               {isFetching ? t('common.refreshing') : t('common.refresh')}
             </Button>
-            <Button size="sm" onClick={() => setLocation("/defects")}>
+            <Button size="sm" onClick={() => setLocation("/defects")}
+              className="bg-primary text-primary-foreground hover:bg-primary/90">
               {t('common.viewDetails')}
             </Button>
           </div>
@@ -381,44 +408,67 @@ export default function Dashboard() {
           onClear={() => { setDateFrom(""); setDateTo(""); }} hasFilter={hasDateFilter} />
 
         {hasDateFilter && (
-          <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 text-sm rounded-lg px-3 py-2"
+            style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", color: "#60A5FA" }}>
             <Filter className="h-4 w-4" />
             <span>{t('dashboard.periodFilter')}: {dateFrom || '...'} → {dateTo || '...'}</span>
           </div>
         )}
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - Enterprise teal gradient */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className={`kpi-card transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
+        {/* Total Defects - Teal gradient */}
+        <div className={`kpi-card-teal transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
           <div className={isFetching ? "animate-pulse" : ""}>
-            <div className="text-lg font-semibold">{t('dashboard.defectList')}</div>
-            <div className="kpi-card-label">{t('dashboard.totalDefects')}</div>
+            <div className="flex items-center gap-2 mb-2">
+              <Activity className="h-5 w-5" style={{ color: "rgba(255,255,255,0.8)" }} />
+              <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>{t('dashboard.totalDefects')}</span>
+            </div>
+            <div className="kpi-card-value">{total}</div>
+            <p className="kpi-card-label">{t('dashboard.defectList')}</p>
           </div>
-        </Card>
-        <Card className={`kpi-card transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
+        </div>
+
+        {/* Resolved */}
+        <div className={`kpi-card transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
           <div className={`flex items-start justify-between ${isFetching ? "animate-pulse" : ""}`}>
             <div>
               <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500" />{t('dashboard.defects')}
+                <CheckCircle className="h-4 w-4" style={{ color: "#00D4AA" }} />{t('dashboard.defects')}
               </p>
-              <p className="kpi-card-value mt-2 text-emerald-600">{total}</p>
+              <p className="kpi-card-value mt-2" style={{ color: "#00D4AA" }}>{closed}</p>
+              <p className="text-xs text-muted-foreground mt-1">{closedPct}% resolvidos</p>
+            </div>
+            <div className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full" style={{ background: "rgba(0,212,170,0.1)", color: "#00D4AA" }}>
+              <TrendingUp className="h-3 w-3" />
+              {closedPct}%
             </div>
           </div>
-        </Card>
-        <Card className={`kpi-card transition-opacity duration-300 ${critical > 0 ? "border-rose-200" : ""} ${isFetching ? "opacity-60" : ""}`}>
+        </div>
+
+        {/* Critical */}
+        <div className={`kpi-card transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}
+          style={critical > 0 ? { borderColor: "rgba(239,68,68,0.3)" } : {}}>
           <div className={`flex items-start justify-between ${isFetching ? "animate-pulse" : ""}`}>
             <div>
               <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <AlertTriangle className={`h-4 w-4 ${critical > 0 ? "text-rose-500" : ""}`} />{t('dashboard.critical')}
+                <AlertTriangle className={`h-4 w-4 ${critical > 0 ? "text-red-400" : ""}`} />{t('dashboard.critical')}
               </p>
-              <p className={`kpi-card-value mt-2 ${critical > 0 ? "text-rose-600" : ""}`}>{critical}</p>
+              <p className={`kpi-card-value mt-2 ${critical > 0 ? "text-red-400" : ""}`}>{critical}</p>
+              <p className="text-xs text-muted-foreground mt-1">Casos com aging &gt; 60 dias</p>
             </div>
+            {critical > 0 && (
+              <div className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full" style={{ background: "rgba(239,68,68,0.1)", color: "#f87171" }}>
+                <Shield className="h-3 w-3" />
+                Atenção
+              </div>
+            )}
           </div>
-        </Card>
+        </div>
       </div>
 
-      {/* Row 1 */}
+      {/* Row 1 - Status + Aging */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status Overview */}
         <Card className={`chart-container transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
@@ -438,10 +488,10 @@ export default function Dashboard() {
                     <Pie data={statusData} cx="50%" cy="50%" innerRadius={68} outerRadius={96} paddingAngle={2} dataKey="value" stroke="transparent">
                       {statusData.map((entry, index) => {
                         const key = entry.name as StatusKey;
-                        return <Cell key={`cell-${index}`} fill={STATUS_COLORS[key] || "#8b5cf6"} />;
+                        return <Cell key={`cell-${index}`} fill={STATUS_COLORS[key] || "#8B5CF6"} />;
                       })}
                     </Pie>
-                    <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.10)" }} />
+                    <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -471,13 +521,13 @@ export default function Dashboard() {
           <div className={isFetching ? "animate-pulse" : ""}>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={bucketData} barCategoryGap="25%">
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis axisLine={false} tickLine={false} dataKey="name" tick={{ fontSize: 12, fill: "#6b7280" }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} />
-                <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.10)" }} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1E3A5F" />
+                <XAxis axisLine={false} tickLine={false} dataKey="name" tick={{ fontSize: 12, fill: "#64748B" }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#64748B" }} />
+                <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
                 <Bar dataKey="value" name={t('dashboard.cases')} radius={[6, 6, 0, 0]}>
                   {bucketData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={BUCKET_COLORS[entry.name as keyof typeof BUCKET_COLORS] || "#f59e0b"} />
+                    <Cell key={`cell-${index}`} fill={BUCKET_COLORS[entry.name as keyof typeof BUCKET_COLORS] || "#F5A623"} />
                   ))}
                 </Bar>
               </BarChart>
@@ -486,7 +536,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Row 2 */}
+      {/* Row 2 - Top Systems + Top Suppliers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className={`chart-container transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
           <div className="mb-4">
@@ -500,11 +550,11 @@ export default function Dashboard() {
               return (
                 <div key={index} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium truncate max-w-[260px]">{item.name}</span>
+                    <span className="font-medium truncate max-w-[260px] text-foreground">{item.name}</span>
                     <span className="text-muted-foreground">{Math.round(percentage)}%</span>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-sky-500 rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="h-full rounded-full transition-all" style={{ width: `${percentage}%`, background: "#00D4AA" }} />
                   </div>
                 </div>
               );
@@ -524,11 +574,11 @@ export default function Dashboard() {
               return (
                 <div key={index} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium truncate max-w-[260px]">{item.name}</span>
+                    <span className="font-medium truncate max-w-[260px] text-foreground">{item.name}</span>
                     <span className="text-muted-foreground">{Math.round(percentage)}%</span>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500 rounded-full transition-all" style={{ width: `${percentage}%` }} />
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="h-full rounded-full transition-all" style={{ width: `${percentage}%`, background: "#F5A623" }} />
                   </div>
                 </div>
               );
@@ -543,7 +593,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="chart-title flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-rose-500" />
+                <AlertTriangle className="h-5 w-5 text-red-400" />
                 {t('dashboard.criticalCases')}
               </h3>
               <p className="text-sm text-muted-foreground">{t('dashboard.criticalCasesDesc')}</p>
@@ -574,36 +624,37 @@ export default function Dashboard() {
                   }))}
                   margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="category" tick={{ fontSize: 10, fill: "#6b7280" }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={50} />
-                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6b7280" }} />
-                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6b7280" }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
-                  <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.10)" }}
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1E3A5F" />
+                  <XAxis dataKey="category" tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={50} />
+                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#64748B" }} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#64748B" }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                  <Tooltip contentStyle={CHART_TOOLTIP_STYLE}
                     formatter={(value: any, name: string) => [name === t('dashboard.occurrences') ? value : `${value}%`, name]} />
-                  <Bar yAxisId="left" dataKey="count" fill="#3b82f6" name={t('dashboard.occurrences')} radius={[4, 4, 0, 0]} barSize={35} cursor="pointer"
+                  <Bar yAxisId="left" dataKey="count" fill="#3B82F6" name={t('dashboard.occurrences')} radius={[4, 4, 0, 0]} barSize={35} cursor="pointer"
                     onClick={(data: any) => { if (data?.fullCause) handleParetoClick(data.fullCause); }} />
-                  <Line yAxisId="right" type="monotone" dataKey="cumulativePercentage" stroke="#f59e0b" strokeWidth={2}
-                    dot={{ fill: "#f59e0b", strokeWidth: 2, r: 4 }} name={t('dashboard.cumPercentage')} />
+                  <Line yAxisId="right" type="monotone" dataKey="cumulativePercentage" stroke="#F5A623" strokeWidth={2}
+                    dot={{ fill: "#F5A623", strokeWidth: 2, r: 4 }} name={t('dashboard.cumPercentage')} />
                 </ComposedChart>
               </ResponsiveContainer>
               <p className="text-xs text-muted-foreground text-center mt-2 italic">{t('dashboard.clickForDetails')}</p>
             </div>
-            <div className="border rounded-lg overflow-hidden">
+            <div className="rounded-lg overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b">
-                  <tr>
-                    <th className="text-left py-3 px-4 font-semibold text-slate-700">{t('dashboard.rootCause')}</th>
-                    <th className="text-center py-3 px-4 font-semibold text-slate-700">{t('dashboard.qty')}</th>
-                    <th className="text-right py-3 px-4 font-semibold text-slate-700">{t('dashboard.cumPct')}</th>
+                <thead style={{ background: "rgba(255,255,255,0.04)" }}>
+                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                    <th className="text-left py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t('dashboard.rootCause')}</th>
+                    <th className="text-center py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t('dashboard.qty')}</th>
+                    <th className="text-right py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t('dashboard.cumPct')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rcaData.topCauses.slice(0, 5).map((item: any, index: number) => (
-                    <tr key={index} className="border-b last:border-b-0 hover:bg-slate-50 transition-colors cursor-pointer"
+                    <tr key={index} className="transition-colors cursor-pointer hover:bg-muted/30"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
                       onClick={() => handleParetoClick(item.cause)}>
-                      <td className="py-3 px-4 font-medium text-slate-800 truncate max-w-[200px]" title={item.cause}>{item.cause}</td>
-                      <td className="py-3 px-4 text-center text-slate-600">{item.count}</td>
-                      <td className="py-3 px-4 text-right font-semibold text-sky-600">{item.cumulativePercentage}%</td>
+                      <td className="py-3 px-4 font-medium text-foreground truncate max-w-[200px]" title={item.cause}>{item.cause}</td>
+                      <td className="py-3 px-4 text-center text-muted-foreground">{item.count}</td>
+                      <td className="py-3 px-4 text-right font-semibold" style={{ color: "#00D4AA" }}>{item.cumulativePercentage}%</td>
                     </tr>
                   ))}
                 </tbody>

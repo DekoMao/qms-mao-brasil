@@ -385,7 +385,7 @@ export default function DefectDetail() {
           <Button 
             variant="ghost" 
             onClick={() => setLocation("/defects")}
-            className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-all duration-200 shadow-sm hover:shadow group"
+            className="h-10 px-4 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-medium transition-all duration-200 shadow-sm hover:shadow group"
           >
             <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
             Voltar
@@ -519,25 +519,25 @@ export default function DefectDetail() {
       {/* Main Content Tabs */}
       <Tabs defaultValue="info" className="space-y-4">
         <TabsList className="bg-muted/50 p-1 rounded-xl">
-          <TabsTrigger value="info" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="info" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
             Visão Geral
           </TabsTrigger>
-          <TabsTrigger value="8d" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="8d" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
             8D
           </TabsTrigger>
-          <TabsTrigger value="evidence" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="evidence" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
             Evidências
           </TabsTrigger>
-          <TabsTrigger value="comments" disabled={isNew} className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="comments" disabled={isNew} className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
             Comentários
           </TabsTrigger>
-          <TabsTrigger value="history" disabled={isNew} className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="history" disabled={isNew} className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
             Auditoria
           </TabsTrigger>
-          <TabsTrigger value="costs" disabled={isNew} className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="costs" disabled={isNew} className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
             Custos
           </TabsTrigger>
-          <TabsTrigger value="ai" disabled={isNew} className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="ai" disabled={isNew} className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
             IA
           </TabsTrigger>
         </TabsList>

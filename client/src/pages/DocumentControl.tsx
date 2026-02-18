@@ -13,7 +13,7 @@ import { FileText, Plus, Loader2, Search, Eye, Trash2, Upload, CheckCircle2, Clo
 import { Can } from "@/components/Can";
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any; bgClass: string }> = {
-  DRAFT: { label: "Rascunho", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200", icon: FileText, bgClass: "bg-gray-500/10" },
+  DRAFT: { label: "Rascunho", color: "bg-muted text-muted-foreground", icon: FileText, bgClass: "bg-muted/30" },
   IN_REVIEW: { label: "Em Revisão", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200", icon: Clock, bgClass: "bg-yellow-500/10" },
   APPROVED: { label: "Aprovado", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200", icon: CheckCircle2, bgClass: "bg-green-500/10" },
   OBSOLETE: { label: "Obsoleto", color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200", icon: XCircle, bgClass: "bg-red-500/10" },
@@ -32,7 +32,7 @@ const CATEGORIES = [
 
 // Visual workflow steps for document approval
 const WORKFLOW_STEPS = [
-  { id: "DRAFT", label: "Rascunho", icon: FileText, color: "text-gray-500" },
+  { id: "DRAFT", label: "Rascunho", icon: FileText, color: "text-muted-foreground" },
   { id: "IN_REVIEW", label: "Em Revisão", icon: Clock, color: "text-yellow-500" },
   { id: "APPROVED", label: "Aprovado", icon: CheckCircle2, color: "text-green-500" },
   { id: "OBSOLETE", label: "Obsoleto", icon: XCircle, color: "text-red-500" },
@@ -141,7 +141,7 @@ export default function DocumentControl() {
           </CardContent>
         </Card>
         {[
-          { key: "DRAFT", count: stats.draft, icon: FileText, color: "text-gray-500" },
+          { key: "DRAFT", count: stats.draft, icon: FileText, color: "text-muted-foreground" },
           { key: "IN_REVIEW", count: stats.inReview, icon: Clock, color: "text-yellow-500" },
           { key: "APPROVED", count: stats.approved, icon: CheckCircle2, color: "text-green-500" },
           { key: "OBSOLETE", count: stats.obsolete, icon: XCircle, color: "text-red-500" },

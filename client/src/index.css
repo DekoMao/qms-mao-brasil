@@ -3,8 +3,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Google Fonts - Inter for modern UI */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* Google Fonts - Inter for modern UI + JetBrains Mono for code */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -43,112 +43,118 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* Custom enterprise colors */
+  --color-teal: oklch(0.78 0.15 170);
+  --color-gold: oklch(0.75 0.15 80);
+  --color-navy-deep: oklch(0.12 0.03 250);
+  --color-navy-card: oklch(0.17 0.03 250);
+  --color-navy-elevated: oklch(0.20 0.035 250);
+  --color-success: oklch(0.70 0.17 160);
+  --color-warning: oklch(0.75 0.15 80);
+  --color-danger: oklch(0.65 0.22 25);
+  --color-info: oklch(0.72 0.14 200);
 }
 
-/* QTrack System - Professional Navy Blue Theme */
+/* =====================================================
+   QTrack System - Dark Navy Enterprise Theme
+   Carousel-inspired design: #0A1628 base, teal accents, gold highlights
+   ===================================================== */
+
 :root {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  
-  /* Navy Blue Primary */
-  --primary: oklch(0.35 0.12 250);
-  --primary-foreground: oklch(0.98 0 0);
-  
-  /* Sidebar - Dark Navy */
-  --sidebar: oklch(0.22 0.08 250);
-  --sidebar-foreground: oklch(0.92 0 0);
-  --sidebar-primary: oklch(0.55 0.18 220);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.30 0.08 250);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.35 0.06 250);
-  --sidebar-ring: oklch(0.55 0.18 220);
-  
-  /* Light background for content */
-  --background: oklch(0.97 0.005 250);
-  --foreground: oklch(0.20 0.02 250);
-  
-  /* Cards */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.20 0.02 250);
-  
-  /* Popover */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.20 0.02 250);
-  
-  /* Secondary */
-  --secondary: oklch(0.94 0.01 250);
-  --secondary-foreground: oklch(0.30 0.02 250);
-  
-  /* Muted */
-  --muted: oklch(0.94 0.01 250);
-  --muted-foreground: oklch(0.50 0.02 250);
-  
-  /* Accent */
-  --accent: oklch(0.55 0.18 220);
-  --accent-foreground: oklch(0.98 0 0);
-  
-  /* Destructive */
-  --destructive: oklch(0.55 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  
-  /* Borders */
-  --border: oklch(0.88 0.01 250);
-  --input: oklch(0.88 0.01 250);
-  --ring: oklch(0.55 0.18 220);
-  
-  /* Charts - Vibrant colors */
-  --chart-1: oklch(0.55 0.18 220);
-  --chart-2: oklch(0.65 0.20 145);
-  --chart-3: oklch(0.70 0.18 55);
-  --chart-4: oklch(0.60 0.22 25);
-  --chart-5: oklch(0.55 0.20 300);
-  
-  --radius: 0.5rem;
-}
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-.dark {
-  --primary: oklch(0.55 0.18 220);
-  --primary-foreground: oklch(0.98 0 0);
-  
-  --sidebar: oklch(0.18 0.06 250);
-  --sidebar-foreground: oklch(0.90 0 0);
-  --sidebar-primary: oklch(0.55 0.18 220);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.25 0.06 250);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.30 0.04 250);
-  --sidebar-ring: oklch(0.55 0.18 220);
-  
-  --background: oklch(0.15 0.04 250);
-  --foreground: oklch(0.92 0 0);
-  
-  --card: oklch(0.20 0.04 250);
-  --card-foreground: oklch(0.92 0 0);
-  
-  --popover: oklch(0.20 0.04 250);
-  --popover-foreground: oklch(0.92 0 0);
-  
-  --secondary: oklch(0.25 0.04 250);
-  --secondary-foreground: oklch(0.85 0 0);
-  
-  --muted: oklch(0.25 0.04 250);
-  --muted-foreground: oklch(0.65 0.02 250);
-  
-  --accent: oklch(0.55 0.18 220);
-  --accent-foreground: oklch(0.98 0 0);
-  
-  --destructive: oklch(0.60 0.20 25);
+  /* Dark Navy Background Layers */
+  --background: oklch(0.13 0.03 250);
+  --foreground: oklch(0.95 0.005 250);
+
+  /* Cards - Slightly lighter navy */
+  --card: oklch(0.17 0.035 250);
+  --card-foreground: oklch(0.95 0.005 250);
+
+  /* Popover */
+  --popover: oklch(0.19 0.035 250);
+  --popover-foreground: oklch(0.95 0.005 250);
+
+  /* Primary = Teal accent */
+  --primary: oklch(0.75 0.14 170);
+  --primary-foreground: oklch(0.15 0.03 250);
+
+  /* Secondary = Elevated navy */
+  --secondary: oklch(0.20 0.035 250);
+  --secondary-foreground: oklch(0.85 0.01 250);
+
+  /* Muted */
+  --muted: oklch(0.22 0.03 250);
+  --muted-foreground: oklch(0.60 0.02 250);
+
+  /* Accent = Gold */
+  --accent: oklch(0.75 0.15 80);
+  --accent-foreground: oklch(0.15 0.03 250);
+
+  /* Destructive */
+  --destructive: oklch(0.60 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
-  
-  --border: oklch(0.30 0.04 250);
-  --input: oklch(0.30 0.04 250);
-  --ring: oklch(0.55 0.18 220);
-  
-  --chart-1: oklch(0.60 0.18 220);
-  --chart-2: oklch(0.70 0.20 145);
-  --chart-3: oklch(0.75 0.18 55);
+
+  /* Borders - Subtle navy */
+  --border: oklch(0.25 0.04 250);
+  --input: oklch(0.22 0.04 250);
+  --ring: oklch(0.75 0.14 170);
+
+  /* Charts - Enterprise palette */
+  --chart-1: oklch(0.75 0.14 170);
+  --chart-2: oklch(0.75 0.15 80);
+  --chart-3: oklch(0.65 0.18 260);
   --chart-4: oklch(0.65 0.22 25);
   --chart-5: oklch(0.60 0.20 300);
+
+  /* Sidebar - Deepest navy */
+  --sidebar: oklch(0.11 0.03 250);
+  --sidebar-foreground: oklch(0.85 0.01 250);
+  --sidebar-primary: oklch(0.75 0.14 170);
+  --sidebar-primary-foreground: oklch(0.13 0.03 250);
+  --sidebar-accent: oklch(0.18 0.035 250);
+  --sidebar-accent-foreground: oklch(0.95 0.005 250);
+  --sidebar-border: oklch(0.22 0.035 250);
+  --sidebar-ring: oklch(0.75 0.14 170);
+
+  --radius: 0.75rem;
+}
+
+/* Dark mode uses the same values (always dark) */
+.dark {
+  --background: oklch(0.13 0.03 250);
+  --foreground: oklch(0.95 0.005 250);
+  --card: oklch(0.17 0.035 250);
+  --card-foreground: oklch(0.95 0.005 250);
+  --popover: oklch(0.19 0.035 250);
+  --popover-foreground: oklch(0.95 0.005 250);
+  --primary: oklch(0.75 0.14 170);
+  --primary-foreground: oklch(0.15 0.03 250);
+  --secondary: oklch(0.20 0.035 250);
+  --secondary-foreground: oklch(0.85 0.01 250);
+  --muted: oklch(0.22 0.03 250);
+  --muted-foreground: oklch(0.60 0.02 250);
+  --accent: oklch(0.75 0.15 80);
+  --accent-foreground: oklch(0.15 0.03 250);
+  --destructive: oklch(0.60 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.25 0.04 250);
+  --input: oklch(0.22 0.04 250);
+  --ring: oklch(0.75 0.14 170);
+  --chart-1: oklch(0.75 0.14 170);
+  --chart-2: oklch(0.75 0.15 80);
+  --chart-3: oklch(0.65 0.18 260);
+  --chart-4: oklch(0.65 0.22 25);
+  --chart-5: oklch(0.60 0.20 300);
+  --sidebar: oklch(0.11 0.03 250);
+  --sidebar-foreground: oklch(0.85 0.01 250);
+  --sidebar-primary: oklch(0.75 0.14 170);
+  --sidebar-primary-foreground: oklch(0.13 0.03 250);
+  --sidebar-accent: oklch(0.18 0.035 250);
+  --sidebar-accent-foreground: oklch(0.95 0.005 250);
+  --sidebar-border: oklch(0.22 0.035 250);
+  --sidebar-ring: oklch(0.75 0.14 170);
 }
 
 @layer base {
@@ -203,94 +209,179 @@
 }
 
 /* =====================================================
-   QTrack System - Professional Design System
+   QTrack Enterprise Design System - Component Classes
    ===================================================== */
 
-/* Status badge colors - Enhanced */
+/* Status badge colors - Dark theme enterprise */
 .status-closed {
-  @apply bg-emerald-100 text-emerald-700 border border-emerald-200;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 .status-ongoing {
-  @apply bg-sky-100 text-sky-700 border border-sky-200;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 .status-delayed {
-  @apply bg-rose-100 text-rose-700 border border-rose-200;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 .status-waiting {
-  @apply bg-amber-100 text-amber-700 border border-amber-200;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
-/* Severity badge colors - MG Style */
+/* Severity badge colors - Enterprise dark */
 .severity-s {
-  @apply bg-rose-600 text-white font-semibold;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  @apply font-semibold;
 }
 .severity-a {
-  @apply bg-orange-500 text-white font-semibold;
+  background: rgba(249, 115, 22, 0.2);
+  color: #fdba74;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  @apply font-semibold;
 }
 .severity-b {
-  @apply bg-amber-400 text-amber-900 font-semibold;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  @apply font-semibold;
 }
 .severity-c {
-  @apply bg-emerald-500 text-white font-semibold;
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  @apply font-semibold;
 }
 
-/* Aging bucket colors - Gradient style */
+/* Aging bucket colors - Dark theme */
 .bucket-4 {
-  @apply bg-emerald-500 text-white;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 .bucket-14 {
-  @apply bg-sky-500 text-white;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 .bucket-29 {
-  @apply bg-amber-500 text-white;
+  background: rgba(249, 115, 22, 0.2);
+  color: #fdba74;
+  border: 1px solid rgba(249, 115, 22, 0.3);
 }
 .bucket-59 {
-  @apply bg-orange-500 text-white;
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 .bucket-60 {
-  @apply bg-rose-500 text-white;
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
-/* KPI Cards */
+/* KPI Cards - Enterprise dark with teal accent */
 .kpi-card {
-  @apply bg-card rounded-xl border shadow-sm p-5 transition-all hover:shadow-md;
+  @apply bg-card rounded-xl border border-border p-5 transition-all;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, oklch(0.75 0.14 170), oklch(0.75 0.15 80));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.kpi-card:hover::before {
+  opacity: 1;
+}
+.kpi-card:hover {
+  border-color: oklch(0.75 0.14 170 / 0.4);
 }
 .kpi-card-value {
-  @apply text-3xl font-bold tracking-tight;
+  @apply text-3xl font-bold tracking-tight text-foreground;
 }
 .kpi-card-label {
-  @apply text-sm text-muted-foreground mt-1;
+  @apply text-sm mt-1;
+  color: oklch(0.60 0.02 250);
 }
 
-/* Data table styling - Enhanced */
+/* Teal KPI Card variant - Colored background */
+.kpi-card-teal {
+  background: linear-gradient(135deg, oklch(0.75 0.14 170), oklch(0.65 0.14 170));
+  border: 1px solid oklch(0.75 0.14 170 / 0.3);
+  @apply rounded-xl p-5 transition-all;
+}
+.kpi-card-teal .kpi-card-value {
+  @apply text-white;
+}
+.kpi-card-teal .kpi-card-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Gold KPI Card variant */
+.kpi-card-gold {
+  background: linear-gradient(135deg, oklch(0.75 0.15 80), oklch(0.65 0.15 80));
+  border: 1px solid oklch(0.75 0.15 80 / 0.3);
+  @apply rounded-xl p-5 transition-all;
+}
+.kpi-card-gold .kpi-card-value {
+  color: oklch(0.15 0.03 250);
+}
+.kpi-card-gold .kpi-card-label {
+  color: oklch(0.15 0.03 250 / 0.7);
+}
+
+/* Data table styling - Dark enterprise */
 .data-table {
   @apply w-full text-sm;
 }
 .data-table thead {
-  @apply bg-muted/50;
+  background: oklch(0.15 0.03 250);
 }
 .data-table th {
-  @apply px-4 py-3 text-left font-semibold text-foreground text-xs uppercase tracking-wider;
+  @apply px-4 py-3 text-left font-semibold text-xs uppercase tracking-wider;
+  color: oklch(0.60 0.02 250);
 }
 .data-table td {
-  @apply px-4 py-3 border-b border-border;
+  @apply px-4 py-3;
+  border-bottom: 1px solid oklch(0.22 0.03 250);
 }
 .data-table tbody tr {
-  @apply transition-colors hover:bg-muted/30;
+  @apply transition-colors;
+}
+.data-table tbody tr:hover {
+  background: oklch(0.19 0.035 250);
 }
 
-/* Kanban card styling */
+/* Kanban card styling - Dark */
 .kanban-card {
-  @apply bg-card rounded-lg border p-4 shadow-sm hover:shadow-md transition-all cursor-pointer;
+  @apply bg-card rounded-lg border border-border p-4 transition-all cursor-pointer;
+}
+.kanban-card:hover {
+  border-color: oklch(0.75 0.14 170 / 0.4);
 }
 .kanban-column {
-  @apply bg-muted/30 rounded-xl p-3 min-h-[500px];
+  background: oklch(0.15 0.03 250);
+  @apply rounded-xl p-3 min-h-[500px];
 }
 .kanban-column-header {
   @apply font-semibold text-sm mb-3 flex items-center justify-between;
 }
 
-/* Workflow stepper */
+/* Workflow stepper - Dark theme */
 .workflow-step {
   @apply flex items-center;
 }
@@ -298,10 +389,12 @@
   @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all;
 }
 .workflow-step-circle.active {
-  @apply bg-primary text-primary-foreground;
+  background: oklch(0.75 0.14 170);
+  color: oklch(0.13 0.03 250);
 }
 .workflow-step-circle.completed {
-  @apply bg-emerald-500 text-white;
+  background: oklch(0.70 0.17 160);
+  @apply text-white;
 }
 .workflow-step-circle.pending {
   @apply bg-muted text-muted-foreground;
@@ -310,13 +403,13 @@
   @apply h-0.5 flex-1 mx-2;
 }
 .workflow-step-line.completed {
-  @apply bg-emerald-500;
+  background: oklch(0.70 0.17 160);
 }
 .workflow-step-line.pending {
   @apply bg-muted;
 }
 
-/* Sidebar menu item */
+/* Sidebar menu item - Dark navy */
 .sidebar-menu-item {
   @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all;
 }
@@ -324,97 +417,134 @@
   @apply bg-sidebar-accent text-sidebar-accent-foreground;
 }
 .sidebar-menu-item.active {
-  @apply bg-sidebar-primary text-sidebar-primary-foreground;
+  background: oklch(0.75 0.14 170);
+  color: oklch(0.13 0.03 250);
 }
 
-/* Icon colors for sidebar */
-.icon-dashboard { @apply text-sky-400; }
-.icon-defects { @apply text-amber-400; }
-.icon-kanban { @apply text-violet-400; }
-.icon-import { @apply text-emerald-400; }
-.icon-reports { @apply text-rose-400; }
-.icon-suppliers { @apply text-orange-400; }
-.icon-sla { @apply text-cyan-400; }
-.icon-portal { @apply text-pink-400; }
+/* Icon colors for sidebar - Teal-centric */
+.icon-dashboard { color: oklch(0.75 0.14 170); }
+.icon-defects { color: oklch(0.75 0.15 80); }
+.icon-kanban { color: oklch(0.65 0.18 260); }
+.icon-import { color: oklch(0.70 0.17 160); }
+.icon-reports { color: oklch(0.65 0.22 25); }
+.icon-suppliers { color: oklch(0.75 0.15 80); }
+.icon-sla { color: oklch(0.72 0.14 200); }
+.icon-portal { color: oklch(0.60 0.20 300); }
 
-/* Chart container */
+/* Chart container - Dark card */
 .chart-container {
-  @apply bg-card rounded-xl border p-5 shadow-sm;
+  @apply bg-card rounded-xl border border-border p-5;
 }
 .chart-title {
-  @apply text-base font-semibold mb-1;
+  @apply text-base font-semibold mb-1 text-foreground;
 }
 .chart-subtitle {
-  @apply text-sm text-muted-foreground mb-4;
+  @apply text-sm mb-4;
+  color: oklch(0.60 0.02 250);
 }
 
-/* Login page */
+/* Login page - Deep navy gradient */
 .login-container {
   @apply min-h-screen flex items-center justify-center;
-  background: linear-gradient(135deg, oklch(0.22 0.08 250) 0%, oklch(0.30 0.10 250) 100%);
+  background: linear-gradient(135deg, oklch(0.10 0.03 250) 0%, oklch(0.16 0.04 250) 50%, oklch(0.12 0.03 250) 100%);
 }
 .login-card {
-  @apply bg-card rounded-2xl shadow-2xl p-8 w-full max-w-md;
+  @apply rounded-2xl p-8 w-full max-w-md;
+  background: oklch(0.17 0.035 250);
+  border: 1px solid oklch(0.25 0.04 250);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 .login-logo {
-  @apply w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center;
+  @apply w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center;
+  background: oklch(0.75 0.14 170 / 0.1);
+  border: 1px solid oklch(0.75 0.14 170 / 0.2);
 }
 
-/* Header bar */
+/* Header bar - Dark enterprise */
 .header-bar {
-  @apply h-14 border-b bg-card/80 backdrop-blur-sm flex items-center justify-between px-6;
+  @apply h-14 flex items-center justify-between px-6;
+  background: oklch(0.15 0.03 250 / 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid oklch(0.22 0.035 250);
 }
 
-/* Filter chips */
+/* Filter chips - Dark */
 .filter-chip {
-  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted hover:bg-muted/80 transition-colors;
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors;
+  background: oklch(0.20 0.035 250);
+  color: oklch(0.70 0.02 250);
+}
+.filter-chip:hover {
+  background: oklch(0.25 0.04 250);
 }
 .filter-chip.active {
-  @apply bg-primary text-primary-foreground;
+  background: oklch(0.75 0.14 170);
+  color: oklch(0.13 0.03 250);
 }
 
-/* Badge variants */
+/* Badge variants - Dark theme */
 .badge-success {
-  @apply bg-emerald-100 text-emerald-700 border-emerald-200;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 .badge-warning {
-  @apply bg-amber-100 text-amber-700 border-amber-200;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 .badge-danger {
-  @apply bg-rose-100 text-rose-700 border-rose-200;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 .badge-info {
-  @apply bg-sky-100 text-sky-700 border-sky-200;
+  background: rgba(6, 182, 212, 0.15);
+  color: #22d3ee;
+  border: 1px solid rgba(6, 182, 212, 0.3);
 }
 
 /* Days late highlight */
 .days-late {
-  @apply text-rose-600 font-semibold;
+  color: #f87171;
+  @apply font-semibold;
 }
 .days-late-badge {
-  @apply bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-xs font-medium;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  @apply px-2 py-0.5 rounded text-xs font-medium;
 }
 
 /* Section divider */
 .section-divider {
-  @apply border-t border-border my-6;
+  border-top: 1px solid oklch(0.22 0.03 250);
+  @apply my-6;
 }
 
 /* Card hover effect */
 .card-hover {
-  @apply transition-all hover:shadow-lg hover:-translate-y-0.5;
+  @apply transition-all;
+}
+.card-hover:hover {
+  border-color: oklch(0.75 0.14 170 / 0.3);
+  transform: translateY(-2px);
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling - Dark */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-muted/30 rounded;
+  background: oklch(0.15 0.03 250);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded hover:bg-muted-foreground/50;
+  background: oklch(0.30 0.04 250);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.40 0.04 250);
 }
 
 /* Animation utilities */
@@ -426,7 +556,105 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive table wrapper */
+/* Responsive table wrapper - Dark */
 .table-wrapper {
-  @apply overflow-x-auto rounded-xl border bg-card;
+  @apply overflow-x-auto rounded-xl;
+  background: oklch(0.17 0.035 250);
+  border: 1px solid oklch(0.25 0.04 250);
+}
+
+/* =====================================================
+   Enterprise-specific utilities
+   ===================================================== */
+
+/* Gradient text utility */
+.text-gradient-teal {
+  background: linear-gradient(135deg, oklch(0.75 0.14 170), oklch(0.72 0.14 200));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, oklch(0.75 0.15 80), oklch(0.80 0.12 60));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effects for emphasis */
+.glow-teal {
+  box-shadow: 0 0 20px oklch(0.75 0.14 170 / 0.15), 0 0 40px oklch(0.75 0.14 170 / 0.05);
+}
+.glow-gold {
+  box-shadow: 0 0 20px oklch(0.75 0.15 80 / 0.15), 0 0 40px oklch(0.75 0.15 80 / 0.05);
+}
+
+/* Code block - Terminal style */
+.code-block {
+  background: oklch(0.12 0.02 250);
+  border: 1px solid oklch(0.22 0.03 250);
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 16px;
+  color: oklch(0.80 0.02 250);
+  overflow-x: auto;
+}
+.code-block-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: oklch(0.10 0.02 250);
+  border-bottom: 1px solid oklch(0.22 0.03 250);
+  border-radius: 12px 12px 0 0;
+}
+.code-block-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.code-block-dot-red { background: #ef4444; }
+.code-block-dot-yellow { background: #f59e0b; }
+.code-block-dot-green { background: #10b981; }
+
+/* Permission matrix - Golden grid */
+.permission-matrix th,
+.permission-matrix td {
+  border: 1px solid oklch(0.75 0.15 80 / 0.2);
+  padding: 8px 12px;
+}
+.permission-matrix th {
+  background: oklch(0.15 0.03 250);
+  color: oklch(0.75 0.15 80);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+.permission-matrix td {
+  background: oklch(0.17 0.035 250);
+  text-align: center;
+}
+
+/* Pulse animation for live indicators */
+@keyframes pulse-teal {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.75 0.14 170 / 0.4); }
+  50% { box-shadow: 0 0 0 8px oklch(0.75 0.14 170 / 0); }
+}
+.pulse-teal {
+  animation: pulse-teal 2s infinite;
+}
+
+/* Enterprise page header */
+.page-header {
+  @apply flex items-center justify-between mb-6;
+}
+.page-title {
+  @apply text-2xl font-bold tracking-tight text-foreground;
+}
+.page-subtitle {
+  @apply text-sm mt-1;
+  color: oklch(0.60 0.02 250);
 }

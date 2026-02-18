@@ -73,7 +73,10 @@ function LanguageSwitcher() {
   return (
     <button
       onClick={cycleLanguage}
-      className="h-9 px-2 rounded-lg hover:bg-muted flex items-center gap-1.5 transition-colors text-sm font-medium text-muted-foreground hover:text-foreground"
+      className="h-9 px-2 rounded-lg flex items-center gap-1.5 transition-colors text-sm font-medium"
+      style={{ color: "rgba(148,163,184,1)" }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#E2E8F0"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(148,163,184,1)"; }}
       title="Mudar idioma / Change language / Cambiar idioma"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
@@ -97,7 +100,6 @@ function TenantSwitcher() {
   const handleSwitch = async (tenantId: number) => {
     if (tenantId === activeTenant?.tenantId) return;
     await switchMutation.mutateAsync({ tenantId });
-    // Invalidate all queries to reload with new tenant context
     utils.invalidate();
   };
 
@@ -105,27 +107,32 @@ function TenantSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="h-9 px-3 rounded-lg hover:bg-muted flex items-center gap-2 transition-colors text-sm font-medium text-muted-foreground hover:text-foreground border border-border/50"
+          className="h-9 px-3 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
+          style={{ 
+            color: "#94A3B8", 
+            border: "1px solid rgba(255,255,255,0.08)",
+            background: "rgba(255,255,255,0.03)",
+          }}
           title="Trocar Tenant"
         >
-          <Building className="h-4 w-4" />
+          <Building className="h-4 w-4" style={{ color: "#00D4AA" }} />
           <span className="hidden sm:inline max-w-[120px] truncate">{currentName}</span>
           <ChevronDown className="h-3 w-3 opacity-50" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 bg-popover border-border">
         {myTenants.map((t: any) => (
           <DropdownMenuItem
             key={t.tenantId}
             onClick={() => handleSwitch(t.tenantId)}
             className={`cursor-pointer ${
-              t.tenantId === activeTenant?.tenantId ? "bg-accent font-semibold" : ""
+              t.tenantId === activeTenant?.tenantId ? "bg-muted font-semibold" : ""
             }`}
           >
             <Building className="mr-2 h-4 w-4" />
             <span className="truncate">{t.tenantName || `Tenant ${t.tenantId}`}</span>
             {t.tenantId === activeTenant?.tenantId && (
-              <span className="ml-auto text-xs text-primary">Ativo</span>
+              <span className="ml-auto text-xs" style={{ color: "#00D4AA" }}>Ativo</span>
             )}
           </DropdownMenuItem>
         ))}
@@ -142,7 +149,6 @@ type MenuItem = {
   iconColor: string;
   hidden?: boolean;
   external?: boolean;
-  /** Optional permission requirement: { resource, action } */
   permission?: { resource: string; action: string };
 };
 
@@ -162,10 +168,10 @@ const menuGroups: MenuGroup[] = [
     collapsible: false,
     defaultOpen: true,
     items: [
-      { icon: LayoutDashboard, label: "Dashboard", path: "/", iconColor: "text-sky-400" },
-      { icon: List, label: "Defeitos", path: "/defects", iconColor: "text-amber-400" },
-      { icon: Kanban, label: "Kanban", path: "/kanban", iconColor: "text-violet-400" },
-      { icon: Upload, label: "Importação", path: "/import", iconColor: "text-emerald-400" },
+      { icon: LayoutDashboard, label: "Dashboard", path: "/", iconColor: "text-[#00D4AA]" },
+      { icon: List, label: "Defeitos", path: "/defects", iconColor: "text-[#F5A623]" },
+      { icon: Kanban, label: "Kanban", path: "/kanban", iconColor: "text-[#3B82F6]" },
+      { icon: Upload, label: "Importação", path: "/import", iconColor: "text-[#10B981]" },
     ],
   },
   {
@@ -174,11 +180,11 @@ const menuGroups: MenuGroup[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
-      { icon: DollarSign, label: "COPQ", path: "/copq", iconColor: "text-red-400" },
-      { icon: Award, label: "Scorecard", path: "/scorecard", iconColor: "text-green-400" },
-      { icon: FileBarChart, label: "Relatórios", path: "/reports", iconColor: "text-rose-400" },
-      { icon: Brain, label: "IA Predição", path: "/prediction", iconColor: "text-purple-400" },
-      { icon: LayoutDashboard, label: "BI Embeddido", path: "/bi", iconColor: "text-indigo-400" },
+      { icon: DollarSign, label: "COPQ", path: "/copq", iconColor: "text-[#EF4444]" },
+      { icon: Award, label: "Scorecard", path: "/scorecard", iconColor: "text-[#00D4AA]" },
+      { icon: FileBarChart, label: "Relatórios", path: "/reports", iconColor: "text-[#F5A623]" },
+      { icon: Brain, label: "IA Predição", path: "/prediction", iconColor: "text-[#8B5CF6]" },
+      { icon: LayoutDashboard, label: "BI Embeddido", path: "/bi", iconColor: "text-[#06B6D4]" },
     ],
   },
   {
@@ -187,10 +193,10 @@ const menuGroups: MenuGroup[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
-      { icon: Building2, label: "Fornecedores", path: "/suppliers", iconColor: "text-orange-400" },
-      { icon: FileText, label: "Documentos", path: "/documents", iconColor: "text-blue-400" },
-      { icon: GitBranch, label: "Workflows", path: "/workflow", iconColor: "text-teal-400" },
-      { icon: Clock, label: "SLA", path: "/sla-settings", iconColor: "text-cyan-400" },
+      { icon: Building2, label: "Fornecedores", path: "/suppliers", iconColor: "text-[#F5A623]" },
+      { icon: FileText, label: "Documentos", path: "/documents", iconColor: "text-[#3B82F6]" },
+      { icon: GitBranch, label: "Workflows", path: "/workflow", iconColor: "text-[#00D4AA]" },
+      { icon: Clock, label: "SLA", path: "/sla-settings", iconColor: "text-[#06B6D4]" },
     ],
   },
   {
@@ -199,17 +205,17 @@ const menuGroups: MenuGroup[] = [
     collapsible: true,
     defaultOpen: false,
     items: [
-      { icon: Key, label: "RBAC", path: "/rbac", iconColor: "text-yellow-400", permission: { resource: "rbac", action: "manage" } },
-      { icon: Building2, label: "Tenants", path: "/tenants", iconColor: "text-indigo-400", permission: { resource: "tenant", action: "manage" } },
-      { icon: Webhook, label: "Webhooks", path: "/webhooks", iconColor: "text-pink-400", permission: { resource: "webhook", action: "manage" } },
-      { icon: Key, label: "API Keys", path: "/api-keys", iconColor: "text-emerald-400", permission: { resource: "api_keys", action: "write" } },
-      { icon: Bell, label: "Push Notifications", path: "/push-settings", iconColor: "text-cyan-400" },
+      { icon: Key, label: "RBAC", path: "/rbac", iconColor: "text-[#F5A623]", permission: { resource: "rbac", action: "manage" } },
+      { icon: Building2, label: "Tenants", path: "/tenants", iconColor: "text-[#8B5CF6]", permission: { resource: "tenant", action: "manage" } },
+      { icon: Webhook, label: "Webhooks", path: "/webhooks", iconColor: "text-[#EF4444]", permission: { resource: "webhook", action: "manage" } },
+      { icon: Key, label: "API Keys", path: "/api-keys", iconColor: "text-[#10B981]", permission: { resource: "api_keys", action: "write" } },
+      { icon: Bell, label: "Push Notifications", path: "/push-settings", iconColor: "text-[#06B6D4]" },
     ],
   },
 ];
 
 const externalLinks: MenuItem[] = [
-  { icon: ExternalLink, label: "Portal do Fornecedor", path: "/supplier-portal", iconColor: "text-pink-400", external: true },
+  { icon: ExternalLink, label: "Portal do Fornecedor", path: "/supplier-portal", iconColor: "text-[#F5A623]", external: true },
 ];
 
 // ─── Collapsible Group Component ─────────────────────────────────────
@@ -257,13 +263,16 @@ function CollapsibleGroup({
           onClick={() => group.collapsible && toggleGroup(group.id)}
           className={`w-full flex items-center justify-between px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors rounded-md ${
             group.collapsible
-              ? "cursor-pointer hover:bg-sidebar-accent/50 text-sidebar-foreground/50 hover:text-sidebar-foreground/70"
-              : "cursor-default text-sidebar-foreground/50"
-          } ${hasActiveItem && isGroupCollapsed ? "text-sidebar-primary" : ""}`}
+              ? "cursor-pointer"
+              : "cursor-default"
+          }`}
+          style={{ 
+            color: hasActiveItem && isGroupCollapsed ? "#00D4AA" : "rgba(148,163,184,0.5)",
+          }}
         >
           <span>{group.label}</span>
           {group.collapsible && (
-            <span className={`transition-transform duration-200 ${isGroupCollapsed ? "" : "rotate-0"}`}>
+            <span className="transition-transform duration-200">
               {isGroupCollapsed ? (
                 <ChevronRight className="h-3.5 w-3.5" />
               ) : (
@@ -296,12 +305,19 @@ function CollapsibleGroup({
                     tooltip={item.label}
                     className={`h-10 rounded-xl transition-all font-medium ${
                       isActive
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                        ? "text-white shadow-md"
+                        : "hover:text-foreground"
                     }`}
+                    style={isActive ? {
+                      background: "linear-gradient(135deg, rgba(0,212,170,0.15), rgba(0,212,170,0.05))",
+                      borderLeft: "3px solid #00D4AA",
+                      color: "#00D4AA",
+                    } : {
+                      color: "rgba(148,163,184,0.8)",
+                    }}
                   >
                     <item.icon
-                      className={`h-[18px] w-[18px] ${isActive ? "text-white" : item.iconColor}`}
+                      className={`h-[18px] w-[18px] ${isActive ? "text-[#00D4AA]" : item.iconColor}`}
                     />
                     <span className="ml-1 text-[13px]">{item.label}</span>
                   </SidebarMenuButton>
@@ -314,7 +330,7 @@ function CollapsibleGroup({
       {/* Active indicator dot when group is collapsed */}
       {isGroupCollapsed && hasActiveItem && !isSidebarCollapsed && (
         <div className="flex justify-center py-1">
-          <div className="h-1 w-6 rounded-full bg-sidebar-primary/60" />
+          <div className="h-1 w-6 rounded-full" style={{ background: "rgba(0,212,170,0.6)" }} />
         </div>
       )}
     </div>
@@ -354,7 +370,7 @@ export default function DashboardLayout({
           <div className="login-logo">
             <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/YCDEzlwkgDTTmqGn.png" alt="QTrack System" className="h-14 w-14 object-contain" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-center mb-2">
+          <h1 className="text-2xl font-bold tracking-tight text-center mb-2 text-foreground">
             QTrack System
           </h1>
           <p className="text-sm text-muted-foreground text-center mb-8">
@@ -365,7 +381,8 @@ export default function DashboardLayout({
               window.location.href = getLoginUrl();
             }}
             size="lg"
-            className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all bg-primary hover:bg-primary/90"
+            className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all"
+            style={{ background: "linear-gradient(135deg, #00D4AA, #00B894)", color: "#0A1628" }}
           >
             Entrar no Sistema
           </Button>
@@ -410,14 +427,12 @@ function DashboardLayoutContent({
   const { canInstall, isOnline, promptInstall } = usePwaInstall();
   const [pwaInstallDismissed, setPwaInstallDismissed] = useState(false);
 
-  // Permission-based menu item visibility
   const canAccess = useCallback((item: MenuItem): boolean => {
-    if (!item.permission) return true; // No permission required
-    if (isRbacAdmin || user?.role === "admin") return true; // Admin bypass
+    if (!item.permission) return true;
+    if (isRbacAdmin || user?.role === "admin") return true;
     return canPermission(item.permission.resource, item.permission.action);
   }, [canPermission, isRbacAdmin, user?.role]);
 
-  // Collapsible group state
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(getInitialCollapsedState);
 
   const toggleGroup = useCallback((id: string) => {
@@ -428,7 +443,6 @@ function DashboardLayoutContent({
     });
   }, []);
 
-  // Find active page label for header
   const activeLabel = (() => {
     for (const group of menuGroups) {
       for (const item of group.items) {
@@ -449,7 +463,6 @@ function DashboardLayoutContent({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-
       const sidebarLeft = sidebarRef.current?.getBoundingClientRect().left ?? 0;
       const newWidth = e.clientX - sidebarLeft;
       if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
@@ -481,18 +494,20 @@ function DashboardLayoutContent({
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
-          className="border-r-0 bg-sidebar"
+          className="border-r-0"
+          style={{ background: "#0A1628" }}
           disableTransition={isResizing}
         >
           {/* Logo Header */}
-          <SidebarHeader className="h-16 justify-center border-b border-sidebar-border px-4">
+          <SidebarHeader className="h-16 justify-center px-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <div className="flex items-center gap-3 transition-all w-full">
               <button
                 onClick={toggleSidebar}
-                className="h-9 w-9 flex items-center justify-center hover:bg-sidebar-accent rounded-lg transition-colors focus:outline-none shrink-0"
+                className="h-9 w-9 flex items-center justify-center rounded-lg transition-colors focus:outline-none shrink-0"
+                style={{ color: "rgba(148,163,184,0.7)" }}
                 aria-label="Toggle navigation"
               >
-                <PanelLeft className="h-5 w-5 text-sidebar-foreground/70" />
+                <PanelLeft className="h-5 w-5" />
               </button>
               {!isCollapsed && (
                 <div className="flex items-center gap-3 min-w-0">
@@ -500,10 +515,10 @@ function DashboardLayoutContent({
                     <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/YCDEzlwkgDTTmqGn.png" alt="QTrack" className="h-9 w-9 object-contain" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-sidebar-foreground tracking-tight text-sm leading-tight">
+                    <span className="font-bold tracking-tight text-sm leading-tight text-foreground">
                       QTrack System
                     </span>
-                    <span className="text-[10px] text-sidebar-foreground/40 leading-tight">
+                    <span className="text-[10px] leading-tight" style={{ color: "rgba(148,163,184,0.4)" }}>
                       Quality Management
                     </span>
                   </div>
@@ -517,7 +532,7 @@ function DashboardLayoutContent({
             {menuGroups.map((group, idx) => (
               <div key={group.id}>
                 {idx > 0 && (
-                  <div className="mx-2 my-2 border-t border-sidebar-border/50" />
+                  <div className="mx-2 my-2" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }} />
                 )}
                 <CollapsibleGroup
                   group={group}
@@ -532,14 +547,15 @@ function DashboardLayoutContent({
             ))}
 
             {/* External Links */}
-            <div className="mx-2 my-2 border-t border-sidebar-border/50" />
+            <div className="mx-2 my-2" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }} />
             <SidebarMenu className="space-y-0.5">
               {externalLinks.map(item => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
                     onClick={() => window.open(item.path, "_blank")}
                     tooltip={item.label}
-                    className="h-10 rounded-xl transition-all font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    className="h-10 rounded-xl transition-all font-medium"
+                    style={{ color: "rgba(148,163,184,0.8)" }}
                   >
                     <item.icon className={`h-[18px] w-[18px] ${item.iconColor}`} />
                     <span className="ml-1 text-[13px]">{item.label}</span>
@@ -550,30 +566,30 @@ function DashboardLayoutContent({
           </SidebarContent>
 
           {/* User Footer */}
-          <SidebarFooter className="p-3 border-t border-sidebar-border">
+          <SidebarFooter className="p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-sidebar-accent transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none">
-                  <Avatar className="h-10 w-10 border-2 border-sidebar-border shrink-0">
-                    <AvatarFallback className="text-sm font-semibold bg-gradient-to-br from-sky-400 to-blue-600 text-white">
+                <button className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none"
+                  style={{ color: "#E2E8F0" }}>
+                  <Avatar className="h-10 w-10 shrink-0" style={{ border: "2px solid rgba(0,212,170,0.3)" }}>
+                    <AvatarFallback className="text-sm font-semibold" style={{ background: "linear-gradient(135deg, #00D4AA, #00B894)", color: "#0A1628" }}>
                       {user?.name?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-semibold text-sidebar-foreground truncate leading-none">
+                    <p className="text-sm font-semibold truncate leading-none text-foreground">
                       {user?.name || "Usuário"}
                     </p>
-                    <p className="text-xs text-sidebar-foreground/60 truncate mt-1">
+                    <p className="text-xs truncate mt-1" style={{ color: "rgba(148,163,184,0.6)" }}>
                       {user?.email || "-"}
                     </p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden" />
+                  <ChevronRight className="h-4 w-4 group-data-[collapsible=icon]:hidden" style={{ color: "rgba(148,163,184,0.4)" }} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
                 <DropdownMenuItem
                   onClick={logout}
-                  className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
@@ -583,18 +599,20 @@ function DashboardLayoutContent({
           </SidebarFooter>
         </Sidebar>
         <div
-          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-sky-400/30 transition-colors ${isCollapsed ? "hidden" : ""}`}
+          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize transition-colors ${isCollapsed ? "hidden" : ""}`}
+          style={{ zIndex: 50 }}
           onMouseDown={() => {
             if (isCollapsed) return;
             setIsResizing(true);
           }}
-          style={{ zIndex: 50 }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,212,170,0.3)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         />
       </div>
 
       <SidebarInset className="bg-background">
         {/* Top Header Bar */}
-        <header className="header-bar sticky top-0 z-40 border-b">
+        <header className="header-bar sticky top-0 z-40">
           <div className="flex items-center gap-4">
             {isMobile && <SidebarTrigger className="h-9 w-9 rounded-lg" />}
             <h1 className="text-lg font-semibold text-foreground">
@@ -605,33 +623,35 @@ function DashboardLayoutContent({
             <TenantSwitcher />
             <button 
               onClick={() => setLocation("/notifications")}
-              className="h-9 w-9 rounded-lg hover:bg-muted flex items-center justify-center transition-colors relative"
+              className="h-9 w-9 rounded-lg flex items-center justify-center transition-colors relative"
+              style={{ color: "#94A3B8" }}
               title="Central de Notificações"
             >
-              <Bell className="h-5 w-5 text-muted-foreground" />
+              <Bell className="h-5 w-5" />
             </button>
             <button 
               onClick={() => setLocation("/settings")}
-              className="h-9 w-9 rounded-lg hover:bg-muted flex items-center justify-center transition-colors"
+              className="h-9 w-9 rounded-lg flex items-center justify-center transition-colors"
+              style={{ color: "#94A3B8" }}
               title="Configurações"
             >
-              <Settings className="h-5 w-5 text-muted-foreground" />
+              <Settings className="h-5 w-5" />
             </button>
             <LanguageSwitcher />
-            <div className="flex items-center gap-2 pl-3 border-l">
+            <div className="flex items-center gap-2 pl-3" style={{ borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="text-xs font-semibold bg-primary text-primary-foreground">
+                <AvatarFallback className="text-xs font-semibold" style={{ background: "linear-gradient(135deg, #00D4AA, #00B894)", color: "#0A1628" }}>
                   {user?.name?.charAt(0).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium hidden md:block">{user?.name?.split(' ')[0]}</span>
+              <span className="text-sm font-medium hidden md:block text-foreground">{user?.name?.split(' ')[0]}</span>
             </div>
           </div>
         </header>
         
         {/* Offline Banner */}
         {!isOnline && (
-          <div className="bg-amber-600 text-white px-4 py-2 text-sm flex items-center gap-2 justify-center">
+          <div className="px-4 py-2 text-sm flex items-center gap-2 justify-center" style={{ background: "rgba(245,158,11,0.15)", color: "#FBBF24", borderBottom: "1px solid rgba(245,158,11,0.2)" }}>
             <WifiOff className="h-4 w-4" />
             <span>Sem conexão com a internet. Algumas funcionalidades podem não estar disponíveis.</span>
           </div>
@@ -639,16 +659,17 @@ function DashboardLayoutContent({
 
         {/* PWA Install Banner */}
         {canInstall && !pwaInstallDismissed && (
-          <div className="bg-primary/10 border-b border-primary/20 px-4 py-2.5 flex items-center justify-between">
+          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "rgba(0,212,170,0.08)", borderBottom: "1px solid rgba(0,212,170,0.15)" }}>
             <div className="flex items-center gap-2 text-sm">
-              <Download className="h-4 w-4 text-primary" />
+              <Download className="h-4 w-4" style={{ color: "#00D4AA" }} />
               <span className="text-foreground">Instale o <strong>QTrack</strong> para acesso rápido e offline.</span>
             </div>
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="default" className="h-7 text-xs" onClick={promptInstall}>
+              <Button size="sm" className="h-7 text-xs" onClick={promptInstall}
+                style={{ background: "#00D4AA", color: "#0A1628" }}>
                 Instalar
               </Button>
-              <button onClick={() => setPwaInstallDismissed(true)} className="h-7 w-7 rounded flex items-center justify-center hover:bg-muted">
+              <button onClick={() => setPwaInstallDismissed(true)} className="h-7 w-7 rounded flex items-center justify-center">
                 <X className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             </div>

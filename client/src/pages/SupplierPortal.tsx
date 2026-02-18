@@ -183,7 +183,7 @@ export default function SupplierPortal() {
     if (mimeType.startsWith('image/')) {
       return <Image className="w-4 h-4 text-blue-500" />;
     }
-    return <File className="w-4 h-4 text-gray-500" />;
+    return <File className="w-4 h-4 text-muted-foreground" />;
   };
 
   const formatFileSize = (bytes: number) => {
@@ -201,7 +201,7 @@ export default function SupplierPortal() {
       case "ONGOING":
         return <Badge className="bg-blue-500">Em Andamento</Badge>;
       default:
-        return <Badge className="bg-gray-500">{status || "N/A"}</Badge>;
+        return <Badge className="bg-muted">{status || "N/A"}</Badge>;
     }
   };
 
@@ -214,7 +214,7 @@ export default function SupplierPortal() {
       "Aguardando Validação de Ação Corretiva": "bg-indigo-500",
       "CLOSED": "bg-green-500",
     };
-    return <Badge className={stepColors[step] || "bg-gray-500"}>{step}</Badge>;
+    return <Badge className={stepColors[step] || "bg-muted"}>{step}</Badge>;
   };
 
   // Login Screen
@@ -262,9 +262,9 @@ export default function SupplierPortal() {
 
   // Supplier Dashboard
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
+      <header className="bg-card border-b border-border sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
@@ -361,7 +361,7 @@ export default function SupplierPortal() {
                 {defects?.map((defect) => (
                   <div
                     key={defect.id}
-                    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    className="border rounded-lg p-4 hover:bg-muted transition-colors"
                   >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-2">
@@ -480,7 +480,7 @@ export default function SupplierPortal() {
                                     {uploadedFiles.map((file, index) => (
                                       <div
                                         key={index}
-                                        className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border"
+                                        className="flex items-center justify-between p-2 bg-muted rounded-lg border"
                                       >
                                         <div className="flex items-center gap-2 min-w-0">
                                           {getFileIcon(file.mimeType)}

@@ -115,14 +115,14 @@ export default function NewDefect() {
             <Button 
               variant="ghost" 
               onClick={() => setLocation("/defects")}
-              className="h-10 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-all duration-200 shadow-sm hover:shadow group"
+              className="h-10 px-4 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-medium transition-all duration-200 shadow-sm hover:shadow group"
             >
               <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
               Voltar
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Novo Defeito</h1>
-              <p className="text-gray-500">Registre um novo caso de defeito de qualidade</p>
+              <h1 className="text-2xl font-bold text-foreground">Novo Defeito</h1>
+              <p className="text-muted-foreground">Registre um novo caso de defeito de qualidade</p>
             </div>
           </div>
         </div>

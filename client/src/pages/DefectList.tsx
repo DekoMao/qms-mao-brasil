@@ -17,26 +17,26 @@ import { ptBR } from "date-fns/locale";
 function getStatusBadge(status: string | null) {
   switch (status) {
     case "CLOSED": 
-      return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">CLOSED</Badge>;
+      return <Badge className="status-closed hover:opacity-90">CLOSED</Badge>;
     case "ONGOING": 
-      return <Badge className="bg-sky-100 text-sky-700 border-sky-200 hover:bg-sky-100">ONGOING</Badge>;
+      return <Badge className="status-ongoing hover:opacity-90">ONGOING</Badge>;
     case "DELAYED": 
-      return <Badge className="bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-100">DELAYED</Badge>;
+      return <Badge className="status-delayed hover:opacity-90">DELAYED</Badge>;
     default: 
-      return <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">{status || "-"}</Badge>;
+      return <Badge className="status-waiting hover:opacity-90">{status || "-"}</Badge>;
   }
 }
 
 function getSeverityBadge(mg: string | null) {
   switch (mg) {
     case "S": 
-      return <Badge className="bg-rose-500 text-white hover:bg-rose-500 font-bold">S</Badge>;
+      return <Badge className="severity-s hover:opacity-90">S</Badge>;
     case "A": 
-      return <Badge className="bg-amber-500 text-white hover:bg-amber-500 font-bold">A</Badge>;
+      return <Badge className="severity-a hover:opacity-90">A</Badge>;
     case "B": 
-      return <Badge className="bg-sky-500 text-white hover:bg-sky-500 font-bold">B</Badge>;
+      return <Badge className="severity-b hover:opacity-90">B</Badge>;
     case "C": 
-      return <Badge className="bg-slate-400 text-white hover:bg-slate-400 font-bold">C</Badge>;
+      return <Badge className="severity-c hover:opacity-90">C</Badge>;
     default: 
       return null;
   }
@@ -140,20 +140,20 @@ export default function DefectList() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Lista de Defeitos</h1>
+          <h1 className="page-title">Lista de Defeitos</h1>
           <p className="text-muted-foreground mt-1">
             {defectsResult?.total || 0} registros encontrados
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="h-9">
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="h-9 border-border bg-transparent hover:bg-muted text-foreground">
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="h-9"
+            className="h-9 border-border bg-transparent hover:bg-muted text-foreground"
             disabled={exporting}
             onClick={async () => {
               setExporting(true);
@@ -186,7 +186,7 @@ export default function DefectList() {
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             {exporting ? "Exportando..." : "Exportar Excel"}
           </Button>
-          <Button size="sm" onClick={() => setLocation("/defects/new")} className="h-9">
+          <Button size="sm" onClick={() => setLocation("/defects/new")} className="h-9" style={{ background: '#00D4AA', color: '#0A1628' }}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Defeito
           </Button>
@@ -201,7 +201,7 @@ export default function DefectList() {
               value={filters.year?.toString() || "all"}
               onValueChange={(v) => setFilters({ ...filters, year: v === "all" ? undefined : parseInt(v) })}
             >
-              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+              <SelectTrigger className="w-auto h-9 px-3 bg-card border-border rounded-full text-sm text-foreground">
                 <span className="flex items-center gap-2">
                   Ano
                   <ChevronDown className="h-3 w-3" />
@@ -219,7 +219,7 @@ export default function DefectList() {
               value={filters.month || "all"}
               onValueChange={(v) => setFilters({ ...filters, month: v === "all" ? undefined : v })}
             >
-              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+              <SelectTrigger className="w-auto h-9 px-3 bg-card border-border rounded-full text-sm text-foreground">
                 <span className="flex items-center gap-2">
                   Mês
                   <ChevronDown className="h-3 w-3" />
@@ -237,7 +237,7 @@ export default function DefectList() {
               value={filters.weekKey || "all"}
               onValueChange={(v) => setFilters({ ...filters, weekKey: v === "all" ? undefined : v })}
             >
-              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+              <SelectTrigger className="w-auto h-9 px-3 bg-card border-border rounded-full text-sm text-foreground">
                 <span className="flex items-center gap-2">
                   Semana
                   <ChevronDown className="h-3 w-3" />
@@ -255,7 +255,7 @@ export default function DefectList() {
               value={filters.supplier || "all"}
               onValueChange={(v) => setFilters({ ...filters, supplier: v === "all" ? undefined : v })}
             >
-              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+              <SelectTrigger className="w-auto h-9 px-3 bg-card border-border rounded-full text-sm text-foreground">
                 <span className="flex items-center gap-2">
                   Fornecedor
                   <ChevronDown className="h-3 w-3" />
@@ -273,7 +273,7 @@ export default function DefectList() {
               value={filters.status || "all"}
               onValueChange={(v) => setFilters({ ...filters, status: v === "all" ? undefined : v })}
             >
-              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+              <SelectTrigger className="w-auto h-9 px-3 bg-card border-border rounded-full text-sm text-foreground">
                 <span className="flex items-center gap-2">
                   Status
                   <ChevronDown className="h-3 w-3" />
@@ -291,7 +291,7 @@ export default function DefectList() {
               value={filters.bucketAging || "all"}
               onValueChange={(v) => setFilters({ ...filters, bucketAging: v === "all" ? undefined : v })}
             >
-              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+              <SelectTrigger className="w-auto h-9 px-3 bg-card border-border rounded-full text-sm text-foreground">
                 <span className="flex items-center gap-2">
                   Bucket
                   <ChevronDown className="h-3 w-3" />
@@ -309,7 +309,7 @@ export default function DefectList() {
               value={filters.mg || "all"}
               onValueChange={(v) => setFilters({ ...filters, mg: v === "all" ? undefined : v })}
             >
-              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+              <SelectTrigger className="w-auto h-9 px-3 bg-card border-border rounded-full text-sm text-foreground">
                 <span className="flex items-center gap-2">
                   Severidade
                   <ChevronDown className="h-3 w-3" />
@@ -327,7 +327,7 @@ export default function DefectList() {
               value={filters.model || "all"}
               onValueChange={(v) => setFilters({ ...filters, model: v === "all" ? undefined : v })}
             >
-              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+              <SelectTrigger className="w-auto h-9 px-3 bg-card border-border rounded-full text-sm text-foreground">
                 <span className="flex items-center gap-2">
                   Modelo
                   <ChevronDown className="h-3 w-3" />
@@ -345,7 +345,7 @@ export default function DefectList() {
               value={filters.customer || "all"}
               onValueChange={(v) => setFilters({ ...filters, customer: v === "all" ? undefined : v })}
             >
-              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+              <SelectTrigger className="w-auto h-9 px-3 bg-card border-border rounded-full text-sm text-foreground">
                 <span className="flex items-center gap-2">
                   Cliente
                   <ChevronDown className="h-3 w-3" />
@@ -363,7 +363,7 @@ export default function DefectList() {
               value={filters.owner || "all"}
               onValueChange={(v) => setFilters({ ...filters, owner: v === "all" ? undefined : v })}
             >
-              <SelectTrigger className="w-auto h-9 px-3 bg-white border rounded-full text-sm">
+              <SelectTrigger className="w-auto h-9 px-3 bg-card border-border rounded-full text-sm text-foreground">
                 <span className="flex items-center gap-2">
                   Owner
                   <ChevronDown className="h-3 w-3" />
@@ -380,7 +380,7 @@ export default function DefectList() {
             {/* Date Range Filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-9 px-3 bg-white border rounded-full text-sm font-normal">
+                <Button variant="outline" className="h-9 px-3 bg-card border-border rounded-full text-sm font-normal text-foreground">
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   {dateFrom ? format(dateFrom, "dd/MM/yy", { locale: ptBR }) : "Data Inicial"}
                 </Button>
@@ -397,7 +397,7 @@ export default function DefectList() {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-9 px-3 bg-white border rounded-full text-sm font-normal">
+                <Button variant="outline" className="h-9 px-3 bg-card border-border rounded-full text-sm font-normal text-foreground">
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   {dateTo ? format(dateTo, "dd/MM/yy", { locale: ptBR }) : "Data Final"}
                 </Button>
@@ -434,12 +434,12 @@ export default function DefectList() {
           placeholder="Buscar por fornecedor..."
           value={filters.search}
           onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          className="pl-10 h-10 bg-white"
+          className="pl-10 h-10 bg-card border-border text-foreground"
         />
       </div>
 
       {/* Data Table */}
-      <Card className="overflow-hidden border-0 shadow-sm">
+      <Card className="overflow-hidden border border-border bg-card">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-4 space-y-3">
@@ -470,7 +470,7 @@ export default function DefectList() {
                       onClick={() => setLocation(`/defects/${defect.id}`)}
                     >
                       <td>
-                        <span className="font-semibold text-primary">{defect.docNumber}</span>
+                        <span className="font-semibold" style={{ color: '#00D4AA' }}>{defect.docNumber}</span>
                       </td>
                       <td>
                         <span className="font-medium">{defect.supplier || "-"}</span>
