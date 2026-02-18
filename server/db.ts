@@ -148,6 +148,8 @@ export interface DefectFilters {
   model?: string;
   customer?: string;
   owner?: string;
+  // Multi-tenancy
+  tenantId?: number;
   // Pagination
   page?: number;
   pageSize?: number;
@@ -163,6 +165,11 @@ export async function getDefects(filters?: DefectFilters) {
   
   if (!filters?.includeDeleted) {
     conditions.push(isNull(defects.deletedAt));
+  }
+
+  // Multi-tenancy scoping
+  if (filters?.tenantId) {
+    conditions.push(eq(defects.tenantId, filters.tenantId));
   }
 
   if (filters?.supplier) {
@@ -251,13 +258,14 @@ export async function getDefectsFlat(filters?: DefectFilters) {
   return result.data;
 }
 
-export async function getDefectById(id: number) {
+export async function getDefectById(id: number, tenantId?: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const result = await db.select().from(defects).where(
-    and(eq(defects.id, id), isNull(defects.deletedAt))
-  ).limit(1);
+  const conditions = [eq(defects.id, id), isNull(defects.deletedAt)];
+  if (tenantId) conditions.push(eq(defects.tenantId, tenantId));
+
+  const result = await db.select().from(defects).where(and(...conditions)).limit(1);
   if (result.length === 0) return null;
 
   return enrichDefect(result[0]);
@@ -446,11 +454,11 @@ export async function getImportLogs() {
 // =====================================================
 // STATISTICS FUNCTIONS
 // =====================================================
-export async function getDefectStats(filters?: { dateFrom?: string; dateTo?: string }) {
+export async function getDefectStats(filters?: { dateFrom?: string; dateTo?: string; tenantId?: number }) {
   const db = await getDb();
   if (!db) return null;
 
-  let { data: allDefects } = await getDefects();
+  let { data: allDefects } = await getDefects({ tenantId: filters?.tenantId });
   
   // Apply period filter
   if (filters?.dateFrom || filters?.dateTo) {
@@ -552,11 +560,11 @@ export async function getDefectStats(filters?: { dateFrom?: string; dateTo?: str
 // =====================================================
 // FILTER OPTIONS
 // =====================================================
-export async function getFilterOptions() {
+export async function getFilterOptions(tenantId?: number) {
   const db = await getDb();
   if (!db) return null;
 
-  const { data: allDefects } = await getDefects();
+  const { data: allDefects } = await getDefects({ tenantId });
   
   // Get suppliers from suppliers table (source of truth)
   const allSuppliers = await getSuppliers();
@@ -688,15 +696,15 @@ export async function deleteSupplier(id: number) {
   return true;
 }
 
-export async function getDefectsForSupplier(supplierName: string) {
+export async function getDefectsForSupplier(supplierName: string, tenantId?: number) {
   const db = await getDb();
   if (!db) return [];
   
+  const conditions = [eq(defects.supplier, supplierName), isNull(defects.deletedAt)];
+  if (tenantId) conditions.push(eq(defects.tenantId, tenantId));
+
   const result = await db.select().from(defects)
-    .where(and(
-      eq(defects.supplier, supplierName),
-      isNull(defects.deletedAt)
-    ))
+    .where(and(...conditions))
     .orderBy(desc(defects.openDate));
   
   return result.map(enrichDefect);
@@ -830,8 +838,8 @@ export async function createRootCauseCategory(data: InsertRootCauseCategory) {
   return result[0].insertId;
 }
 
-export async function getRootCauseAnalysis(filters?: { dateFrom?: string; dateTo?: string }) {
-  let { data: allDefects } = await getDefects();
+export async function getRootCauseAnalysis(filters?: { dateFrom?: string; dateTo?: string; tenantId?: number }) {
+  let { data: allDefects } = await getDefects({ tenantId: filters?.tenantId });
   
   // Apply period filter
   if (filters?.dateFrom || filters?.dateTo) {
@@ -923,8 +931,8 @@ function extractCauseCategory(cause: string): string {
 // =====================================================
 // SLA CHECK FUNCTIONS
 // =====================================================
-export async function checkSlaViolations() {
-  const { data: allDefects } = await getDefects();
+export async function checkSlaViolations(tenantId?: number) {
+  const { data: allDefects } = await getDefects({ tenantId });
   const slaConfigsList = await getSlaConfigs();
   
   const violations: Array<{
@@ -1093,15 +1101,15 @@ export async function softDeleteDefectCost(id: number) {
   await db.update(defectCosts).set({ deletedAt: new Date() }).where(eq(defectCosts.id, id));
 }
 
-export async function getCopqDashboard(filters?: { startDate?: string; endDate?: string; supplierId?: number }) {
+export async function getCopqDashboard(filters?: { startDate?: string; endDate?: string; supplierId?: number; tenantId?: number }) {
   const db = await getDb();
   if (!db) return null;
 
   // Get all non-deleted costs
   let allCosts = await db.select().from(defectCosts).where(isNull(defectCosts.deletedAt));
 
-  // Join with defects for supplier info
-  const allDefectsResult = await getDefects({ pageSize: 10000 });
+  // Join with defects for supplier info (tenant-scoped)
+  const allDefectsResult = await getDefects({ pageSize: 10000, tenantId: filters?.tenantId });
   const defectMap = new Map(allDefectsResult.data.map((d: any) => [d.id, d]));
 
   // Apply filters
@@ -1227,8 +1235,8 @@ export async function getScoreHistory(supplierId: number, limit = 12) {
     .limit(limit);
 }
 
-export async function calculateSupplierScore(supplierId: number) {
-  const allDefectsResult = await getDefects({ pageSize: 10000 });
+export async function calculateSupplierScore(supplierId: number, tenantId?: number) {
+  const allDefectsResult = await getDefects({ pageSize: 10000, tenantId });
   const supplierDefects = allDefectsResult.data.filter((d: any) => d.supplierId === supplierId);
   const configs = await getScoreConfigs();
   const slaConfigs = await getSlaConfigs();
@@ -1302,11 +1310,11 @@ export async function calculateSupplierScore(supplierId: number) {
   };
 }
 
-export async function getAllSupplierScores() {
+export async function getAllSupplierScores(tenantId?: number) {
   const allSuppliers = await getSuppliers();
   const scores = [];
   for (const supplier of allSuppliers) {
-    const score = await calculateSupplierScore(supplier.id);
+    const score = await calculateSupplierScore(supplier.id, tenantId);
     const history = await getScoreHistory(supplier.id, 6);
     const historyScores = history.map((h: any) => parseFloat(h.overallScore));
     const avgLast3 = historyScores.length >= 3
@@ -1843,11 +1851,17 @@ export async function getWebhookLogs(configId: number, limit: number = 50) {
 // =====================================================
 // 6.5 AI PREDICTION HELPERS
 // =====================================================
-export async function detectRecurrencePatterns(supplierId?: number) {
+export async function detectRecurrencePatterns(supplierId?: number, tenantId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  const whereConditions = [
+    isNull(defects.deletedAt),
+    gte(defects.openDate, sixMonthsAgo.toISOString().split("T")[0]),
+  ];
+  if (tenantId) whereConditions.push(eq(defects.tenantId, tenantId));
 
   let query = db.select({
     supplierId: defects.supplierId,
@@ -1858,10 +1872,7 @@ export async function detectRecurrencePatterns(supplierId?: number) {
     count: sql<number>`COUNT(*)`,
     lastOccurrence: sql<string>`MAX(${defects.openDate})`,
   }).from(defects).where(
-    and(
-      isNull(defects.deletedAt),
-      gte(defects.openDate, sixMonthsAgo.toISOString().split("T")[0])
-    )
+    and(...whereConditions)
   ).groupBy(defects.supplierId, defects.supplier, defects.model, defects.cause, defects.category)
    .having(sql`COUNT(*) >= 2`);
 
@@ -1879,29 +1890,34 @@ export async function detectRecurrencePatterns(supplierId?: number) {
   }));
 }
 
-export async function getRecurrenceHeatmap() {
+export async function getRecurrenceHeatmap(tenantId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
+  const conditions = [
+    isNull(defects.deletedAt),
+    gte(defects.openDate, sixMonthsAgo.toISOString().split("T")[0]),
+  ];
+  if (tenantId) conditions.push(eq(defects.tenantId, tenantId));
+
   return db.select({
     supplierName: defects.supplier,
     category: defects.category,
     count: sql<number>`COUNT(*)`,
-  }).from(defects).where(
-    and(isNull(defects.deletedAt), gte(defects.openDate, sixMonthsAgo.toISOString().split("T")[0]))
-  ).groupBy(defects.supplier, defects.category);
+  }).from(defects).where(and(...conditions)).groupBy(defects.supplier, defects.category);
 }
 
 // =====================================================
 // 6.6 DOCUMENT CONTROL / DMS HELPERS
 // =====================================================
 
-export async function getDocuments(filters?: { status?: string; category?: string; search?: string }) {
+export async function getDocuments(filters?: { status?: string; category?: string; search?: string; tenantId?: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const conditions: any[] = [isNull(documents.deletedAt)];
+  if (filters?.tenantId) conditions.push(eq(documents.tenantId, filters.tenantId));
   if (filters?.status) conditions.push(eq(documents.status, filters.status as any));
   if (filters?.category) conditions.push(eq(documents.category, filters.category as any));
   if (filters?.search) conditions.push(sql`(${documents.title} LIKE ${'%' + filters.search + '%'} OR ${documents.documentNumber} LIKE ${'%' + filters.search + '%'})`);
@@ -1971,4 +1987,58 @@ export async function softDeleteDocument(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(documents).set({ deletedAt: new Date() }).where(eq(documents.id, id));
+}
+
+// =====================================================
+// TENANT CONTEXT HELPERS
+// =====================================================
+
+export async function updateActiveTenantId(userId: number, tenantId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ activeTenantId: tenantId }).where(eq(users.id, userId));
+}
+
+/**
+ * Ensure a user is a member of the given tenant.
+ * If not, auto-add them (used during login / first access).
+ */
+export async function ensureUserInTenant(userId: number, tenantId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(tenantUsers)
+    .where(and(eq(tenantUsers.userId, userId), eq(tenantUsers.tenantId, tenantId)));
+  if (existing.length > 0) {
+    // Reactivate if deactivated
+    if (!existing[0].isActive) {
+      await db.update(tenantUsers).set({ isActive: true })
+        .where(eq(tenantUsers.id, existing[0].id));
+    }
+    return existing[0];
+  }
+  const [result] = await db.insert(tenantUsers).values({ userId, tenantId, role: "user", isActive: true }).$returningId();
+  return result;
+}
+
+export async function getTenantMembers(tenantId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      userId: tenantUsers.userId,
+      role: tenantUsers.role,
+      isActive: tenantUsers.isActive,
+      userName: users.name,
+      userEmail: users.email,
+      userRole: users.role,
+    })
+    .from(tenantUsers)
+    .innerJoin(users, eq(tenantUsers.userId, users.id))
+    .where(and(eq(tenantUsers.tenantId, tenantId), eq(tenantUsers.isActive, true)));
+}
+
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ id: users.id, name: users.name, email: users.email, role: users.role }).from(users);
 }

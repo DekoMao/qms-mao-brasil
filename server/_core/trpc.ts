@@ -28,6 +28,36 @@ const requireUser = t.middleware(async opts => {
 export const protectedProcedure = t.procedure.use(requireUser);
 
 /**
+ * Tenant-aware procedure: requires auth + resolves and validates tenant access.
+ * Injects ctx.tenantId (guaranteed non-null).
+ */
+const requireTenant = t.middleware(async (opts) => {
+  const { ctx, next } = opts;
+  if (!ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+  }
+  if (!ctx.tenantId) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Nenhum tenant ativo. Selecione uma organização.",
+    });
+  }
+  // Validate access
+  const { assertTenantAccess } = await import("../tenantContext");
+  await assertTenantAccess(ctx.user.id, ctx.tenantId);
+
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.user,
+      tenantId: ctx.tenantId,
+    },
+  });
+});
+
+export const tenantProcedure = t.procedure.use(requireTenant);
+
+/**
  * RBAC-aware procedure: checks if user has a specific permission.
  * Usage: authorizedProcedure("defects", "delete").mutation(...)
  */

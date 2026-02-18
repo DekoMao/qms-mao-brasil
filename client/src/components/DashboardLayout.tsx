@@ -52,6 +52,9 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { useTranslation } from 'react-i18next';
 import { usePermissions } from "@/hooks/usePermissions";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
+import { trpc } from "@/lib/trpc";
+import { Building, Download, WifiOff, X } from "lucide-react";
 
 // ─── Language Switcher ───────────────────────────────────────────────
 const LANGS = ['pt-BR', 'en', 'es'] as const;
@@ -76,6 +79,58 @@ function LanguageSwitcher() {
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
       <span className="hidden sm:inline">{LANG_LABELS[currentLang] || 'PT'}</span>
     </button>
+  );
+}
+
+// ─── Tenant Switcher ────────────────────────────────────────────────
+function TenantSwitcher() {
+  const { data: myTenants } = trpc.tenant.myTenants.useQuery();
+  const { data: activeTenant } = trpc.tenant.activeTenant.useQuery();
+  const switchMutation = trpc.tenant.switchTenant.useMutation();
+  const utils = trpc.useUtils();
+
+  if (!myTenants || myTenants.length <= 1) return null;
+
+  const currentTenant = myTenants.find((t: any) => t.tenantId === activeTenant?.tenantId);
+  const currentName = currentTenant?.tenantName || "Tenant";
+
+  const handleSwitch = async (tenantId: number) => {
+    if (tenantId === activeTenant?.tenantId) return;
+    await switchMutation.mutateAsync({ tenantId });
+    // Invalidate all queries to reload with new tenant context
+    utils.invalidate();
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="h-9 px-3 rounded-lg hover:bg-muted flex items-center gap-2 transition-colors text-sm font-medium text-muted-foreground hover:text-foreground border border-border/50"
+          title="Trocar Tenant"
+        >
+          <Building className="h-4 w-4" />
+          <span className="hidden sm:inline max-w-[120px] truncate">{currentName}</span>
+          <ChevronDown className="h-3 w-3 opacity-50" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        {myTenants.map((t: any) => (
+          <DropdownMenuItem
+            key={t.tenantId}
+            onClick={() => handleSwitch(t.tenantId)}
+            className={`cursor-pointer ${
+              t.tenantId === activeTenant?.tenantId ? "bg-accent font-semibold" : ""
+            }`}
+          >
+            <Building className="mr-2 h-4 w-4" />
+            <span className="truncate">{t.tenantName || `Tenant ${t.tenantId}`}</span>
+            {t.tenantId === activeTenant?.tenantId && (
+              <span className="ml-auto text-xs text-primary">Ativo</span>
+            )}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -123,6 +178,7 @@ const menuGroups: MenuGroup[] = [
       { icon: Award, label: "Scorecard", path: "/scorecard", iconColor: "text-green-400" },
       { icon: FileBarChart, label: "Relatórios", path: "/reports", iconColor: "text-rose-400" },
       { icon: Brain, label: "IA Predição", path: "/prediction", iconColor: "text-purple-400" },
+      { icon: LayoutDashboard, label: "BI Embeddido", path: "/bi", iconColor: "text-indigo-400" },
     ],
   },
   {
@@ -144,7 +200,10 @@ const menuGroups: MenuGroup[] = [
     defaultOpen: false,
     items: [
       { icon: Key, label: "RBAC", path: "/rbac", iconColor: "text-yellow-400", permission: { resource: "rbac", action: "manage" } },
+      { icon: Building2, label: "Tenants", path: "/tenants", iconColor: "text-indigo-400", permission: { resource: "tenant", action: "manage" } },
       { icon: Webhook, label: "Webhooks", path: "/webhooks", iconColor: "text-pink-400", permission: { resource: "webhook", action: "manage" } },
+      { icon: Key, label: "API Keys", path: "/api-keys", iconColor: "text-emerald-400", permission: { resource: "api_keys", action: "write" } },
+      { icon: Bell, label: "Push Notifications", path: "/push-settings", iconColor: "text-cyan-400" },
     ],
   },
 ];
@@ -348,6 +407,8 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const { can: canPermission, isAdmin: isRbacAdmin } = usePermissions();
+  const { canInstall, isOnline, promptInstall } = usePwaInstall();
+  const [pwaInstallDismissed, setPwaInstallDismissed] = useState(false);
 
   // Permission-based menu item visibility
   const canAccess = useCallback((item: MenuItem): boolean => {
@@ -541,6 +602,7 @@ function DashboardLayoutContent({
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            <TenantSwitcher />
             <button 
               onClick={() => setLocation("/notifications")}
               className="h-9 w-9 rounded-lg hover:bg-muted flex items-center justify-center transition-colors relative"
@@ -567,6 +629,32 @@ function DashboardLayoutContent({
           </div>
         </header>
         
+        {/* Offline Banner */}
+        {!isOnline && (
+          <div className="bg-amber-600 text-white px-4 py-2 text-sm flex items-center gap-2 justify-center">
+            <WifiOff className="h-4 w-4" />
+            <span>Sem conexão com a internet. Algumas funcionalidades podem não estar disponíveis.</span>
+          </div>
+        )}
+
+        {/* PWA Install Banner */}
+        {canInstall && !pwaInstallDismissed && (
+          <div className="bg-primary/10 border-b border-primary/20 px-4 py-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <Download className="h-4 w-4 text-primary" />
+              <span className="text-foreground">Instale o <strong>QTrack</strong> para acesso rápido e offline.</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="default" className="h-7 text-xs" onClick={promptInstall}>
+                Instalar
+              </Button>
+              <button onClick={() => setPwaInstallDismissed(true)} className="h-7 w-7 rounded flex items-center justify-center hover:bg-muted">
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <main className="flex-1 p-6 bg-background min-h-[calc(100vh-3.5rem)]">
           {children}
         </main>

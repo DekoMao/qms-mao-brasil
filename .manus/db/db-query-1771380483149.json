@@ -1,0 +1,22 @@
+{
+  "query": "SELECT 'defects' as tbl, COUNT(*) as cnt FROM defects UNION ALL SELECT 'tenants', COUNT(*) FROM tenants UNION ALL SELECT 'tenant_users', COUNT(*) FROM tenant_users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT 'defects' as tbl, COUNT(*) as cnt FROM defects UNION ALL SELECT 'tenants', COUNT(*) FROM tenants UNION ALL SELECT 'tenant_users', COUNT(*) FROM tenant_users;",
+  "rows": [
+    {
+      "tbl": "tenant_users",
+      "cnt": "1"
+    },
+    {
+      "tbl": "defects",
+      "cnt": "119"
+    },
+    {
+      "tbl": "tenants",
+      "cnt": "23"
+    }
+  ],
+  "messages": [],
+  "stdout": "tbl\tcnt\ntenant_users\t1\ndefects\t119\ntenants\t23\n",
+  "stderr": "",
+  "execution_time_ms": 364
+}

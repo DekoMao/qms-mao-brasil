@@ -1,0 +1,9 @@
+{
+  "query": "INSERT IGNORE INTO tenant_users (tenantId, userId, role, isActive) SELECT 1, id, 'admin', 1 FROM users WHERE role = 'admin' AND id NOT IN (SELECT userId FROM tenant_users WHERE tenantId = 1 AND isActive = 1);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute INSERT IGNORE INTO tenant_users (tenantId, userId, role, isActive) SELECT 1, id, 'admin', 1 FROM users WHERE role = 'admin' AND id NOT IN (SELECT userId FROM tenant_users WHERE tenantId = 1 AND isActive = 1);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 507
+}

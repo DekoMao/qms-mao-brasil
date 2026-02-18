@@ -19,6 +19,10 @@ export default function RbacAdmin() {
   const [editPerms, setEditPerms] = useState<number[]>([]);
   const [assignUserId, setAssignUserId] = useState<string>("");
   const [assignRoleId, setAssignRoleId] = useState<string>("");
+  const [createRoleOpen, setCreateRoleOpen] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [newRoleDesc, setNewRoleDesc] = useState("");
+  const [cloneFromRoleId, setCloneFromRoleId] = useState<string>("");
 
   const { data: roles, isLoading: rolesLoading, refetch: refetchRoles } = trpc.rbac.roles.useQuery();
   const { data: permissions } = trpc.rbac.permissions.useQuery();
@@ -49,6 +53,16 @@ export default function RbacAdmin() {
 
   const removeRoleMutation = trpc.rbac.removeRole.useMutation({
     onSuccess: () => { toast.success("Role removido com sucesso"); },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const createRoleMutation = trpc.rbac.createRole.useMutation({
+    onSuccess: () => { toast.success("Role customizado criado com sucesso"); refetchRoles(); setCreateRoleOpen(false); setNewRoleName(""); setNewRoleDesc(""); setCloneFromRoleId(""); },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const deleteRoleMutation = trpc.rbac.deleteRole.useMutation({
+    onSuccess: () => { toast.success("Role removido"); refetchRoles(); },
     onError: (err: any) => toast.error(err.message),
   });
 
@@ -84,12 +98,17 @@ export default function RbacAdmin() {
           <p className="text-muted-foreground mt-1">Gerencie roles, permissões e atribuições de usuários</p>
         </div>
         <Can resource="rbac" action="manage">
-          {(!roles || roles.length === 0) && (
-            <Button onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
-              {seedMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Inicializar Roles Padrão
+          <div className="flex items-center gap-2">
+            {(!roles || roles.length === 0) && (
+              <Button onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
+                {seedMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Inicializar Roles Padrão
+              </Button>
+            )}
+            <Button onClick={() => setCreateRoleOpen(true)} variant="outline">
+              <UserPlus className="h-4 w-4 mr-2" /> Criar Role Custom
             </Button>
-          )}
+          </div>
         </Can>
       </div>
 
@@ -411,6 +430,61 @@ export default function RbacAdmin() {
                 </Button>
               </div>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Custom Role Dialog */}
+      <Dialog open={createRoleOpen} onOpenChange={setCreateRoleOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Criar Role Customizado</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Nome do Role</label>
+              <input
+                type="text"
+                className="w-full mt-1 px-3 py-2 border rounded-md bg-background text-foreground"
+                placeholder="Ex: Auditor Externo"
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Descrição</label>
+              <input
+                type="text"
+                className="w-full mt-1 px-3 py-2 border rounded-md bg-background text-foreground"
+                placeholder="Descrição do role"
+                value={newRoleDesc}
+                onChange={(e) => setNewRoleDesc(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Clonar permissões de (opcional)</label>
+              <Select value={cloneFromRoleId} onValueChange={setCloneFromRoleId}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Nenhum (role vazio)" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (role vazio)</SelectItem>
+                  {roles?.map((r: any) => (
+                    <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              className="w-full"
+              disabled={!newRoleName.trim() || createRoleMutation.isPending}
+              onClick={() => createRoleMutation.mutate({
+                name: newRoleName.trim(),
+                description: newRoleDesc.trim() || undefined,
+                cloneFromRoleId: cloneFromRoleId && cloneFromRoleId !== "none" ? Number(cloneFromRoleId) : undefined,
+              })}
+            >
+              {createRoleMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Criar Role
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

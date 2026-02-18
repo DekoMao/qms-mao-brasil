@@ -342,6 +342,68 @@
 - [x] 6.2 RBAC: Componente <Can> integrado nas páginas admin
 - [x] 6.1 Workflow: Integrar engine com fluxo de defeitos (step transitions via engine)
 - [x] 6.1 Workflow: Templates SCAR e Fast Track além do 8D
-- [ ] 4.6 BI Embeddido: Dashboard customizável com widgets drag-and-drop
-- [ ] 7.3 Push Notifications: Web Push via service worker (notificação browser)
+- [x] 4.6 BI Embeddido: Dashboard customizável com widgets drag-and-drop (P4 completo)
+- [x] 7.3 Push Notifications: Web Push via service worker (P3 completo)
 - [x] Testes: Cobertura completa das novas features (target 220+ testes) - 268 testes passando
+
+## SDD Enterprise Gap Closure v1.0.0
+
+### P1 — Multi-tenancy Isolamento Real
+- [x] P1.1 Backend: tenantContext (resolver tenant ativo via header/user/fallback)
+- [x] P1.2 Backend: middleware requireTenant + assertTenantAccess
+- [x] P1.3 Backend: WHERE tenantId em getDefects, byId, update, list, reports
+- [x] P1.4 Backend: WHERE tenantId em copq, scorecard, ai_suggestions
+- [x] P1.5 Backend: WHERE tenantId em notifications, documents, webhook_configs, webhook_logs
+- [x] P1.6 Backend: Índices compostos (tenantId, createdAt) em tabelas grandes
+- [x] P1.7 Backend: Auditoria TENANT_SWITCH, TENANT_ACCESS_DENIED
+- [x] P1.8 Frontend: Página /tenants (listar, criar, gerenciar membros)
+- [x] P1.9 Frontend: Tenant Switcher no header DashboardLayout
+- [x] P1.10 Frontend: Persistir activeTenantId + atualizar cache/queries
+- [x] P1.11 Testes: Isolamento cross-tenant (mesma procedure, tenants distintos)
+- [x] P1.12 Testes: byId cross-tenant retorna not found/forbidden — 294 testes passando
+
+### P2 — API REST Pública + OpenAPI
+- [x] P2.1 Schema: tabela api_keys (tenantId, name, keyHash, scopes, revokedAt, lastUsedAt)
+- [x] P2.2 Backend: Auth middleware para API keys (Bearer + X-Tenant-Id)
+- [x] P2.3 Backend: requireScope middleware (defects:read, defects:write, reports:read, etc.)
+- [x] P2.4 Endpoints: GET /api/v1/defects (filtros)
+- [x] P2.5 Endpoints: GET /api/v1/defects/:id
+- [x] P2.6 Endpoints: POST /api/v1/defects
+- [x] P2.7 Endpoints: PATCH /api/v1/defects/:id
+- [x] P2.8 Endpoints: GET /api/v1/reports/stats + GET /api/v1/reports/copq + GET /api/v1/suppliers
+- [x] P2.9 OpenAPI: spec JSON em /api/v1/docs
+- [x] P2.10 Auditoria: API_KEY_CREATE, API_KEY_REVOKE
+- [x] P2.11 Frontend: Página /api-keys (criar/revogar keys, scopes, curl exemplo)
+- [x] P2.12 Testes: 16 testes API REST (CRUD, auth, scope, tenant isolation, key format) — 310 total
+
+### P3 — Push Notifications (Web Push)
+- [x] P3.1 Backend: dependência web-push + VAPID keys (auto-generate)
+- [x] P3.2 Schema: tabela push_subscriptions (userId, tenantId, endpoint, p256dh, auth)
+- [x] P3.3 Procedures: vapidPublicKey, subscribe, unsubscribe, mySubscriptions, sendTest
+- [x] P3.4 Backend: sendPushToUser + sendPushToTenant + auto-deactivate 410 Gone
+- [x] P3.5 Service Worker: handlers push + notificationclick com deep-link
+- [x] P3.6 Frontend: Página /push-settings (ativar, status, teste, dispositivos, tipos)
+- [x] P3.7 Testes: 11 testes (VAPID, subscription CRUD, push delivery, payload) — 321 total
+
+### P4 — BI Embeddido
+- [x] P4.1 Schema: tabelas bi_dashboards + bi_widgets (10 widgetTypes, 18 dataSources)
+- [x] P4.2 Procedures: CRUD dashboards + widgets + resolveData (18 data resolvers)
+- [x] P4.3 Frontend: Página /bi com boards e widgets (KPI, Bar, Line, Pie, Donut, Gauge, Table, Heatmap)
+- [x] P4.4 Widgets: 8 tipos visuais + 18 fontes de dados
+- [x] P4.5 Dashboard CRUD: criar, editar, deletar, compartilhar
+- [x] P4.6 Persistência: salvar layout por dashboard, auto-refresh configurável
+- [x] P4.7 Testes: 22 testes BI (CRUD + resolver + 12 dataSources) — 343 total
+
+### P5 — Polishes Enterprise
+- [x] P5.1 PWA: beforeinstallprompt handler + CTA "Instalar QTrack" (usePwaInstall hook)
+- [x] P5.2 PWA: Offline Banner (navigator.onLine) no DashboardLayout
+- [x] P5.3 RBAC: UI criar role custom (nome, descrição, clonar permissões)
+- [x] P5.4 RBAC: Auditoria RBAC_ROLE_CREATE, RBAC_ROLE_UPDATE, RBAC_ROLE_DELETE
+- [x] P5.5 Workflow: Seed templates SCAR, Fast Track, Investigação Detalhada (seedAll)
+- [x] P5.6 Workflow: 4 templates prontos via seedAll mutation
+
+### Documentação
+- [ ] DOC.1 /docs/tenancy.md
+- [ ] DOC.2 /docs/integrations/rest-api.md
+- [ ] DOC.3 /docs/push.md
+- [ ] DOC.4 /docs/bi.md

@@ -1,9 +1,12 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, authorizedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, authorizedProcedure, tenantProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { eq } from "drizzle-orm";
+import { roles } from "../drizzle/schema";
+import { getDb } from "./db";
 import {
   getDefects,
   getDefectById,
@@ -114,7 +117,14 @@ import {
   getDocumentVersions,
   addDocumentVersion,
   softDeleteDocument,
+  updateActiveTenantId,
+  ensureUserInTenant,
+  getTenantMembers,
+  getAllUsers,
 } from "./db";
+import { createApiKey, listApiKeys, revokeApiKey } from "./apiKeyDb";
+import { getVapidPublicKey, subscribePush, unsubscribePush, getActiveSubscriptions, sendPushToUser } from "./pushNotifications";
+import { getBiDashboards, createBiDashboard, updateBiDashboard, deleteBiDashboard, getWidgetsForDashboard, createBiWidget, updateBiWidget, deleteBiWidget, resolveWidgetData } from "./biResolver";
 import { calculateStep, calculateResponsible } from "../shared/defectLogic";
 import { notifyOwner } from "./_core/notification";
 
@@ -141,15 +151,15 @@ const defectRouter = router({
       customer: z.string().optional(),
       owner: z.string().optional(),
     }).optional())
-    .query(async ({ input }) => {
-      return getDefects(input);
+    .query(async ({ input, ctx }) => {
+      return getDefects({ ...input, tenantId: ctx.tenantId ?? undefined });
     }),
 
   // Get single defect by ID
   byId: publicProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
-      const defect = await getDefectById(input.id);
+    .query(async ({ input, ctx }) => {
+      const defect = await getDefectById(input.id, ctx.tenantId ?? undefined);
       if (!defect) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Defect not found" });
       }
@@ -206,6 +216,7 @@ const defectRouter = router({
         openDate: input.openDate,
         targetDate: input.targetDate || null,
         occurrence: input.occurrence || null,
+        tenantId: ctx.tenantId,
         rate: input.rate || null,
       }, ctx.user.id);
 
@@ -465,13 +476,13 @@ const defectRouter = router({
       dateFrom: z.string().optional(),
       dateTo: z.string().optional(),
     }).optional())
-    .query(async ({ input }) => {
-      return getDefectStats(input);
+    .query(async ({ input, ctx }) => {
+      return getDefectStats({ ...input, tenantId: ctx.tenantId ?? undefined });
     }),
 
   // Get filter options
-  filterOptions: publicProcedure.query(async () => {
-    return getFilterOptions();
+  filterOptions: publicProcedure.query(async ({ ctx }) => {
+    return getFilterOptions(ctx.tenantId ?? undefined);
   }),
 
   // Export filtered defects to Excel (base64)
@@ -493,10 +504,10 @@ const defectRouter = router({
       customer: z.string().optional(),
       owner: z.string().optional(),
     }).optional())
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       // RN-FLT-06: Limit export to 10,000 records
       const MAX_EXPORT = 10000;
-      const { data, total } = await getDefects({ ...input, pageSize: MAX_EXPORT });
+      const { data, total } = await getDefects({ ...input, pageSize: MAX_EXPORT, tenantId: ctx.tenantId ?? undefined });
       if (total > MAX_EXPORT) {
         // Still export first 10k but warn in metadata
         console.warn(`Export truncated: ${total} records, exporting first ${MAX_EXPORT}`);
@@ -771,8 +782,8 @@ const supplierRouter = router({
   // Get defects for supplier (supplier portal)
   myDefects: publicProcedure
     .input(z.object({ supplierName: z.string() }))
-    .query(async ({ input }) => {
-      return getDefectsForSupplier(input.supplierName);
+    .query(async ({ input, ctx }) => {
+      return getDefectsForSupplier(input.supplierName, ctx.tenantId ?? undefined);
     }),
 
   // Create new supplier
@@ -977,8 +988,8 @@ const slaRouter = router({
     }),
 
   // Check SLA violations
-  checkViolations: protectedProcedure.query(async () => {
-    return checkSlaViolations();
+  checkViolations: protectedProcedure.query(async ({ ctx }) => {
+    return checkSlaViolations(ctx.tenantId ?? undefined);
   }),
 });
 
@@ -1050,8 +1061,8 @@ const notificationRouter = router({
     }),
 
    // Send SLA notifications (called by cron job or manually)
-  sendSlaAlerts: protectedProcedure.mutation(async () => {
-    const violations = await checkSlaViolations();
+  sendSlaAlerts: protectedProcedure.mutation(async ({ ctx }) => {
+    const violations = await checkSlaViolations(ctx.tenantId ?? undefined);
     const recipients = await getNotificationRecipients();
     const sentNotifications: number[] = [];
     const ownerNotifications: string[] = [];
@@ -1187,8 +1198,8 @@ const rcaRouter = router({
       dateFrom: z.string().optional(),
       dateTo: z.string().optional(),
     }).optional())
-    .query(async ({ input }) => {
-      return getRootCauseAnalysis(input);
+    .query(async ({ input, ctx }) => {
+      return getRootCauseAnalysis({ ...input, tenantId: ctx.tenantId ?? undefined });
     }),
 
   // Get categories
@@ -1276,8 +1287,8 @@ const copqRouter = router({
       endDate: z.string().optional(),
       supplierId: z.number().optional(),
     }).optional())
-    .query(async ({ input }) => {
-      return getCopqDashboard(input);
+    .query(async ({ input, ctx }) => {
+      return getCopqDashboard({ ...input, tenantId: ctx.tenantId ?? undefined });
     }),
 
   defaults: protectedProcedure.query(async () => {
@@ -1289,15 +1300,15 @@ const copqRouter = router({
 // SUPPLIER SCORECARD ROUTER
 // =====================================================
 const scorecardRouter = router({
-  list: protectedProcedure.query(async () => {
+  list: protectedProcedure.query(async ({ ctx }) => {
     await initializeScoreConfigs();
-    return getAllSupplierScores();
+    return getAllSupplierScores(ctx.tenantId ?? undefined);
   }),
 
   bySupplier: protectedProcedure
     .input(z.object({ supplierId: z.number() }))
-    .query(async ({ input }) => {
-      const current = await calculateSupplierScore(input.supplierId);
+    .query(async ({ input, ctx }) => {
+      const current = await calculateSupplierScore(input.supplierId, ctx.tenantId ?? undefined);
       const history = await getScoreHistory(input.supplierId, 12);
       const historyScores = history.map((h: any) => parseFloat(h.overallScore));
       const avgLast3 = historyScores.length >= 3
@@ -1486,6 +1497,49 @@ const rbacRouter = router({
       const allowed = await hasPermission(ctx.user.id, input.resource, input.action);
       return { allowed };
     }),
+  createRole: authorizedProcedure("rbac", "manage")
+    .input(z.object({ name: z.string().min(2).max(100), description: z.string().optional(), cloneFromRoleId: z.number().optional() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [result] = await db.insert(roles).values({ name: input.name, description: input.description || null, isSystem: false }).$returningId();
+      const newRoleId = result.id;
+      // Clone permissions from another role if specified
+      if (input.cloneFromRoleId) {
+        const sourcePerms = await getRolePermissions(input.cloneFromRoleId);
+        if (sourcePerms.length > 0) {
+          await setRolePermissions(newRoleId, sourcePerms.map((p: any) => p.id));
+        }
+      }
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "RBAC_ROLE_CREATE" as any, fieldName: "role", oldValue: null, newValue: JSON.stringify({ id: newRoleId, name: input.name, clonedFrom: input.cloneFromRoleId }) });
+      return { success: true, id: newRoleId };
+    }),
+  updateRole: authorizedProcedure("rbac", "manage")
+    .input(z.object({ roleId: z.number(), name: z.string().min(2).max(100).optional(), description: z.string().optional() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const updates: Record<string, any> = {};
+      if (input.name !== undefined) updates.name = input.name;
+      if (input.description !== undefined) updates.description = input.description;
+      if (Object.keys(updates).length > 0) {
+        await db.update(roles).set(updates).where(eq(roles.id, input.roleId));
+      }
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "RBAC_ROLE_UPDATE" as any, fieldName: "role", oldValue: null, newValue: JSON.stringify({ roleId: input.roleId, ...updates }) });
+      return { success: true };
+    }),
+  deleteRole: authorizedProcedure("rbac", "manage")
+    .input(z.object({ roleId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Don't allow deleting system roles
+      const [role] = await db.select().from(roles).where(eq(roles.id, input.roleId));
+      if (role?.isSystem) throw new TRPCError({ code: "FORBIDDEN", message: "Cannot delete system roles" });
+      await db.update(roles).set({ deletedAt: new Date() }).where(eq(roles.id, input.roleId));
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "RBAC_ROLE_DELETE" as any, fieldName: "role", oldValue: JSON.stringify({ roleId: input.roleId, name: role?.name }), newValue: null });
+      return { success: true };
+    }),
 });
 
 // =====================================================
@@ -1496,6 +1550,63 @@ const workflowRouter = router({
     const result = await seedDefaultWorkflow();
     await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "System", action: "WORKFLOW_CREATE", fieldName: "workflow", oldValue: null, newValue: "seeded" });
     return result;
+  }),
+  seedAll: authorizedProcedure("workflow", "manage").mutation(async ({ ctx }) => {
+    // Seed 8D default
+    await seedDefaultWorkflow();
+    // Seed SCAR template
+    const scarSteps = [
+      { id: "detection", name: "Detecção e Registro", order: 1, responsible: "SQA" as const, requiredFields: ["description"], slaDefault: 1 },
+      { id: "containment", name: "Ação de Contenção", order: 2, responsible: "SUPPLIER" as const, requiredFields: ["correctiveActions"], slaDefault: 3 },
+      { id: "root_cause", name: "Análise de Causa Raiz", order: 3, responsible: "SUPPLIER" as const, requiredFields: ["cause"], slaDefault: 7 },
+      { id: "corrective", name: "Ação Corretiva", order: 4, responsible: "SUPPLIER" as const, requiredFields: ["correctiveActions"], slaDefault: 14 },
+      { id: "verification", name: "Verificação de Eficácia", order: 5, responsible: "SQA" as const, requiredFields: ["checkSolution"], slaDefault: 30 },
+      { id: "closed", name: "CLOSED", order: 6, responsible: "SQA" as const, requiredFields: [], slaDefault: 0 },
+    ];
+    const scarTransitions = [
+      { fromStepId: "detection", toStepId: "containment", conditions: ["description"], actions: ["notify_supplier"] },
+      { fromStepId: "containment", toStepId: "root_cause", conditions: ["correctiveActions"], actions: ["notify_sqa"] },
+      { fromStepId: "root_cause", toStepId: "corrective", conditions: ["cause"], actions: ["notify_sqa"] },
+      { fromStepId: "corrective", toStepId: "verification", conditions: ["correctiveActions"], actions: ["notify_sqa"] },
+      { fromStepId: "verification", toStepId: "closed", conditions: ["checkSolution"], actions: ["close_defect"] },
+    ];
+    try { await createWorkflowDefinition({ name: "SCAR (Supplier Corrective Action Request)", description: "Workflow SCAR para ações corretivas de fornecedor com verificação de eficácia", steps: scarSteps, transitions: scarTransitions, metadata: { tags: ["SCAR", "supplier"], industry: "manufacturing" }, createdBy: ctx.user.id }); } catch {}
+    // Seed Fast Track template
+    const ftSteps = [
+      { id: "registro", name: "Registro Rápido", order: 1, responsible: "SQA" as const, requiredFields: ["description"], slaDefault: 1 },
+      { id: "acao_imediata", name: "Ação Imediata", order: 2, responsible: "SUPPLIER" as const, requiredFields: ["correctiveActions"], slaDefault: 2 },
+      { id: "validacao", name: "Validação", order: 3, responsible: "SQA" as const, requiredFields: ["checkSolution"], slaDefault: 1 },
+      { id: "closed", name: "CLOSED", order: 4, responsible: "SQA" as const, requiredFields: [], slaDefault: 0 },
+    ];
+    const ftTransitions = [
+      { fromStepId: "registro", toStepId: "acao_imediata", conditions: ["description"], actions: ["notify_supplier"] },
+      { fromStepId: "acao_imediata", toStepId: "validacao", conditions: ["correctiveActions"], actions: ["notify_sqa"] },
+      { fromStepId: "validacao", toStepId: "closed", conditions: ["checkSolution"], actions: ["close_defect"] },
+    ];
+    try { await createWorkflowDefinition({ name: "Fast Track", description: "Workflow simplificado para defeitos de baixa severidade (MG C/B)", steps: ftSteps, transitions: ftTransitions, metadata: { tags: ["fast-track", "low-severity"], industry: "manufacturing" }, createdBy: ctx.user.id }); } catch {}
+    // Seed Investigação Detalhada template
+    const invSteps = [
+      { id: "triagem", name: "Triagem Inicial", order: 1, responsible: "SQA" as const, requiredFields: ["description"], slaDefault: 1 },
+      { id: "coleta_dados", name: "Coleta de Dados e Evidências", order: 2, responsible: "SQA" as const, requiredFields: ["evidence"], slaDefault: 5 },
+      { id: "analise_tecnica", name: "Análise Técnica Aprofundada", order: 3, responsible: "BOTH" as const, requiredFields: ["dateTechAnalysis"], slaDefault: 10 },
+      { id: "causa_raiz", name: "Determinação de Causa Raiz (5 Porquês)", order: 4, responsible: "SUPPLIER" as const, requiredFields: ["cause"], slaDefault: 10 },
+      { id: "plano_acao", name: "Plano de Ação Corretiva", order: 5, responsible: "SUPPLIER" as const, requiredFields: ["correctiveActions"], slaDefault: 15 },
+      { id: "implementacao", name: "Implementação das Ações", order: 6, responsible: "SUPPLIER" as const, requiredFields: ["dateCorrectiveAction"], slaDefault: 30 },
+      { id: "verificacao", name: "Verificação e Validação", order: 7, responsible: "SQA" as const, requiredFields: ["checkSolution"], slaDefault: 10 },
+      { id: "closed", name: "CLOSED", order: 8, responsible: "SQA" as const, requiredFields: [], slaDefault: 0 },
+    ];
+    const invTransitions = [
+      { fromStepId: "triagem", toStepId: "coleta_dados", conditions: ["description"], actions: ["notify_sqa"] },
+      { fromStepId: "coleta_dados", toStepId: "analise_tecnica", conditions: ["evidence"], actions: ["notify_supplier"] },
+      { fromStepId: "analise_tecnica", toStepId: "causa_raiz", conditions: ["dateTechAnalysis"], actions: ["notify_supplier"] },
+      { fromStepId: "causa_raiz", toStepId: "plano_acao", conditions: ["cause"], actions: ["notify_sqa"] },
+      { fromStepId: "plano_acao", toStepId: "implementacao", conditions: ["correctiveActions"], actions: ["notify_sqa"] },
+      { fromStepId: "implementacao", toStepId: "verificacao", conditions: ["dateCorrectiveAction"], actions: ["notify_sqa"] },
+      { fromStepId: "verificacao", toStepId: "closed", conditions: ["checkSolution"], actions: ["close_defect"] },
+    ];
+    try { await createWorkflowDefinition({ name: "Investigação Detalhada", description: "Workflow completo para investigação aprofundada de defeitos críticos (MG S/A)", steps: invSteps, transitions: invTransitions, metadata: { tags: ["investigation", "critical", "5-whys"], industry: "manufacturing" }, createdBy: ctx.user.id }); } catch {}
+    await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "System", action: "WORKFLOW_CREATE", fieldName: "workflow", oldValue: null, newValue: "seeded_all_templates" });
+    return { success: true, templates: ["8D Padrão", "SCAR", "Fast Track", "Investigação Detalhada"] };
   }),
   definitions: protectedProcedure.query(async () => getWorkflowDefinitions()),
   definitionById: protectedProcedure
@@ -1584,6 +1695,22 @@ const tenantRouter = router({
       return result;
     }),
   myTenants: protectedProcedure.query(async ({ ctx }) => getTenantsForUser(ctx.user.id)),
+  activeTenant: protectedProcedure.query(async ({ ctx }) => {
+    return { tenantId: ctx.tenantId };
+  }),
+  switchTenant: protectedProcedure
+    .input(z.object({ tenantId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      // Validate user has access to this tenant
+      const userTenants = await getTenantsForUser(ctx.user.id);
+      const hasAccess = userTenants.some(t => t.tenantId === input.tenantId);
+      if (!hasAccess) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Acesso negado a este tenant" });
+      }
+      await updateActiveTenantId(ctx.user.id, input.tenantId);
+      await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "TENANT_SWITCH", fieldName: "activeTenantId", oldValue: String(ctx.tenantId), newValue: String(input.tenantId) });
+      return { success: true, tenantId: input.tenantId };
+    }),
   addUser: authorizedProcedure("tenant", "manage")
     .input(z.object({ userId: z.number(), tenantId: z.number(), role: z.string().optional() }))
     .mutation(async ({ input, ctx }) => {
@@ -1598,6 +1725,10 @@ const tenantRouter = router({
       await createAuditLog({ defectId: 0, userId: ctx.user.id, userName: ctx.user.name || "Unknown", action: "TENANT_REMOVE_USER", fieldName: "tenantUser", oldValue: JSON.stringify({ targetUserId: input.userId, tenantId: input.tenantId }), newValue: null });
       return { success: true };
     }),
+  members: protectedProcedure
+    .input(z.object({ tenantId: z.number() }))
+    .query(async ({ input }) => getTenantMembers(input.tenantId)),
+  allUsers: protectedProcedure.query(async () => getAllUsers()),
 });
 
 // =====================================================
@@ -1643,8 +1774,8 @@ const webhookRouter = router({
 const predictionRouter = router({
   recurrencePatterns: protectedProcedure
     .input(z.object({ supplierId: z.number().optional() }).optional())
-    .query(async ({ input }) => detectRecurrencePatterns(input?.supplierId)),
-  heatmap: protectedProcedure.query(async () => getRecurrenceHeatmap()),
+    .query(async ({ input, ctx }) => detectRecurrencePatterns(input?.supplierId, ctx.tenantId ?? undefined)),
+  heatmap: protectedProcedure.query(async ({ ctx }) => getRecurrenceHeatmap(ctx.tenantId ?? undefined)),
 });
 
 // =====================================================
@@ -1653,7 +1784,7 @@ const predictionRouter = router({
 const documentRouter = router({
   list: protectedProcedure
     .input(z.object({ status: z.string().optional(), category: z.string().optional(), search: z.string().optional() }).optional())
-    .query(async ({ input }) => getDocuments(input || undefined)),
+    .query(async ({ input, ctx }) => getDocuments({ ...(input || {}), tenantId: ctx.tenantId ?? undefined })),
   byId: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => getDocumentById(input.id)),
@@ -1702,6 +1833,190 @@ const documentRouter = router({
 });
 
 // =====================================================
+// API KEY ROUTER (for managing REST API keys)
+// =====================================================
+const apiKeyRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const tenantId = ctx.tenantId || 1;
+    return listApiKeys(tenantId);
+  }),
+  create: authorizedProcedure("api_keys", "write")
+    .input(z.object({
+      name: z.string().min(1).max(200),
+      scopes: z.array(z.string()).min(1),
+      expiresInDays: z.number().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const tenantId = ctx.tenantId || 1;
+      const expiresAt = input.expiresInDays
+        ? new Date(Date.now() + input.expiresInDays * 86400000)
+        : undefined;
+      const result = await createApiKey({
+        tenantId,
+        createdBy: ctx.user.id,
+        name: input.name,
+        scopes: input.scopes,
+        expiresAt,
+      });
+      await createAuditLog({
+        defectId: 0, userId: ctx.user.id,
+        userName: ctx.user.name || "Unknown",
+        action: "API_KEY_CREATE",
+        fieldName: "apiKey",
+        oldValue: null,
+        newValue: JSON.stringify({ id: result.id, name: input.name }),
+      });
+      return result; // rawKey only returned once
+    }),
+  revoke: authorizedProcedure("api_keys", "write")
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const tenantId = ctx.tenantId || 1;
+      await revokeApiKey(input.id, tenantId);
+      await createAuditLog({
+        defectId: 0, userId: ctx.user.id,
+        userName: ctx.user.name || "Unknown",
+        action: "API_KEY_REVOKE",
+        fieldName: "apiKey",
+        oldValue: JSON.stringify({ id: input.id }),
+        newValue: null,
+      });
+      return { success: true };
+    }),
+});
+
+// =====================================================
+// PUSH NOTIFICATION ROUTER
+// =====================================================
+const pushRouter = router({
+  vapidPublicKey: publicProcedure.query(() => {
+    return { publicKey: getVapidPublicKey() };
+  }),
+  subscribe: protectedProcedure
+    .input(z.object({
+      endpoint: z.string().url(),
+      p256dh: z.string(),
+      auth: z.string(),
+      userAgent: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const tenantId = ctx.tenantId || 1;
+      return subscribePush({
+        userId: ctx.user.id,
+        tenantId,
+        endpoint: input.endpoint,
+        p256dh: input.p256dh,
+        auth: input.auth,
+        userAgent: input.userAgent,
+      });
+    }),
+  unsubscribe: protectedProcedure
+    .input(z.object({ endpoint: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      return unsubscribePush({
+        userId: ctx.user.id,
+        endpoint: input.endpoint,
+      });
+    }),
+  mySubscriptions: protectedProcedure.query(async ({ ctx }) => {
+    return getActiveSubscriptions(ctx.user.id);
+  }),
+  sendTest: protectedProcedure.mutation(async ({ ctx }) => {
+    return sendPushToUser(ctx.user.id, {
+      title: "QTrack — Teste de Notificação",
+      body: "Push notifications estão funcionando corretamente!",
+      icon: "/icons/icon-192x192.png",
+      tag: "test",
+      url: "/notifications",
+    });
+  }),
+});
+
+// =====================================================
+// BI EMBEDDED ROUTER
+// =====================================================
+const biRouter = router({
+  dashboards: protectedProcedure.query(async ({ ctx }) => {
+    return getBiDashboards(ctx.user.id, ctx.tenantId ?? undefined);
+  }),
+  createDashboard: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1).max(200),
+      description: z.string().optional(),
+      isShared: z.boolean().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return createBiDashboard({
+        userId: ctx.user.id,
+        tenantId: ctx.tenantId ?? undefined,
+        name: input.name,
+        description: input.description,
+        isShared: input.isShared,
+      });
+    }),
+  updateDashboard: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      description: z.string().optional(),
+      layout: z.any().optional(),
+      isShared: z.boolean().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const { id, ...params } = input;
+      return updateBiDashboard(id, ctx.user.id, params);
+    }),
+  deleteDashboard: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      return deleteBiDashboard(input.id, ctx.user.id);
+    }),
+  widgets: protectedProcedure
+    .input(z.object({ dashboardId: z.number() }))
+    .query(async ({ input }) => {
+      return getWidgetsForDashboard(input.dashboardId);
+    }),
+  createWidget: protectedProcedure
+    .input(z.object({
+      dashboardId: z.number(),
+      widgetType: z.string(),
+      title: z.string(),
+      dataSource: z.string(),
+      config: z.any().optional(),
+      position: z.object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() }),
+    }))
+    .mutation(async ({ input }) => {
+      return createBiWidget(input);
+    }),
+  updateWidget: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      title: z.string().optional(),
+      config: z.any().optional(),
+      position: z.object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() }).optional(),
+      widgetType: z.string().optional(),
+      dataSource: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { id, ...params } = input;
+      return updateBiWidget(id, params);
+    }),
+  deleteWidget: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      return deleteBiWidget(input.id);
+    }),
+  resolveData: protectedProcedure
+    .input(z.object({
+      dataSource: z.string(),
+      config: z.any().optional(),
+    }))
+    .query(async ({ input, ctx }) => {
+      return resolveWidgetData(input.dataSource, ctx.tenantId ?? undefined, input.config);
+    }),
+});
+
+// =====================================================
 // MAIN ROUTER
 // =====================================================
 export const appRouter = router({
@@ -1731,5 +2046,8 @@ export const appRouter = router({
   webhook: webhookRouter,
   prediction: predictionRouter,
   document: documentRouter,
+  apiKey: apiKeyRouter,
+  push: pushRouter,
+  bi: biRouter,
 });
 export type AppRouter = typeof appRouter;

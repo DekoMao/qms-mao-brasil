@@ -24,6 +24,10 @@ import WorkflowEditor from "./pages/WorkflowEditor";
 import WebhooksAdmin from "./pages/WebhooksAdmin";
 import DocumentControl from "./pages/DocumentControl";
 import AiPrediction from "./pages/AiPrediction";
+import TenantAdmin from "./pages/TenantAdmin";
+import ApiKeysAdmin from "./pages/ApiKeysAdmin";
+import PushSettings from "./pages/PushSettings";
+import BiDashboard from "./pages/BiDashboard";
 
 // Main app router with dashboard layout
 function MainRouter() {
@@ -48,6 +52,10 @@ function MainRouter() {
         <Route path="/webhooks" component={WebhooksAdmin} />
         <Route path="/documents" component={DocumentControl} />
         <Route path="/prediction" component={AiPrediction} />
+        <Route path="/tenants" component={TenantAdmin} />
+        <Route path="/api-keys" component={ApiKeysAdmin} />
+        <Route path="/push-settings" component={PushSettings} />
+        <Route path="/bi" component={BiDashboard} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

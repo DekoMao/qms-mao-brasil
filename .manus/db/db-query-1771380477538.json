@@ -1,0 +1,91 @@
+{
+  "query": "SELECT COUNT(*) as cnt FROM defects; SELECT COUNT(*) as cnt FROM tenants; SELECT id, name, slug FROM tenants;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT COUNT(*) as cnt FROM defects; SELECT COUNT(*) as cnt FROM tenants; SELECT id, name, slug FROM tenants;",
+  "rows": [
+    {
+      "cnt": "119"
+    },
+    {
+      "cnt": "cnt"
+    },
+    {
+      "cnt": "23"
+    },
+    {
+      "cnt": "id\tname\tslug"
+    },
+    {
+      "cnt": "1\tTest Company\ttest-company"
+    },
+    {
+      "cnt": "5\tTest Company\ttest-co-1771298249153"
+    },
+    {
+      "cnt": "6\tTest Company\ttest-co-1771298268070"
+    },
+    {
+      "cnt": "7\tTest Company\ttest-co-1771298276859"
+    },
+    {
+      "cnt": "30001\tTest Company\ttest-co-1771299948558"
+    },
+    {
+      "cnt": "30002\tTest Company\ttest-co-1771301039070"
+    },
+    {
+      "cnt": "30003\tTest Company\ttest-co-1771301710209"
+    },
+    {
+      "cnt": "30004\tTest Company\ttest-co-1771301934682"
+    },
+    {
+      "cnt": "30005\tTest Company\ttest-co-1771302035672"
+    },
+    {
+      "cnt": "30006\tTest Company\ttest-co-1771302150899"
+    },
+    {
+      "cnt": "30007\tHardening Test Tenant\thardening-1771302251678"
+    },
+    {
+      "cnt": "30008\tTest Company\ttest-co-1771302263403"
+    },
+    {
+      "cnt": "30009\tHardening Test Tenant\thardening-1771302265230"
+    },
+    {
+      "cnt": "30010\tTest Company\ttest-co-1771302592013"
+    },
+    {
+      "cnt": "30011\tHardening Test Tenant\thardening-1771302594004"
+    },
+    {
+      "cnt": "30012\tTest Company\ttest-co-1771302891470"
+    },
+    {
+      "cnt": "30013\tHardening Test Tenant\thardening-1771302893350"
+    },
+    {
+      "cnt": "30014\tTest Company\ttest-co-1771302955133"
+    },
+    {
+      "cnt": "30015\tHardening Test Tenant\thardening-1771302957164"
+    },
+    {
+      "cnt": "60001\tTest Company\ttest-co-1771350425499"
+    },
+    {
+      "cnt": "60002\tHardening Test Tenant\thardening-1771350427582"
+    },
+    {
+      "cnt": "90001\tTest Company\ttest-co-1771366231930"
+    },
+    {
+      "cnt": "90002\tHardening Test Tenant\thardening-1771366233788"
+    }
+  ],
+  "messages": [],
+  "stdout": "cnt\n119\ncnt\n23\nid\tname\tslug\n1\tTest Company\ttest-company\n5\tTest Company\ttest-co-1771298249153\n6\tTest Company\ttest-co-1771298268070\n7\tTest Company\ttest-co-1771298276859\n30001\tTest Company\ttest-co-1771299948558\n30002\tTest Company\ttest-co-1771301039070\n30003\tTest Company\ttest-co-1771301710209\n30004\tTest Company\ttest-co-1771301934682\n30005\tTest Company\ttest-co-1771302035672\n30006\tTest Company\ttest-co-1771302150899\n30007\tHardening Test Tenant\thardening-1771302251678\n30008\tTest Company\ttest-co-1771302263403\n30009\tHardening Test Tenant\thardening-1771302265230\n30010\tTest Company\ttest-co-1771302592013\n30011\tHardening Test Tenant\thardening-1771302594004\n30012\tTest Company\ttest-co-1771302891470\n30013\tHardening Test Tenant\thardening-1771302893350\n30014\tTest Company\ttest-co-1771302955133\n30015\tHardening Test Tenant\thardening-1771302957164\n60001\tTest Company\ttest-co-1771350425499\n60002\tHardening Test Tenant\thardening-1771350427582\n90001\tTest Company\ttest-co-1771366231930\n90002\tHardening Test Tenant\thardening-1771366233788\n",
+  "stderr": "",
+  "execution_time_ms": 563
+}

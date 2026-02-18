@@ -14,6 +14,7 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  activeTenantId: int("activeTenantId"),
 });
 
 export type User = typeof users.$inferSelect;
@@ -113,6 +114,9 @@ export const defects = mysqlTable("defects", {
   status: mysqlEnum("status", ["CLOSED", "ONGOING", "DELAYED", "Waiting for CHK Solution"]).default("ONGOING"),
   closeWeekKey: varchar("closeWeekKey", { length: 10 }),
 
+  // Multi-tenancy
+  tenantId: int("tenantId"),
+
   // Soft delete
   deletedAt: timestamp("deletedAt"),
 
@@ -131,6 +135,7 @@ export const defects = mysqlTable("defects", {
   index("idx_defects_week_key").on(table.weekKey),
   index("idx_defects_doc_number").on(table.docNumber),
   index("idx_defects_deleted_at").on(table.deletedAt),
+  index("idx_defects_tenant_id").on(table.tenantId),
 ]);
 
 export type Defect = typeof defects.$inferSelect;
@@ -144,7 +149,7 @@ export const auditLogs = mysqlTable("audit_logs", {
   defectId: int("defectId").notNull(),
   userId: int("userId"),
   userName: varchar("userName", { length: 100 }),
-  action: mysqlEnum("action", ["CREATE", "UPDATE", "DELETE", "ADVANCE_STEP", "RESTORE", "RBAC_SEED", "RBAC_SET_PERMISSIONS", "RBAC_ASSIGN_ROLE", "RBAC_REMOVE_ROLE", "WORKFLOW_CREATE", "WORKFLOW_NEW_VERSION", "WORKFLOW_CREATE_INSTANCE", "WORKFLOW_ADVANCE", "TENANT_CREATE", "TENANT_ADD_USER", "TENANT_REMOVE_USER", "WEBHOOK_CREATE", "WEBHOOK_DELETE", "WEBHOOK_TEST", "DOCUMENT_CREATE", "DOCUMENT_STATUS_CHANGE", "DOCUMENT_ADD_VERSION", "DOCUMENT_DELETE"]).notNull(),
+  action: mysqlEnum("action", ["CREATE", "UPDATE", "DELETE", "ADVANCE_STEP", "RESTORE", "RBAC_SEED", "RBAC_SET_PERMISSIONS", "RBAC_ASSIGN_ROLE", "RBAC_REMOVE_ROLE", "WORKFLOW_CREATE", "WORKFLOW_NEW_VERSION", "WORKFLOW_CREATE_INSTANCE", "WORKFLOW_ADVANCE", "TENANT_CREATE", "TENANT_ADD_USER", "TENANT_REMOVE_USER", "WEBHOOK_CREATE", "WEBHOOK_DELETE", "WEBHOOK_TEST", "DOCUMENT_CREATE", "DOCUMENT_STATUS_CHANGE", "DOCUMENT_ADD_VERSION", "DOCUMENT_DELETE", "TENANT_SWITCH", "API_KEY_CREATE", "API_KEY_REVOKE"]).notNull(),
   fieldName: varchar("fieldName", { length: 100 }),
   oldValue: text("oldValue"),
   newValue: text("newValue"),
@@ -678,5 +683,111 @@ export const documentVersionsRelations = relations(documentVersions, ({ one }) =
   document: one(documents, {
     fields: [documentVersions.documentId],
     references: [documents.id],
+  }),
+}));
+
+// =====================================================
+// API KEYS TABLE (Public REST API)
+// =====================================================
+export const apiKeys = mysqlTable("api_keys", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  createdBy: int("createdBy").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  keyPrefix: varchar("keyPrefix", { length: 8 }).notNull(),
+  keyHash: varchar("keyHash", { length: 128 }).notNull(),
+  scopes: json("scopes").notNull(), // ["defects:read","defects:write","reports:read"]
+  expiresAt: timestamp("expiresAt"),
+  lastUsedAt: timestamp("lastUsedAt"),
+  revokedAt: timestamp("revokedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("idx_apikey_tenant").on(table.tenantId),
+  index("idx_apikey_prefix").on(table.keyPrefix),
+  index("idx_apikey_hash").on(table.keyHash),
+]);
+
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type InsertApiKey = typeof apiKeys.$inferInsert;
+
+// =====================================================
+// PUSH NOTIFICATIONS TABLE (Web Push)
+// =====================================================
+export const pushSubscriptions = mysqlTable("push_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tenantId: int("tenantId"),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  userAgent: varchar("userAgent", { length: 500 }),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("idx_push_user").on(table.userId),
+  index("idx_push_tenant").on(table.tenantId),
+]);
+
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
+
+// =====================================================
+// BI EMBEDDED TABLES (Custom Dashboards)
+// =====================================================
+export const biDashboards = mysqlTable("bi_dashboards", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId"),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  layout: json("layout"), // grid layout config
+  isDefault: boolean("isDefault").default(false),
+  isShared: boolean("isShared").default(false),
+  deletedAt: timestamp("deletedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("idx_bi_dash_tenant").on(table.tenantId),
+  index("idx_bi_dash_user").on(table.userId),
+]);
+
+export const biWidgets = mysqlTable("bi_widgets", {
+  id: int("id").autoincrement().primaryKey(),
+  dashboardId: int("dashboardId").notNull(),
+  widgetType: mysqlEnum("widgetType", [
+    "KPI_CARD", "BAR_CHART", "LINE_CHART", "PIE_CHART", "DONUT_CHART",
+    "RADAR_CHART", "TABLE", "HEATMAP", "GAUGE", "TREND_SPARKLINE"
+  ]).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  dataSource: mysqlEnum("dataSource", [
+    "DEFECT_COUNT", "DEFECT_BY_STATUS", "DEFECT_BY_SEVERITY", "DEFECT_BY_SUPPLIER",
+    "DEFECT_BY_PLANT", "DEFECT_TREND", "COPQ_TOTAL", "COPQ_BY_CATEGORY",
+    "COPQ_TREND", "SLA_COMPLIANCE", "SLA_VIOLATIONS", "SUPPLIER_SCORES",
+    "SUPPLIER_RANKING", "RESOLUTION_TIME", "RECURRENCE_RATE",
+    "OPEN_VS_CLOSED", "TOP_ROOT_CAUSES", "MONTHLY_COMPARISON"
+  ]).notNull(),
+  config: json("config"), // filters, colors, thresholds, etc.
+  position: json("position").notNull(), // { x, y, w, h } grid position
+  refreshInterval: int("refreshInterval").default(300), // seconds
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("idx_bi_widget_dash").on(table.dashboardId),
+]);
+
+export type BiDashboard = typeof biDashboards.$inferSelect;
+export type InsertBiDashboard = typeof biDashboards.$inferInsert;
+export type BiWidget = typeof biWidgets.$inferSelect;
+export type InsertBiWidget = typeof biWidgets.$inferInsert;
+
+export const biDashboardsRelations = relations(biDashboards, ({ many }) => ({
+  widgets: many(biWidgets),
+}));
+
+export const biWidgetsRelations = relations(biWidgets, ({ one }) => ({
+  dashboard: one(biDashboards, {
+    fields: [biWidgets.dashboardId],
+    references: [biDashboards.id],
   }),
 }));

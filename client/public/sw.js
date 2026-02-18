@@ -44,3 +44,57 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(event.request).then((cached) => cached || new Response('Offline', { status: 503 })))
   );
 });
+
+// ─── Push Notification Handlers ────────────────────────────────
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  try {
+    const payload = event.data.json();
+    const options = {
+      body: payload.body || '',
+      icon: payload.icon || '/icon-192.png',
+      badge: payload.badge || '/icon-192.png',
+      tag: payload.tag || 'qtrack-notification',
+      data: {
+        url: payload.url || '/',
+        ...payload.data,
+      },
+      vibrate: [200, 100, 200],
+      actions: [
+        { action: 'open', title: 'Abrir' },
+        { action: 'dismiss', title: 'Dispensar' },
+      ],
+      requireInteraction: true,
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(payload.title || 'QTrack', options)
+    );
+  } catch (err) {
+    console.error('[SW] Push parse error:', err);
+  }
+});
+
+// Deep-link on notification click
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'dismiss') return;
+
+  const url = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      // Focus existing window if available
+      for (const client of clients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      // Open new window
+      return self.clients.openWindow(url);
+    })
+  );
+});
