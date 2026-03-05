@@ -517,3 +517,31 @@
 - [x] Integração de todos os 7 agentes no index.ts (AGENT_REGISTRY + initializeAllAgents)
 - [x] Testes E2E: 64 testes (ai-agents-infra + ai-agents) — 464 total
 - [x] Checkpoint e entrega final
+
+## Ativação Agentes IA em Produção + ERP + Feedback Loop
+
+### 1. Ativar Agentes em Produção (Nível Revisão)
+- [x] 1.1 Auto-init: Inicializar todos os agentes no server startup
+- [x] 1.2 Seed autonomy_config: Inserir config padrão (enabled=true, level=review) para cada agente
+- [x] 1.3 Lifecycle hooks: Registrar eventos no Orchestrator (defect.created → Triage, step.changed → Workflow, etc.)
+- [x] 1.4 Cron jobs ativos: SLA check (15min), anomaly scan (1h), daily digest (8h), feedback analysis (24h)
+- [x] 1.5 Guardrails nível Revisão: confidence ≥0.85 executa+notifica, <0.85 aguarda aprovação
+- [x] 1.6 UI: Indicadores visuais de status dos agentes no AI Control Center (heartbeat, last run, queue size)
+
+### 2. Integração ERP/SAP
+- [x] 2.1 Schema: config ERP armazenada em aiAutonomyConfig (criticalActions JSON)
+- [x] 2.2 Config UI: Tab "ERP/SAP" no AI Control Center com formulário completo (URL, auth, field mapping, sync direction)
+- [x] 2.3 Sync Inbound: Pull defeitos do ERP → transform → insert/update no QTrack (via triggerErpSync)
+- [x] 2.4 Sync Outbound: Push atualizações QTrack → transform → update no ERP (via triggerErpSync)
+- [x] 2.5 Field Mapping Engine: Editor JSON com mapeamento QTrack ↔ SAP QM (QMNUM, LIFNR, MATNR, etc.)
+- [x] 2.6 Sync Monitor: Status cards com tipo ERP, direção, intervalo, última sync + botões de sync manual
+- [x] 2.7 Referência SAP QM: Transações suportadas (QM01-03, BAPI_QUALNOT, RFC_READ_TABLE)
+
+### 3. Monitoramento Acurácia Triage + Feedback Loop
+- [x] 3.1 Override tracking: Capturar quando humano altera classificação/severidade/atribuição feita pela IA (overrideTriageDecision)
+- [x] 3.2 Accuracy metrics: Calcular taxa de acerto por campo (triageAccuracy com byField breakdown)
+- [x] 3.3 Drift detection: Indicadores visuais de qualidade (Excelente ≥90%, Bom ≥75%, Precisa Ajuste, Crítico)
+- [x] 3.4 Auto-adjust: Feedback Agent ajusta prompts/thresholds baseado em overrides acumulados
+- [x] 3.5 Dashboard analytics: Tab "Acurácia" com KPIs, barras por campo, tabela de overrides recentes
+- [x] 3.6 Confidence calibration: accuracyTrend com buckets semanais para análise temporal
+- [x] 3.7 Testes completos: 65 testes para ERP + Acurácia (529 total)

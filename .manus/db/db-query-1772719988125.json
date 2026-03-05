@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, name, cronExpression FROM ai_cron_jobs;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4GJHCuwNTEenDTS.648275377d58 --database o7SrWWu7Rrxp5u67zP2qqx --execute SELECT id, name, cronExpression FROM ai_cron_jobs;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "sla-check",
+      "cronExpression": "*/15 * * * *"
+    },
+    {
+      "id": "2",
+      "name": "anomaly-scan",
+      "cronExpression": "0 * * * *"
+    },
+    {
+      "id": "3",
+      "name": "daily-digest",
+      "cronExpression": "0 8 * * 1-5"
+    },
+    {
+      "id": "4",
+      "name": "weekly-summary",
+      "cronExpression": "0 9 * * 1"
+    },
+    {
+      "id": "5",
+      "name": "health-check",
+      "cronExpression": "*/5 * * * *"
+    },
+    {
+      "id": "6",
+      "name": "metrics-collect",
+      "cronExpression": "0 * * * *"
+    },
+    {
+      "id": "7",
+      "name": "feedback-analysis",
+      "cronExpression": "0 2 * * *"
+    },
+    {
+      "id": "8",
+      "name": "erp-sync",
+      "cronExpression": "*/30 * * * *"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcronExpression\n1\tsla-check\t*/15 * * * *\n2\tanomaly-scan\t0 * * * *\n3\tdaily-digest\t0 8 * * 1-5\n4\tweekly-summary\t0 9 * * 1\n5\thealth-check\t*/5 * * * *\n6\tmetrics-collect\t0 * * * *\n7\tfeedback-analysis\t0 2 * * *\n8\terp-sync\t*/30 * * * *\n",
+  "stderr": "",
+  "execution_time_ms": 197
+}

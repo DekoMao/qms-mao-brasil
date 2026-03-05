@@ -242,9 +242,13 @@ const defectRouter = router({
         }
       } catch (_e) { /* graceful: workflow instance creation is optional */ }
 
-      // Fire webhook for defect creation
+       // Fire webhook for defect creation
       await fireWebhook("defect.created", { defectId: defect!.id, docNumber: input.docNumber, userId: ctx.user.id });
-
+      // Fire AI agent event for triage
+      try {
+        const { fireAgentEvent } = await import("./aiAgents/orchestrator");
+        await fireAgentEvent("defect.created", { defectId: defect!.id, docNumber: input.docNumber }, ctx.tenantId ?? undefined);
+      } catch (_e) { /* graceful: AI agent event is optional */ }
       return defect;
     }),
 
@@ -319,7 +323,18 @@ const defectRouter = router({
           newValue: String(change.newValue ?? ""),
         });
       }
-
+      // Fire AI agent event for defect update
+      if (changes.length > 0) {
+        try {
+          const { fireAgentEvent } = await import("./aiAgents/orchestrator");
+          const changedFields = changes.map(c => c.field);
+          await fireAgentEvent("defect.updated", { defectId: id, changedFields }, ctx.tenantId ?? undefined);
+          // Check if status changed to CLOSED
+          if (updateData.status === "CLOSED") {
+            await fireAgentEvent("defect.closed", { defectId: id }, ctx.tenantId ?? undefined);
+          }
+        } catch (_e) { /* graceful: AI agent event is optional */ }
+      }
       return defect;
     }),
 
@@ -400,6 +415,14 @@ const defectRouter = router({
 
       // Fire webhooks for step change
       await fireWebhook("defect.status_changed", { defectId: id, oldStep: currentDefect.step, newStep: step, userId: ctx.user.id });
+      // Fire AI agent event for step change
+      try {
+        const { fireAgentEvent } = await import("./aiAgents/orchestrator");
+        await fireAgentEvent("defect.step_changed", { defectId: id, oldStep: currentDefect.step, newStep: step }, ctx.tenantId ?? undefined);
+        if (step === "CLOSED") {
+          await fireAgentEvent("defect.closed", { defectId: id }, ctx.tenantId ?? undefined);
+        }
+      } catch (_e) { /* graceful: AI agent event is optional */ }
 
       // RN-IA-01: Auto-trigger AI suggestion when reaching "Aguardando Causa Raiz"
       if (step === "Aguardando Causa Raiz") {
@@ -2182,6 +2205,227 @@ const aiControlRouter = router({
       await toggleCronJob(input.id, input.enabled);
       return { success: true };
     }),
+
+  // =====================================================
+  // ERP/SAP INTEGRATION CONFIG
+  // =====================================================
+  getErpConfig: protectedProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return null;
+    const { aiAutonomyConfig } = await import("../drizzle/schema");
+    const rows = await db.select().from(aiAutonomyConfig)
+      .where(eq(aiAutonomyConfig.agentName, "integration")).limit(1);
+    const config = rows[0];
+    const params = (config?.criticalActions as Record<string, unknown>) || {};
+    return {
+      enabled: config?.enabled ?? false,
+      erpType: (params.erpType as string) || "sap",
+      baseUrl: (params.erpBaseUrl as string) || "",
+      apiKey: (params.erpApiKey as string) || "",
+      syncDirection: (params.syncDirection as string) || "bidirectional",
+      syncInterval: (params.syncIntervalMinutes as number) || 30,
+      fieldMapping: (params.fieldMapping as Record<string, string>) || {
+        docNumber: "NOTIFICATION_ID",
+        supplier: "VENDOR_CODE",
+        model: "MATERIAL_NUMBER",
+        symptom: "DEFECT_TEXT",
+        mg: "PRIORITY",
+        status: "STATUS",
+        step: "PHASE",
+        cause: "CAUSE_TEXT",
+        correctiveActions: "CORRECTIVE_ACTION",
+      },
+      lastSyncAt: (params.lastSyncAt as string) || null,
+      lastSyncStatus: (params.lastSyncStatus as string) || "never",
+      totalSynced: (params.totalSynced as number) || 0,
+      syncErrors: (params.syncErrors as number) || 0,
+    };
+  }),
+
+  updateErpConfig: protectedProcedure
+    .input(z.object({
+      erpType: z.enum(["sap", "oracle", "dynamics", "custom"]).optional(),
+      baseUrl: z.string().optional(),
+      apiKey: z.string().optional(),
+      syncDirection: z.enum(["inbound", "outbound", "bidirectional"]).optional(),
+      syncInterval: z.number().min(5).max(1440).optional(),
+      fieldMapping: z.record(z.string(), z.string()).optional(),
+      enabled: z.boolean().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB not available");
+      const { aiAutonomyConfig } = await import("../drizzle/schema");
+      const rows = await db.select().from(aiAutonomyConfig)
+        .where(eq(aiAutonomyConfig.agentName, "integration")).limit(1);
+      const existing = rows[0];
+      const currentParams = (existing?.criticalActions as Record<string, unknown>) || {};
+      const newParams = { ...currentParams };
+      if (input.erpType !== undefined) newParams.erpType = input.erpType;
+      if (input.baseUrl !== undefined) newParams.erpBaseUrl = input.baseUrl;
+      if (input.apiKey !== undefined) newParams.erpApiKey = input.apiKey;
+      if (input.syncDirection !== undefined) newParams.syncDirection = input.syncDirection;
+      if (input.syncInterval !== undefined) newParams.syncIntervalMinutes = input.syncInterval;
+      if (input.fieldMapping !== undefined) newParams.fieldMapping = input.fieldMapping;
+      if (existing) {
+        await db.update(aiAutonomyConfig)
+          .set({
+            criticalActions: newParams,
+            enabled: input.enabled ?? existing.enabled,
+            updatedAt: new Date(),
+          })
+          .where(eq(aiAutonomyConfig.agentName, "integration"));
+      }
+      return { success: true };
+    }),
+
+  testErpConnection: protectedProcedure
+    .input(z.object({ baseUrl: z.string(), apiKey: z.string() }))
+    .mutation(async ({ input }) => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const resp = await fetch(`${input.baseUrl}/health`, {
+          method: "GET",
+          headers: { "Authorization": `Bearer ${input.apiKey}`, "Accept": "application/json" },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        return { success: resp.ok, status: resp.status, message: resp.ok ? "Conexão ERP estabelecida com sucesso" : `Erro HTTP ${resp.status}` };
+      } catch (err: any) {
+        return { success: false, status: 0, message: err.name === "AbortError" ? "Timeout: ERP não respondeu em 10s" : `Erro de conexão: ${err.message}` };
+      }
+    }),
+
+  triggerErpSync: protectedProcedure
+    .input(z.object({ direction: z.enum(["inbound", "outbound"]).optional() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB not available");
+      const { aiAutonomyConfig } = await import("../drizzle/schema");
+      const { integrationAgent } = await import("./aiAgents");
+      const result = await integrationAgent.execute({
+        _eventType: "integration.erp_sync",
+        direction: input.direction || "outbound",
+        manual: true,
+      });
+      // Update last sync timestamp
+      const rows = await db.select().from(aiAutonomyConfig)
+        .where(eq(aiAutonomyConfig.agentName, "integration")).limit(1);
+      if (rows[0]) {
+        const params = (rows[0].criticalActions as Record<string, unknown>) || {};
+        params.lastSyncAt = new Date().toISOString();
+        params.lastSyncStatus = (result as any).error ? "error" : "success";
+        params.totalSynced = ((params.totalSynced as number) || 0) + 1;
+        await db.update(aiAutonomyConfig)
+          .set({ criticalActions: params, updatedAt: new Date() })
+          .where(eq(aiAutonomyConfig.agentName, "integration"));
+      }
+      return result;
+    }),
+
+  // =====================================================
+  // TRIAGE ACCURACY MONITORING
+  // =====================================================
+  triageAccuracy: protectedProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return { total: 0, overridden: 0, accuracy: 0, byField: {}, recentOverrides: [] };
+    const { aiAgentDecisions } = await import("../drizzle/schema");
+    const { desc } = await import("drizzle-orm");
+    // Get all triage decisions
+    const allDecisions = await db.select().from(aiAgentDecisions)
+      .where(eq(aiAgentDecisions.agentName, "triage"))
+      .orderBy(desc(aiAgentDecisions.createdAt))
+      .limit(500);
+    const total = allDecisions.length;
+    const overridden = allDecisions.filter(d => d.status === "OVERRIDDEN").length;
+    const approved = allDecisions.filter(d => d.status === "APPROVED" || d.status === "EXECUTED").length;
+    const accuracy = total > 0 ? (approved / total) * 100 : 0;
+    // Breakdown by decision type
+    const byField: Record<string, { total: number; overridden: number; accuracy: number }> = {};
+    for (const d of allDecisions) {
+      const type = d.decisionType || "unknown";
+      if (!byField[type]) byField[type] = { total: 0, overridden: 0, accuracy: 0 };
+      byField[type].total++;
+      if (d.status === "OVERRIDDEN") byField[type].overridden++;
+    }
+    for (const key of Object.keys(byField)) {
+      const f = byField[key];
+      f.accuracy = f.total > 0 ? ((f.total - f.overridden) / f.total) * 100 : 0;
+    }
+    // Recent overrides for review
+    const recentOverrides = allDecisions
+      .filter(d => d.status === "OVERRIDDEN")
+      .slice(0, 20)
+      .map(d => ({
+        id: d.id,
+        defectId: d.defectId,
+        type: d.decisionType,
+        aiSuggestion: d.output,
+        confidence: d.confidence,
+        createdAt: d.createdAt,
+      }));
+    return { total, overridden, approved, accuracy: Math.round(accuracy * 10) / 10, byField, recentOverrides };
+  }),
+
+  // Feedback: mark a triage decision as overridden with human correction
+  overrideTriageDecision: protectedProcedure
+    .input(z.object({
+      decisionId: z.number(),
+      humanValue: z.string(),
+      reason: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB not available");
+      const { aiAgentDecisions } = await import("../drizzle/schema");
+      await db.update(aiAgentDecisions)
+        .set({
+          status: "OVERRIDDEN",
+          reviewedBy: ctx.user.id,
+          reviewedAt: new Date(),
+          output: { ...(await db.select().from(aiAgentDecisions).where(eq(aiAgentDecisions.id, input.decisionId)).limit(1).then(r => (r[0]?.output as Record<string, unknown>) || {})), humanOverride: input.humanValue, overrideReason: input.reason },
+        })
+        .where(eq(aiAgentDecisions.id, input.decisionId));
+      // Trigger feedback agent learning
+      const { feedbackAgent } = await import("./aiAgents");
+      await feedbackAgent.execute({
+        _eventType: "feedback.override",
+        decisionId: input.decisionId,
+        humanValue: input.humanValue,
+        reason: input.reason,
+      });
+      return { success: true };
+    }),
+
+  // Accuracy trend over time (weekly buckets)
+  accuracyTrend: protectedProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return [];
+    const { aiAgentDecisions } = await import("../drizzle/schema");
+    const decisions = await db.select().from(aiAgentDecisions)
+      .where(eq(aiAgentDecisions.agentName, "triage"))
+      .orderBy(aiAgentDecisions.createdAt)
+      .limit(1000);
+    // Group by week
+    const weekMap = new Map<string, { total: number; correct: number }>();
+    for (const d of decisions) {
+      const date = new Date(d.createdAt!);
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay());
+      const key = weekStart.toISOString().split("T")[0];
+      if (!weekMap.has(key)) weekMap.set(key, { total: 0, correct: 0 });
+      const w = weekMap.get(key)!;
+      w.total++;
+      if (d.status !== "OVERRIDDEN") w.correct++;
+    }
+    return Array.from(weekMap.entries()).map(([week, data]) => ({
+      week,
+      total: data.total,
+      correct: data.correct,
+      accuracy: data.total > 0 ? Math.round((data.correct / data.total) * 1000) / 10 : 0,
+    }));
+  }),
 });
 
 // =====================================================

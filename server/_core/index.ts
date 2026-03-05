@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { createApiV1Router } from "../apiRest";
+import { startAIAgents } from "../aiAgents/startup";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -60,8 +61,14 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
+  server.listen(port, async () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // Initialize AI Agent System after server is ready
+    try {
+      await startAIAgents();
+    } catch (error) {
+      console.error("[Server] AI Agent startup failed (system continues in manual mode):", error);
+    }
   });
 }
 
