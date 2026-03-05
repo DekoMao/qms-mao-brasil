@@ -42,6 +42,7 @@ import {
   GitBranch,
   Webhook,
   Brain,
+  Bot,
   FileText,
   Key,
   type LucideIcon,
@@ -210,6 +211,7 @@ const menuGroups: MenuGroup[] = [
       { icon: Webhook, label: "Webhooks", path: "/webhooks", iconColor: "text-[#EF4444]", permission: { resource: "webhook", action: "manage" } },
       { icon: Key, label: "API Keys", path: "/api-keys", iconColor: "text-[#10B981]", permission: { resource: "api_keys", action: "write" } },
       { icon: Bell, label: "Push Notifications", path: "/push-settings", iconColor: "text-[#06B6D4]" },
+      { icon: Bot, label: "AI Control Center", path: "/ai-control", iconColor: "text-[#8B5CF6]" },
     ],
   },
 ];

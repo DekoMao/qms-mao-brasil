@@ -2017,6 +2017,174 @@ const biRouter = router({
 });
 
 // =====================================================
+// AI AGENT CONTROL ROUTER
+// =====================================================
+const aiControlRouter = router({
+  // Get all agent health statuses
+  health: protectedProcedure.query(async () => {
+    const { orchestrator } = await import("./aiAgents");
+    return orchestrator.getHealthStatuses();
+  }),
+
+  // Get registered agents
+  agents: protectedProcedure.query(async () => {
+    const { orchestrator } = await import("./aiAgents");
+    return orchestrator.listAgents();
+  }),
+
+  // Get autonomy config for an agent
+  getConfig: protectedProcedure
+    .input(z.object({ agentName: z.string(), tenantId: z.number().optional() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const { aiAutonomyConfig } = await import("../drizzle/schema");
+      const { eq, and, sql } = await import("drizzle-orm");
+      const rows = await db.select().from(aiAutonomyConfig)
+        .where(and(
+          eq(aiAutonomyConfig.agentName, input.agentName),
+          input.tenantId ? eq(aiAutonomyConfig.tenantId, input.tenantId) : sql`${aiAutonomyConfig.tenantId} IS NULL`
+        )).limit(1);
+      return rows[0] ?? null;
+    }),
+
+  // Update autonomy config
+  updateConfig: protectedProcedure
+    .input(z.object({
+      agentName: z.string(),
+      enabled: z.boolean().optional(),
+      autoThreshold: z.number().min(0).max(1).optional(),
+      reviewThreshold: z.number().min(0).max(1).optional(),
+      maxAutoDecisionsPerHour: z.number().min(1).max(10000).optional(),
+      criticalActions: z.array(z.string()).optional(),
+      tenantId: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB not available" });
+      const { aiAutonomyConfig } = await import("../drizzle/schema");
+      const { eq, and, sql } = await import("drizzle-orm");
+
+      const existing = await db.select().from(aiAutonomyConfig)
+        .where(and(
+          eq(aiAutonomyConfig.agentName, input.agentName),
+          input.tenantId ? eq(aiAutonomyConfig.tenantId, input.tenantId) : sql`${aiAutonomyConfig.tenantId} IS NULL`
+        )).limit(1);
+
+      const values: Record<string, unknown> = {};
+      if (input.enabled !== undefined) values.enabled = input.enabled;
+      if (input.autoThreshold !== undefined) values.autoThreshold = String(input.autoThreshold);
+      if (input.reviewThreshold !== undefined) values.reviewThreshold = String(input.reviewThreshold);
+      if (input.maxAutoDecisionsPerHour !== undefined) values.maxAutoDecisionsPerHour = input.maxAutoDecisionsPerHour;
+      if (input.criticalActions !== undefined) values.criticalActions = input.criticalActions;
+
+      if (existing.length > 0) {
+        await db.update(aiAutonomyConfig).set(values).where(eq(aiAutonomyConfig.id, existing[0].id));
+        return { updated: true };
+      } else {
+        await db.insert(aiAutonomyConfig).values({
+          agentName: input.agentName,
+          tenantId: input.tenantId ?? null,
+          ...values,
+        } as any);
+        return { updated: true };
+      }
+    }),
+
+  // Get recent decisions
+  decisions: protectedProcedure
+    .input(z.object({
+      agentName: z.string().optional(),
+      status: z.enum(["PENDING", "EXECUTED", "APPROVED", "REJECTED", "OVERRIDDEN"]).optional(),
+      limit: z.number().min(1).max(100).default(50),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const { aiAgentDecisions } = await import("../drizzle/schema");
+      const { eq, and, desc, sql } = await import("drizzle-orm");
+      const conditions: any[] = [];
+      if (input.agentName) conditions.push(eq(aiAgentDecisions.agentName, input.agentName));
+      if (input.status) conditions.push(eq(aiAgentDecisions.status, input.status));
+      return db.select().from(aiAgentDecisions)
+        .where(conditions.length > 0 ? and(...conditions) : sql`1=1`)
+        .orderBy(desc(aiAgentDecisions.createdAt))
+        .limit(input.limit);
+    }),
+
+  // Approve a pending decision
+  approveDecision: protectedProcedure
+    .input(z.object({ decisionId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const { approveDecision } = await import("./aiAgents");
+      const success = await approveDecision(input.decisionId, ctx.user!.id);
+      if (!success) throw new TRPCError({ code: "NOT_FOUND", message: "Decision not found or already processed" });
+      return { success: true };
+    }),
+
+  // Reject a pending decision
+  rejectDecision: protectedProcedure
+    .input(z.object({ decisionId: z.number(), reason: z.string().optional() }))
+    .mutation(async ({ input, ctx }) => {
+      const { rejectDecision } = await import("./aiAgents");
+      const success = await rejectDecision(input.decisionId, ctx.user!.id, input.reason);
+      if (!success) throw new TRPCError({ code: "NOT_FOUND", message: "Decision not found or already processed" });
+      return { success: true };
+    }),
+
+  // Override a pending decision
+  overrideDecision: protectedProcedure
+    .input(z.object({ decisionId: z.number(), overrideData: z.record(z.string(), z.unknown()) }))
+    .mutation(async ({ input, ctx }) => {
+      const { overrideDecision } = await import("./aiAgents");
+      const success = await overrideDecision(input.decisionId, ctx.user!.id, input.overrideData);
+      if (!success) throw new TRPCError({ code: "NOT_FOUND", message: "Decision not found or already processed" });
+      return { success: true };
+    }),
+
+  // Get agent metrics
+  metrics: protectedProcedure
+    .input(z.object({ agentName: z.string().optional(), days: z.number().min(1).max(90).default(30) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const { aiAgentMetrics } = await import("../drizzle/schema");
+      const { eq, and, desc, gte, sql } = await import("drizzle-orm");
+      const cutoff = new Date(Date.now() - input.days * 86400000).toISOString().slice(0, 10);
+      const conditions: any[] = [gte(aiAgentMetrics.metricDate, cutoff)];
+      if (input.agentName) conditions.push(eq(aiAgentMetrics.agentName, input.agentName));
+      return db.select().from(aiAgentMetrics)
+        .where(and(...conditions))
+        .orderBy(desc(aiAgentMetrics.metricDate));
+    }),
+
+  // Get job queue stats
+  queueStats: protectedProcedure
+    .input(z.object({ agentName: z.string().optional() }))
+    .query(async ({ input }) => {
+      const { getQueueStats } = await import("./aiAgents");
+      return getQueueStats(input.agentName);
+    }),
+
+  // Get cron jobs
+  cronJobs: protectedProcedure
+    .input(z.object({ agentName: z.string().optional() }))
+    .query(async ({ input }) => {
+      const { listCronJobs } = await import("./aiAgents");
+      return listCronJobs(input.agentName);
+    }),
+
+  // Toggle cron job
+  toggleCronJob: protectedProcedure
+    .input(z.object({ id: z.number(), enabled: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const { toggleCronJob } = await import("./aiAgents");
+      await toggleCronJob(input.id, input.enabled);
+      return { success: true };
+    }),
+});
+
+// =====================================================
 // MAIN ROUTER
 // =====================================================
 export const appRouter = router({
@@ -2049,5 +2217,6 @@ export const appRouter = router({
   apiKey: apiKeyRouter,
   push: pushRouter,
   bi: biRouter,
+  aiControl: aiControlRouter,
 });
 export type AppRouter = typeof appRouter;

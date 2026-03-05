@@ -452,3 +452,68 @@
 - [x] Reorganizar Settings: Idioma em card separado com ícone Globe
 - [x] Validar que o sistema funciona corretamente sem o toggle
 - [x] Atualizar testes: 3 novos testes (ThemeContext, App.tsx, Settings.tsx) — 365 total
+
+## SDD Implementação: QTrack 100% Autônomo e Gerenciado por IA
+
+### Fase 1: Infraestrutura Base
+- [x] Schema: 6 tabelas AI (decisions, metrics, autonomy_config, jobs, models, cron_jobs)
+- [x] Job Queue Engine: enqueue, dequeue, retry, dead letter
+- [x] Cron Scheduler: parse cron, execute jobs, track last run
+- [x] Agent Base Class: lifecycle, heartbeat, error handling
+- [x] Guardrails Engine: confidence check, rate limit, HITL escalation
+- [x] Orchestrator Event Dispatcher (subscribe, dispatch, fireAgentEvent)
+- [x] tRPC aiControlRouter: 12 procedures (health, metrics, decisions, config, approve/reject, trigger)
+- [x] Testes Fase 1: 42 testes infraestrutura
+
+### Fase 2: Triage Agent
+- [x] NLP Entity Extraction (LLM prompt + JSON parser)
+- [x] Auto-Classification (categoria + subcategoria via LLM)
+- [x] Auto-Severity (MG calculation + LLM assessment)
+- [x] Auto-Assignment (workload balancing + expertise matching)
+- [x] Duplicate Detection (semantic similarity via LLM)
+- [x] Integrado no fluxo via Orchestrator events
+- [x] Testes Fase 2: cobertura TriageAgent
+
+### Fase 3: Workflow Agent
+- [x] Auto-Advance Engine (checkAutoAdvance + quality validation)
+- [x] SLA Monitor com alertas progressivos (handleSlaEvent)
+- [x] Auto-Escalation (reatribuição + notificação)
+- [x] Auto-Close via periodicScan
+- [x] Cron integration via CronScheduler
+- [x] Testes Fase 3: cobertura WorkflowAgent
+
+### Fase 4: Predict Agent
+- [x] Root Cause Analysis multi-hipótese (LLM + histórico)
+- [x] Anomaly Detection (Z-score + alertas)
+- [x] Trend Prediction (série temporal)
+- [x] Supplier Risk Score dinâmico
+- [x] Recurrence Prediction
+- [x] Testes Fase 4: cobertura PredictAgent
+
+### Fase 5: Report Agent
+- [x] Daily Digest (generateDailyDigest + push)
+- [x] Weekly Executive Summary (generateExecutiveSummary)
+- [x] Natural Language Query (naturalLanguageQuery → LLM → SQL)
+- [x] Testes Fase 5: cobertura ReportAgent
+
+### Fase 6: Integration Agent
+- [x] ERP Sync Inbound (pull + transform)
+- [x] ERP Sync Outbound (event-driven push)
+- [x] Data Transformation Engine (field mapping)
+- [x] Webhook Orchestration (dispatchWebhook + retry)
+- [x] Testes Fase 6: cobertura IntegrationAgent
+
+### Fase 7: Health + Feedback Agents
+- [x] Health Monitor (heartbeat + restart + checkSystemHealth)
+- [x] Fallback Mode (desativar agente → modo manual)
+- [x] Accuracy Drift Detection (analyzeAccuracyDrift)
+- [x] Feedback Collection (override tracking + processOverrides)
+- [x] Weight Adjustment (adjustThresholds)
+- [x] Testes Fase 7: cobertura HealthAgent + FeedbackAgent
+
+### Fase 8: AI Control Center + E2E
+- [x] Página AiControlCenter.tsx (3 tabs: Agentes, Decisões, Guardrails)
+- [x] Rota /ai-control + nav item no DashboardLayout (Bot icon)
+- [x] Integração de todos os 7 agentes no index.ts (AGENT_REGISTRY + initializeAllAgents)
+- [x] Testes E2E: 64 testes (ai-agents-infra + ai-agents) — 464 total
+- [x] Checkpoint e entrega final

@@ -149,7 +149,7 @@ export const auditLogs = mysqlTable("audit_logs", {
   defectId: int("defectId").notNull(),
   userId: int("userId"),
   userName: varchar("userName", { length: 100 }),
-  action: mysqlEnum("action", ["CREATE", "UPDATE", "DELETE", "ADVANCE_STEP", "RESTORE", "RBAC_SEED", "RBAC_SET_PERMISSIONS", "RBAC_ASSIGN_ROLE", "RBAC_REMOVE_ROLE", "WORKFLOW_CREATE", "WORKFLOW_NEW_VERSION", "WORKFLOW_CREATE_INSTANCE", "WORKFLOW_ADVANCE", "TENANT_CREATE", "TENANT_ADD_USER", "TENANT_REMOVE_USER", "WEBHOOK_CREATE", "WEBHOOK_DELETE", "WEBHOOK_TEST", "DOCUMENT_CREATE", "DOCUMENT_STATUS_CHANGE", "DOCUMENT_ADD_VERSION", "DOCUMENT_DELETE", "TENANT_SWITCH", "API_KEY_CREATE", "API_KEY_REVOKE"]).notNull(),
+  action: mysqlEnum("action", ["CREATE", "UPDATE", "DELETE", "ADVANCE_STEP", "RESTORE", "RBAC_SEED", "RBAC_SET_PERMISSIONS", "RBAC_ASSIGN_ROLE", "RBAC_REMOVE_ROLE", "WORKFLOW_CREATE", "WORKFLOW_NEW_VERSION", "WORKFLOW_CREATE_INSTANCE", "WORKFLOW_ADVANCE", "TENANT_CREATE", "TENANT_ADD_USER", "TENANT_REMOVE_USER", "WEBHOOK_CREATE", "WEBHOOK_DELETE", "WEBHOOK_TEST", "DOCUMENT_CREATE", "DOCUMENT_STATUS_CHANGE", "DOCUMENT_ADD_VERSION", "DOCUMENT_DELETE", "TENANT_SWITCH", "API_KEY_CREATE", "API_KEY_REVOKE", "AI_AUTO_CLASSIFY", "AI_AUTO_SEVERITY", "AI_AUTO_ASSIGN", "AI_AUTO_ADVANCE", "AI_AUTO_ESCALATE", "AI_AUTO_CLOSE", "AI_ANOMALY_DETECTED", "AI_PREDICTION", "AI_REPORT_GENERATED", "AI_AGENT_RESTART", "AI_AGENT_FALLBACK", "AI_FEEDBACK_OVERRIDE", "AI_CONFIG_CHANGE"]).notNull(),
   fieldName: varchar("fieldName", { length: 100 }),
   oldValue: text("oldValue"),
   newValue: text("newValue"),
@@ -789,5 +789,164 @@ export const biWidgetsRelations = relations(biWidgets, ({ one }) => ({
   dashboard: one(biDashboards, {
     fields: [biWidgets.dashboardId],
     references: [biDashboards.id],
+  }),
+}));
+
+
+// =====================================================
+// AI AGENT INFRASTRUCTURE TABLES (Autonomous System)
+// =====================================================
+
+// Registro de decisões dos agentes
+export const aiAgentDecisions = mysqlTable("ai_agent_decisions", {
+  id: int("id").autoincrement().primaryKey(),
+  agentName: varchar("agentName", { length: 50 }).notNull(),
+  defectId: int("defectId"),
+  decisionType: varchar("decisionType", { length: 100 }).notNull(),
+  input: json("input").notNull(),
+  output: json("output").notNull(),
+  confidence: decimal("confidence", { precision: 5, scale: 4 }).notNull(),
+  autonomyLevel: mysqlEnum("autonomyLevel", ["auto", "review", "hitl", "blocked"]).notNull(),
+  status: mysqlEnum("status", ["PENDING", "EXECUTED", "APPROVED", "REJECTED", "OVERRIDDEN"]).default("PENDING"),
+  executedAt: timestamp("executedAt"),
+  reviewedBy: int("reviewedBy"),
+  reviewedAt: timestamp("reviewedAt"),
+  humanOverride: json("humanOverride"),
+  tenantId: int("tenantId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("idx_ai_decisions_agent").on(table.agentName),
+  index("idx_ai_decisions_defect").on(table.defectId),
+  index("idx_ai_decisions_status").on(table.status),
+  index("idx_ai_decisions_tenant").on(table.tenantId),
+  index("idx_ai_decisions_created").on(table.createdAt),
+]);
+
+export type AiAgentDecision = typeof aiAgentDecisions.$inferSelect;
+export type InsertAiAgentDecision = typeof aiAgentDecisions.$inferInsert;
+
+// Métricas de performance dos agentes
+export const aiAgentMetrics = mysqlTable("ai_agent_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  agentName: varchar("agentName", { length: 50 }).notNull(),
+  metricDate: varchar("metricDate", { length: 10 }).notNull(),
+  totalDecisions: int("totalDecisions").default(0),
+  autoExecuted: int("autoExecuted").default(0),
+  humanApproved: int("humanApproved").default(0),
+  humanRejected: int("humanRejected").default(0),
+  humanOverridden: int("humanOverridden").default(0),
+  avgConfidence: decimal("avgConfidence", { precision: 5, scale: 4 }),
+  accuracyRate: decimal("accuracyRate", { precision: 5, scale: 4 }),
+  avgResponseTimeMs: int("avgResponseTimeMs"),
+  tenantId: int("tenantId"),
+}, (table) => [
+  index("idx_ai_metrics_agent_date").on(table.agentName, table.metricDate),
+  index("idx_ai_metrics_tenant").on(table.tenantId),
+]);
+
+export type AiAgentMetric = typeof aiAgentMetrics.$inferSelect;
+export type InsertAiAgentMetric = typeof aiAgentMetrics.$inferInsert;
+
+// Configuração de autonomia por agente e tenant
+export const aiAutonomyConfig = mysqlTable("ai_autonomy_config", {
+  id: int("id").autoincrement().primaryKey(),
+  agentName: varchar("agentName", { length: 50 }).notNull(),
+  tenantId: int("tenantId"),
+  enabled: boolean("enabled").default(true),
+  autoThreshold: decimal("autoThreshold", { precision: 5, scale: 4 }).default("0.8500"),
+  reviewThreshold: decimal("reviewThreshold", { precision: 5, scale: 4 }).default("0.6000"),
+  maxAutoDecisionsPerHour: int("maxAutoDecisionsPerHour").default(100),
+  criticalActions: json("criticalActions"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("idx_ai_config_agent_tenant").on(table.agentName, table.tenantId),
+]);
+
+export type AiAutonomyConfig = typeof aiAutonomyConfig.$inferSelect;
+export type InsertAiAutonomyConfig = typeof aiAutonomyConfig.$inferInsert;
+
+// Fila de tarefas dos agentes (job queue)
+export const aiAgentJobs = mysqlTable("ai_agent_jobs", {
+  id: int("id").autoincrement().primaryKey(),
+  agentName: varchar("agentName", { length: 50 }).notNull(),
+  jobType: varchar("jobType", { length: 100 }).notNull(),
+  priority: int("priority").default(5),
+  payload: json("payload").notNull(),
+  status: mysqlEnum("status", ["QUEUED", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED"]).default("QUEUED"),
+  attempts: int("attempts").default(0),
+  maxAttempts: int("maxAttempts").default(3),
+  result: json("result"),
+  error: text("error"),
+  scheduledAt: timestamp("scheduledAt"),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  tenantId: int("tenantId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("idx_ai_jobs_agent").on(table.agentName),
+  index("idx_ai_jobs_status").on(table.status),
+  index("idx_ai_jobs_priority").on(table.priority),
+  index("idx_ai_jobs_tenant").on(table.tenantId),
+  index("idx_ai_jobs_scheduled").on(table.scheduledAt),
+]);
+
+export type AiAgentJob = typeof aiAgentJobs.$inferSelect;
+export type InsertAiAgentJob = typeof aiAgentJobs.$inferInsert;
+
+// Modelos e pesos de IA (versionados)
+export const aiModels = mysqlTable("ai_models", {
+  id: int("id").autoincrement().primaryKey(),
+  agentName: varchar("agentName", { length: 50 }).notNull(),
+  modelVersion: varchar("modelVersion", { length: 20 }).notNull(),
+  modelType: varchar("modelType", { length: 50 }).notNull(),
+  weights: json("weights").notNull(),
+  trainingDataCount: int("trainingDataCount"),
+  accuracyScore: decimal("accuracyScore", { precision: 5, scale: 4 }),
+  isActive: boolean("isActive").default(false),
+  activatedAt: timestamp("activatedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("idx_ai_models_agent_version").on(table.agentName, table.modelVersion),
+  index("idx_ai_models_active").on(table.isActive),
+]);
+
+export type AiModel = typeof aiModels.$inferSelect;
+export type InsertAiModel = typeof aiModels.$inferInsert;
+
+// Scheduler de tarefas periódicas
+export const aiCronJobs = mysqlTable("ai_cron_jobs", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  cronExpression: varchar("cronExpression", { length: 50 }).notNull(),
+  agentName: varchar("agentName", { length: 50 }).notNull(),
+  jobType: varchar("jobType", { length: 100 }).notNull(),
+  payload: json("payload"),
+  enabled: boolean("enabled").default(true),
+  lastRunAt: timestamp("lastRunAt"),
+  nextRunAt: timestamp("nextRunAt"),
+  lastStatus: mysqlEnum("lastStatus", ["SUCCESS", "FAILED", "SKIPPED"]),
+  tenantId: int("tenantId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("idx_ai_cron_name").on(table.name),
+  index("idx_ai_cron_agent").on(table.agentName),
+  index("idx_ai_cron_enabled").on(table.enabled),
+  index("idx_ai_cron_next_run").on(table.nextRunAt),
+]);
+
+export type AiCronJob = typeof aiCronJobs.$inferSelect;
+export type InsertAiCronJob = typeof aiCronJobs.$inferInsert;
+
+// =====================================================
+// AI AGENT RELATIONS
+// =====================================================
+export const aiAgentDecisionsRelations = relations(aiAgentDecisions, ({ one }) => ({
+  defect: one(defects, {
+    fields: [aiAgentDecisions.defectId],
+    references: [defects.id],
+  }),
+  reviewer: one(users, {
+    fields: [aiAgentDecisions.reviewedBy],
+    references: [users.id],
   }),
 }));

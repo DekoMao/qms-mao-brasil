@@ -28,6 +28,7 @@ import TenantAdmin from "./pages/TenantAdmin";
 import ApiKeysAdmin from "./pages/ApiKeysAdmin";
 import PushSettings from "./pages/PushSettings";
 import BiDashboard from "./pages/BiDashboard";
+import AiControlCenter from "./pages/AiControlCenter";
 
 // Main app router with dashboard layout
 function MainRouter() {
@@ -56,6 +57,7 @@ function MainRouter() {
         <Route path="/api-keys" component={ApiKeysAdmin} />
         <Route path="/push-settings" component={PushSettings} />
         <Route path="/bi" component={BiDashboard} />
+        <Route path="/ai-control" component={AiControlCenter} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
