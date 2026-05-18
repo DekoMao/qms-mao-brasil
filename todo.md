@@ -545,3 +545,4 @@
 - [x] 3.5 Dashboard analytics: Tab "Acurácia" com KPIs, barras por campo, tabela de overrides recentes
 - [x] 3.6 Confidence calibration: accuracyTrend com buckets semanais para análise temporal
 - [x] 3.7 Testes completos: 65 testes para ERP + Acurácia (529 total)
+- [x] 3.8 Fix: Duplicate React key error na página Import (COLUMN_MAPPING usava db field como key em vez de excel column name — 30 console errors eliminados)

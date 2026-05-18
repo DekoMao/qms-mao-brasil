@@ -350,7 +350,7 @@ export default function Import() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm">
             {Object.entries(COLUMN_MAPPING).map(([excel, db]) => (
-              <div key={db} className="flex items-center gap-2">
+              <div key={excel} className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">{excel}</Badge>
               </div>
             ))}
