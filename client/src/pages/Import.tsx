@@ -349,9 +349,18 @@ export default function Import() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm">
-            {Object.entries(COLUMN_MAPPING).map(([excel, db]) => (
-              <div key={excel} className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">{excel}</Badge>
+            {Object.entries(
+              Object.entries(COLUMN_MAPPING).reduce<Record<string, string[]>>((acc, [excel, db]) => {
+                if (!acc[db]) acc[db] = [];
+                acc[db].push(excel);
+                return acc;
+              }, {})
+            ).map(([db, variants]) => (
+              <div key={db} className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">{variants[0]}</Badge>
+                {variants.length > 1 && (
+                  <span className="text-[10px] text-muted-foreground">+{variants.length - 1}</span>
+                )}
               </div>
             ))}
           </div>

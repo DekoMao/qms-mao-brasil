@@ -47,6 +47,16 @@ import {
   Database,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts";
 
 // =====================================================
 // TYPES
@@ -494,11 +504,33 @@ function ErpIntegrationConfig() {
   };
 
   const handleSync = async (direction: "inbound" | "outbound") => {
+    const startTime = Date.now();
+    const dirLabel = direction === "inbound" ? "ERP → QTrack" : "QTrack → ERP";
     try {
-      await syncMutation.mutateAsync({ direction });
-      toast.success(`Sincronização ${direction === "inbound" ? "ERP → QTrack" : "QTrack → ERP"} iniciada`);
-    } catch {
-      toast.error("Erro ao iniciar sincronização");
+      const result = await syncMutation.mutateAsync({ direction }) as any;
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+      const synced = result?.recordsProcessed ?? result?.processed ?? 0;
+      const errors = result?.errors?.length ?? result?.errorCount ?? 0;
+      const skipped = result?.skipped ?? 0;
+
+      if (errors > 0) {
+        toast.warning(`Sincronização ${dirLabel} concluída com avisos`, {
+          description: `${synced} registros sincronizados, ${errors} erro(s), ${skipped} ignorado(s) — ${duration}s`,
+          duration: 6000,
+        });
+      } else {
+        toast.success(`Sincronização ${dirLabel} concluída`, {
+          description: `${synced} registro(s) sincronizado(s)${skipped ? `, ${skipped} ignorado(s)` : ""} — ${duration}s`,
+          duration: 5000,
+        });
+      }
+      utils.aiControl.getErpConfig.invalidate();
+    } catch (err: any) {
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+      toast.error(`Erro na sincronização ${dirLabel}`, {
+        description: err?.message || `Falha após ${duration}s. Verifique a configuração de conexão.`,
+        duration: 8000,
+      });
     }
   };
 
@@ -768,6 +800,7 @@ function ErpIntegrationConfig() {
 // =====================================================
 function TriageAccuracyMonitor() {
   const { data: accuracyData, isLoading } = trpc.aiControl.triageAccuracy.useQuery();
+  const { data: trendData } = trpc.aiControl.accuracyTrend.useQuery();
   const overrideMutation = trpc.aiControl.overrideTriageDecision.useMutation();
   const utils = trpc.useUtils();
 
@@ -989,6 +1022,56 @@ function TriageAccuracyMonitor() {
           )}
         </CardContent>
       </Card>
+
+      {/* Accuracy Trend Chart */}
+      {trendData && (trendData as any[]).length > 0 && (
+        <Card className="border" style={{ background: "rgba(15,23,42,0.6)", borderColor: "rgba(255,255,255,0.08)" }}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" style={{ color: "#8B5CF6" }} />
+              Tendência de Acurácia — Evolução Semanal
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={(trendData as any[]).map(d => ({ ...d, weekLabel: d.week ? new Date(d.week).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "" }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="weekLabel" tick={{ fill: "rgba(148,163,184,0.7)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fill: "rgba(148,163,184,0.7)", fontSize: 10 }} axisLine={false} tickLine={false} unit="%" />
+                <Tooltip
+                  contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", fontSize: "11px" }}
+                  formatter={(value: number) => [`${value}%`, "Acurácia"]}
+                  labelFormatter={(label) => `Semana: ${label}`}
+                />
+                <ReferenceLine y={90} stroke="#00D4AA" strokeDasharray="4 4" strokeOpacity={0.5} />
+                <ReferenceLine y={75} stroke="#F5A623" strokeDasharray="4 4" strokeOpacity={0.3} />
+                <Line
+                  type="monotone"
+                  dataKey="accuracy"
+                  stroke="#8B5CF6"
+                  strokeWidth={2.5}
+                  dot={{ fill: "#8B5CF6", r: 4, strokeWidth: 2, stroke: "rgba(15,23,42,0.8)" }}
+                  activeDot={{ r: 6, fill: "#A78BFA", stroke: "#8B5CF6", strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+            <div className="flex items-center justify-center gap-4 mt-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-0.5 rounded" style={{ background: "#00D4AA" }} />
+                <span className="text-[10px] text-muted-foreground">Meta 90%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-0.5 rounded" style={{ background: "#F5A623" }} />
+                <span className="text-[10px] text-muted-foreground">Alerta 75%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-1 rounded" style={{ background: "#8B5CF6" }} />
+                <span className="text-[10px] text-muted-foreground">Acurácia Real</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Feedback Loop Info */}
       <Card className="border" style={{ background: "rgba(15,23,42,0.6)", borderColor: "rgba(255,255,255,0.08)" }}>

@@ -546,3 +546,8 @@
 - [x] 3.6 Confidence calibration: accuracyTrend com buckets semanais para análise temporal
 - [x] 3.7 Testes completos: 65 testes para ERP + Acurácia (529 total)
 - [x] 3.8 Fix: Duplicate React key error na página Import (COLUMN_MAPPING usava db field como key em vez de excel column name — 30 console errors eliminados)
+
+## Melhorias UX - Sprint AI Control Center + Import
+- [x] 4.1 Gráfico de tendência temporal (line chart) na tab Acurácia do AI Control Center — evolução semanal da taxa de acerto do Triage Agent
+- [x] 4.2 Filtro de deduplicação na lista de mapeamento da Importação — mostrar apenas campos únicos de destino sem repetir variantes
+- [x] 4.3 Toast de confirmação detalhado no sync ERP — quantidade de registros sincronizados, erros encontrados, duração
