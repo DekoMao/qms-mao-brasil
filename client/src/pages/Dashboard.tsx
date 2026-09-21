@@ -28,6 +28,7 @@ import { AlertTriangle, RefreshCw, CheckCircle, ChevronLeft, ChevronRight, Pause
 import { useLocation } from "wouter";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { getTriageAccuracyAlert } from "@/lib/accuracyAlert";
 
 /* Enterprise dark chart colors */
 const STATUS_COLORS = {
@@ -327,8 +328,14 @@ export default function Dashboard() {
 
   const { data: stats, isLoading, isFetching, refetch } = trpc.defect.stats.useQuery(statsInput);
   const { data: rcaData } = trpc.rca.analysis.useQuery(statsInput);
+  const { data: accuracyTrend } = trpc.aiControl.accuracyTrend.useQuery();
   const [, setLocation] = useLocation();
   const hasDateFilter = dateFrom !== "" || dateTo !== "";
+  const latestAccuracy = useMemo(() => {
+    const trend = (accuracyTrend as Array<{ accuracy?: number }> | undefined) ?? [];
+    return trend.length > 0 ? trend[trend.length - 1]?.accuracy : undefined;
+  }, [accuracyTrend]);
+  const accuracyAlert = getTriageAccuracyAlert(latestAccuracy);
 
   if (isLoading) {
     return (
@@ -412,6 +419,57 @@ export default function Dashboard() {
             style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", color: "#60A5FA" }}>
             <Filter className="h-4 w-4" />
             <span>{t('dashboard.periodFilter')}: {dateFrom || '...'} → {dateTo || '...'}</span>
+          </div>
+        )}
+
+        {accuracyAlert.visible && (
+          <div
+            role="alert"
+            className="relative overflow-hidden rounded-xl px-4 py-4 sm:px-5"
+            style={{
+              background: accuracyAlert.severity === "critical"
+                ? "linear-gradient(110deg, rgba(127,29,29,0.46), rgba(239,68,68,0.12))"
+                : "linear-gradient(110deg, rgba(120,53,15,0.46), rgba(245,166,35,0.12))",
+              border: accuracyAlert.severity === "critical"
+                ? "1px solid rgba(239,68,68,0.5)"
+                : "1px solid rgba(245,166,35,0.5)",
+              boxShadow: accuracyAlert.severity === "critical"
+                ? "0 0 24px rgba(239,68,68,0.12)"
+                : "0 0 24px rgba(245,166,35,0.10)",
+            }}
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div
+                  className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                  style={{
+                    background: accuracyAlert.severity === "critical" ? "rgba(239,68,68,0.2)" : "rgba(245,166,35,0.2)",
+                    color: accuracyAlert.severity === "critical" ? "#F87171" : "#FBBF24",
+                  }}
+                >
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">
+                    {accuracyAlert.severity === "critical" ? "Acurácia crítica do Triage Agent" : "Acurácia abaixo da meta"}
+                  </p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                    A acurácia semanal está em <strong className="text-foreground">{accuracyAlert.accuracy}%</strong>, abaixo da meta de <strong className="text-foreground">90%</strong>.
+                    {accuracyAlert.severity === "critical" ? " Revisão imediata recomendada." : " Acompanhe o feedback loop e os overrides recentes."}
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLocation("/ai-control")}
+                className="w-full shrink-0 border-current bg-transparent text-xs hover:bg-white/10 sm:w-auto"
+                style={{ color: accuracyAlert.severity === "critical" ? "#F87171" : "#FBBF24" }}
+              >
+                <Shield className="mr-1.5 h-3.5 w-3.5" />
+                Revisar acurácia
+              </Button>
+            </div>
           </div>
         )}
       </div>
