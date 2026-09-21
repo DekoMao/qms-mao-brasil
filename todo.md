@@ -175,7 +175,7 @@
 ## Importação de Imagens de Evidências
 - [x] Analisar coluna "T" da aba "NEW_FORM" da planilha - 136 imagens encontradas
 - [x] Verificar viabilidade de importar imagens de evidências - VIÁVEL
-- [ ] Implementar importação de imagens aos respectivos defeitos
+- [x] Implementar importação de imagens aos respectivos defeitos (URLs e data URIs na coluna Evidence)
 
 ## Cadastro e Edição de Fornecedores
 - [x] Implementar cadastro de fornecedores com geração de código de acesso (já existia)
@@ -254,12 +254,12 @@
 - [x] 3.9 Remover ComponentShowcase.tsx
 
 ## Roadmap - Fase 4 (Enterprise)
-- [ ] 4.1 Multi-tenancy (múltiplas plantas/unidades)
-- [ ] 4.2 RBAC granular (permissões por módulo)
-- [ ] 4.3 Workflow configurável (etapas customizáveis)
-- [ ] 4.4 Integração com ERP (API pública REST)
-- [ ] 4.5 Mobile app (PWA)
-- [ ] 4.6 BI embeddido (dashboards customizáveis)
+- [x] 4.1 Multi-tenancy (múltiplas plantas/unidades)
+- [x] 4.2 RBAC granular (permissões por módulo)
+- [x] 4.3 Workflow configurável (etapas customizáveis)
+- [x] 4.4 Integração com ERP (API pública REST)
+- [x] 4.5 Mobile app (PWA)
+- [x] 4.6 BI embeddido (dashboards customizáveis)
 
 ## SDD Roadmap - Fase 5 Quick Wins
 - [x] 3.7 Histórico de alterações com diff visual (aba Histórico no DefectDetail)
@@ -278,11 +278,11 @@
 - [x] Testes: 68 testes para features SDD (181 total)
 
 ## SDD Roadmap - Gaps Parciais (Refinamentos)
-- [ ] 5.3 IA: Trigger automático ao atingir step "Aguardando Causa Raiz" (RN-IA-01)
-- [ ] 5.3 IA: Procedure recurrenceAnalysis + página RecurrenceAnalysis.tsx
-- [ ] 5.4 Filtros: Persistir filtros na URL (query params) (RN-FLT-03)
-- [ ] 5.4 Filtros: Limite 10.000 registros na exportação (RN-FLT-06)
-- [ ] 5.2 Scorecard: Radar chart e trend sparklines no frontend
+- [x] 5.3 IA: Trigger automático ao atingir step "Aguardando Causa Raiz" (RN-IA-01)
+- [x] 5.3 IA: Procedure recurrenceAnalysis + página RecurrenceAnalysis.tsx
+- [x] 5.4 Filtros: Persistir filtros na URL (query params) (RN-FLT-03)
+- [x] 5.4 Filtros: Limite 10.000 registros na exportação (RN-FLT-06)
+- [x] 5.2 Scorecard: Radar chart e trend sparklines no frontend
 
 ## SDD Roadmap - Fase 5 Restante
 - [x] 5.5 PWA Mobile - manifest.json, service worker, ícones
@@ -403,10 +403,10 @@
 - [x] P5.6 Workflow: 4 templates prontos via seedAll mutation
 
 ### Documentação
-- [ ] DOC.1 /docs/tenancy.md
-- [ ] DOC.2 /docs/integrations/rest-api.md
-- [ ] DOC.3 /docs/push.md
-- [ ] DOC.4 /docs/bi.md
+- [x] DOC.1 /docs/tenancy.md
+- [x] DOC.2 /docs/integrations/rest-api.md
+- [x] DOC.3 /docs/push.md
+- [x] DOC.4 /docs/bi.md
 
 ## Redesign UX Dark Navy Enterprise (SDD Design UX)
 - [x] Design System: index.css com tokens oklch, dark navy #0A1628, teal #00D4AA, gold #F5A623

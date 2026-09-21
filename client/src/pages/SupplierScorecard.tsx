@@ -45,6 +45,23 @@ const METRIC_LABELS: Record<string, Record<string, string>> = {
   },
 };
 
+function SupplierScoreSparkline({ history }: { history: Array<{ periodKey: string; overallScore: string | number }> }) {
+  const data = history
+    .map((item) => ({ period: item.periodKey, score: Number(item.overallScore) }))
+    .reverse();
+
+  if (data.length === 0) return null;
+
+  return (
+    <ResponsiveContainer width="100%" height={120}>
+      <LineChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 8 }}>
+        <Line type="monotone" dataKey="score" stroke="#00D4AA" strokeWidth={2} dot={{ r: 3, fill: "#00D4AA" }} activeDot={{ r: 5 }} />
+        <Tooltip contentStyle={{ background: '#1A2942', border: '1px solid #2A4A6B', borderRadius: 8, color: '#E0E8F0' }} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
 export default function SupplierScorecard() {
   const { i18n } = useTranslation();
   const lang = i18n.language?.startsWith("en") ? "en" : "pt";
@@ -256,12 +273,7 @@ export default function SupplierScorecard() {
           {supplierDetail?.history && supplierDetail.history.length > 0 && (
             <div className="mt-4">
               <h3 className="text-sm font-medium mb-2">{lang === "pt" ? "Histórico (últimos 12 meses)" : "History (last 12 months)"}</h3>
-              <ResponsiveContainer width="100%" height={120}>
-                <LineChart data={supplierDetail.history.map((h: any) => ({ period: h.periodKey, score: parseFloat(h.overallScore) })).reverse()}>
-                  <Line type="monotone" dataKey="score" stroke="#00D4AA" strokeWidth={2} dot={{ r: 3 }} />
-                  <Tooltip contentStyle={{ background: '#1A2942', border: '1px solid #2A4A6B', borderRadius: 8, color: '#E0E8F0' }} />
-                </LineChart>
-              </ResponsiveContainer>
+              <SupplierScoreSparkline history={supplierDetail.history} />
             </div>
           )}
         </DialogContent>

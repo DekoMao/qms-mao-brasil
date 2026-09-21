@@ -219,9 +219,11 @@ export default function Import() {
       setImportResults(result.results);
       
       if (result.errorCount === 0) {
-        toast.success(`${result.successCount} registros importados com sucesso!`);
+        const evidenceMessage = result.evidenceCount > 0 ? ` ${result.evidenceCount} evidências associadas.` : "";
+        toast.success(`${result.successCount} registros importados com sucesso!${evidenceMessage}`);
       } else {
-        toast.warning(`${result.successCount} importados, ${result.errorCount} erros`);
+        const evidenceMessage = result.evidenceCount > 0 ? ` ${result.evidenceCount} evidências associadas.` : "";
+        toast.warning(`${result.successCount} importados, ${result.errorCount} erros.${evidenceMessage}`);
       }
     } catch (error: any) {
       toast.error(`Erro na importação: ${error.message}`);
@@ -344,7 +346,7 @@ export default function Import() {
         <CardHeader>
           <CardTitle>Mapeamento de Colunas</CardTitle>
           <CardDescription>
-            Certifique-se de que sua planilha possui as seguintes colunas
+            Certifique-se de que sua planilha possui as seguintes colunas. URLs de imagens ou data URIs na coluna Evidence são associados automaticamente ao defeito importado.
           </CardDescription>
         </CardHeader>
         <CardContent>

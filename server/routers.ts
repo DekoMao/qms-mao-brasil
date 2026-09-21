@@ -685,6 +685,68 @@ const attachmentRouter = router({
 // =====================================================
 // IMPORT ROUTER
 // =====================================================
+async function attachImportedImageEvidence(params: {
+  defectId: number;
+  evidence: unknown;
+  uploadedBy: number;
+  uploadedByName: string;
+}) {
+  const rawEvidence = typeof params.evidence === "string" ? params.evidence.trim() : "";
+  if (!rawEvidence) return false;
+
+  let fileUrl: string;
+  let fileKey: string;
+  let fileName: string;
+  let mimeType: string;
+  let fileSize: number | undefined;
+
+  if (rawEvidence.startsWith("data:image/")) {
+    const match = rawEvidence.match(/^data:(image\/[\w.+-]+);base64,(.+)$/);
+    if (!match) return false;
+    const [, dataMimeType, encodedData] = match;
+    const fileBuffer = Buffer.from(encodedData, "base64");
+    if (fileBuffer.length > 10 * 1024 * 1024) throw new Error("Imagem de evidência excede o limite de 10MB");
+    const extension = dataMimeType.split("/")[1]?.replace("jpeg", "jpg") || "png";
+    fileName = `evidence-${params.defectId}.${extension}`;
+    mimeType = dataMimeType;
+    fileSize = fileBuffer.length;
+    const timestamp = Date.now();
+    fileKey = `defects/${params.defectId}/evidence/import-${timestamp}-${fileName}`;
+    const { storagePut } = await import("./storage");
+    const stored = await storagePut(fileKey, fileBuffer, mimeType);
+    fileUrl = stored.url;
+  } else if (/^https?:\/\//i.test(rawEvidence) && /\.(?:png|jpe?g|gif|webp|bmp|svg)(?:[?#].*)?$/i.test(rawEvidence)) {
+    fileUrl = rawEvidence;
+    fileKey = `external:${rawEvidence}`;
+    const pathname = new URL(rawEvidence).pathname;
+    fileName = pathname.split("/").pop() || `evidence-${params.defectId}`;
+    const extension = fileName.split(".").pop()?.toLowerCase();
+    mimeType = extension === "jpg" || extension === "jpeg" ? "image/jpeg" : `image/${extension || "png"}`;
+  } else {
+    return false;
+  }
+
+  await createAttachment({
+    defectId: params.defectId,
+    fileName,
+    fileUrl,
+    fileKey,
+    mimeType,
+    fileSize,
+    uploadedBy: params.uploadedBy,
+    uploadedByName: params.uploadedByName,
+  });
+  await createAuditLog({
+    defectId: params.defectId,
+    userId: params.uploadedBy,
+    userName: params.uploadedByName,
+    action: "UPDATE",
+    fieldName: "evidence_import",
+    newValue: fileName,
+  });
+  return true;
+}
+
 const importRouter = router({
   logs: publicProcedure.query(async () => {
     return getImportLogs();
@@ -698,6 +760,7 @@ const importRouter = router({
       const results: { row: number; status: "OK" | "ERROR"; message?: string }[] = [];
       let successCount = 0;
       let errorCount = 0;
+      let evidenceCount = 0;
 
       for (let i = 0; i < input.data.length; i++) {
         const row = input.data[i];
@@ -713,7 +776,7 @@ const importRouter = router({
           }
 
           // Create defect
-          await createDefect({
+          const createdDefect = await createDefect({
             docNumber: String(row.docNumber || `AUTO-${Date.now()}-${i}`),
             openDate: String(row.openDate || new Date().toISOString().split("T")[0]),
             mg: row.mg as "S" | "A" | "B" | "C" | null,
@@ -748,6 +811,15 @@ const importRouter = router({
             status: row.status as "CLOSED" | "ONGOING" | "DELAYED" | "Waiting for CHK Solution" | null,
           }, ctx.user.id);
 
+          if (createdDefect?.id && await attachImportedImageEvidence({
+            defectId: createdDefect.id,
+            evidence: row.evidence,
+            uploadedBy: ctx.user.id,
+            uploadedByName: ctx.user.name || "Unknown",
+          })) {
+            evidenceCount++;
+          }
+
           results.push({ row: i + 1, status: "OK" });
           successCount++;
         } catch (error: any) {
@@ -767,7 +839,7 @@ const importRouter = router({
         importedByName: ctx.user.name || "Unknown",
       });
 
-      return { results, successCount, errorCount };
+      return { results, successCount, errorCount, evidenceCount };
     }),
 });
 
@@ -1798,6 +1870,17 @@ const predictionRouter = router({
   recurrencePatterns: protectedProcedure
     .input(z.object({ supplierId: z.number().optional() }).optional())
     .query(async ({ input, ctx }) => detectRecurrencePatterns(input?.supplierId, ctx.tenantId ?? undefined)),
+  recurrenceAnalysis: protectedProcedure
+    .input(z.object({ supplierId: z.number().optional() }).optional())
+    .query(async ({ input, ctx }) => {
+      const patterns = await detectRecurrencePatterns(input?.supplierId, ctx.tenantId ?? undefined);
+      return {
+        patterns,
+        totalPatterns: patterns.length,
+        highRiskPatterns: patterns.filter((pattern: any) => pattern.riskLevel === "HIGH").length,
+        generatedAt: new Date().toISOString(),
+      };
+    }),
   heatmap: protectedProcedure.query(async ({ ctx }) => getRecurrenceHeatmap(ctx.tenantId ?? undefined)),
 });
 
