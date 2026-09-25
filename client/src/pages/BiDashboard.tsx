@@ -538,7 +538,7 @@ export default function BiDashboard() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <LayoutDashboard className="h-6 w-6 text-primary" />
-            BI Embeddido
+            BI Embedded
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Dashboards customizáveis com widgets de dados em tempo real
@@ -676,7 +676,7 @@ export default function BiDashboard() {
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <Activity className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-medium mb-2">Bem-vindo ao BI Embeddido</h3>
+            <h3 className="text-xl font-medium mb-2">Bem-vindo ao BI Embedded</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
               Crie dashboards personalizados com widgets de KPI, gráficos, tabelas e heatmaps
               para monitorar seus indicadores de qualidade em tempo real.

@@ -185,7 +185,7 @@ const menuGroups: MenuGroup[] = [
       { icon: Award, label: "Scorecard", path: "/scorecard", iconColor: "text-[#00D4AA]" },
       { icon: FileBarChart, label: "Relatórios", path: "/reports", iconColor: "text-[#F5A623]" },
       { icon: Brain, label: "IA Predição", path: "/prediction", iconColor: "text-[#8B5CF6]" },
-      { icon: LayoutDashboard, label: "BI Embeddido", path: "/bi", iconColor: "text-[#06B6D4]" },
+      { icon: LayoutDashboard, label: "BI Embedded", path: "/bi", iconColor: "text-[#06B6D4]" },
     ],
   },
   {
