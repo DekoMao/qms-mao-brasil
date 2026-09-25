@@ -104,3 +104,11 @@ O trabalho estará alinhado ao modelo quando o usuário conseguir perguntar uma 
 ## 10. Recomendação executiva
 
 A maior oportunidade não é apenas trocar cores ou adicionar um chat. É transformar o AI Control Center em uma camada conversacional do QTrack: **perguntar, explicar, apontar e desdobrar**. Recomenda-se começar por regras e agregações locais, porque elas entregam privacidade real, previsibilidade e valor imediato; o modelo Phi-3 ou equivalente deve entrar depois como interpretador opcional, não como única fonte de verdade dos indicadores.
+
+## 11. Status de implementação — 25/09/2026
+
+As quatro fases propostas foram implementadas. O Dashboard agora possui o dock QTrack Insight, foco coordenado, subinsights e ações contextuais. As métricas são calculadas em Web Worker e armazenadas em cache apenas por snapshot agregado, tenant e período. O catálogo cobre as oito consultas iniciais, com resposta segura para perguntas fora do escopo.
+
+O modo local oferece regras determinísticas, classificação semântica multilíngue em WASM e Phi-3.5 quantizado em WebGPU, ambos executados em Workers. O download dos modelos é explícito, o Phi-3 usa IndexedDB e pode ser removido, e falhas nunca acionam servidor automaticamente.
+
+A governança inclui ChartSpec validado por Zod, evidências e fórmulas, confiança, latência, timestamp, filtros e auditoria local limitada a metadados. Perguntas e respostas não são persistidas.

@@ -525,6 +525,29 @@ export async function getDefectStats(filters?: { dateFrom?: string; dateTo?: str
     .slice(0, 5)
     .map(([name, count]) => ({ name, count }));
 
+  // Local AI-safe aggregates by supplier. Only summarized values are sent to the client.
+  const supplierMetricMap = allDefects.reduce((acc, d) => {
+    const name = d.supplier || "Sem fornecedor";
+    if (!acc[name]) {
+      acc[name] = { name, total: 0, agingSum: 0, critical: 0, severities: {} as Record<string, number> };
+    }
+    const aging = Number(d.agingTotal || 0);
+    const severity = d.mg || d.defectsSeverity || "N/A";
+    acc[name].total += 1;
+    acc[name].agingSum += aging;
+    if (d.status === "DELAYED" || aging > 30) acc[name].critical += 1;
+    acc[name].severities[severity] = (acc[name].severities[severity] || 0) + 1;
+    return acc;
+  }, {} as Record<string, { name: string; total: number; agingSum: number; critical: number; severities: Record<string, number> }>);
+
+  const supplierMetrics = Object.values(supplierMetricMap)
+    .map(({ agingSum, ...item }) => ({
+      ...item,
+      averageAging: item.total > 0 ? Math.round((agingSum / item.total) * 10) / 10 : 0,
+    }))
+    .sort((a, b) => b.averageAging - a.averageAging)
+    .slice(0, 10);
+
   // Critical cases (DELAYED or aging > 30)
   const criticalCases = allDefects.filter(d => 
     d.status === "DELAYED" || d.agingTotal > 30
@@ -551,6 +574,7 @@ export async function getDefectStats(filters?: { dateFrom?: string; dateTo?: str
     byBucketAging,
     topSymptoms,
     topSuppliers,
+    supplierMetrics,
     criticalCases: criticalCases.length,
     criticalCasesList: criticalCases.slice(0, 10),
     weeklyTrend: Object.values(weeklyTrend).sort((a, b) => a.weekKey.localeCompare(b.weekKey)),

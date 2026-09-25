@@ -30,6 +30,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { getTriageAccuracyAlert } from "@/lib/accuracyAlert";
 import { LocalInsightDock } from "@/components/LocalInsightDock";
+import { LocalPrivacyChips } from "@/components/LocalPrivacyChips";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 /* Enterprise dark chart colors */
 const STATUS_COLORS = {
@@ -317,6 +319,7 @@ function PeriodFilter({ dateFrom, dateTo, onDateFromChange, onDateToChange, onCl
 
 export default function Dashboard() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [focusedIds, setFocusedIds] = useState<string[]>([]);
@@ -391,14 +394,24 @@ export default function Dashboard() {
     setLocation(`/defects?search=${encodeURIComponent(cause)}`);
   };
 
+  const handleInsightFocus = useCallback((ids: string[]) => {
+    setFocusedIds(ids);
+    if (ids[0]) {
+      window.setTimeout(() => {
+        document.querySelector(`[data-focus-id="${ids[0]}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 80);
+    }
+  }, []);
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="space-y-2">
             <h1 className="page-title">{t('dashboard.title')}</h1>
             <p className="page-subtitle">Visão geral em tempo real da qualidade operacional</p>
+            <LocalPrivacyChips />
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}
@@ -427,7 +440,8 @@ export default function Dashboard() {
         {accuracyAlert.visible && (
           <div
             role="alert"
-            className="relative overflow-hidden rounded-xl px-4 py-4 sm:px-5"
+            data-focus-id="triage-accuracy"
+            className={`relative overflow-hidden rounded-xl px-4 py-4 transition-all sm:px-5 ${focusedIds.includes("triage-accuracy") ? "ring-2 ring-violet-400 shadow-[0_0_28px_rgba(139,92,246,0.32)]" : ""}`}
             style={{
               background: accuracyAlert.severity === "critical"
                 ? "linear-gradient(110deg, rgba(127,29,29,0.46), rgba(239,68,68,0.12))"
@@ -724,7 +738,15 @@ export default function Dashboard() {
         </Card>
       )}
 
-      <LocalInsightDock stats={stats} accuracyTrend={accuracyTrend} onFocus={setFocusedIds} />
+      <LocalInsightDock
+        stats={stats}
+        accuracyTrend={accuracyTrend}
+        topCauses={rcaData?.topCauses}
+        tenantId={user?.activeTenantId}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onFocus={handleInsightFocus}
+      />
     </div>
   );
 }

@@ -10,7 +10,15 @@ export type LocalRuntimeStatus = {
 };
 
 export async function detectLocalRuntime(): Promise<LocalRuntimeStatus> {
-  const webgpuAvailable = typeof navigator !== "undefined" && "gpu" in navigator;
+  let webgpuAvailable = false;
+  if (typeof navigator !== "undefined" && "gpu" in navigator) {
+    try {
+      const gpu = (navigator as Navigator & { gpu?: { requestAdapter: () => Promise<unknown> } }).gpu;
+      webgpuAvailable = Boolean(await gpu?.requestAdapter());
+    } catch {
+      webgpuAvailable = false;
+    }
+  }
   const wasmAvailable = typeof WebAssembly !== "undefined";
   const runtime: LocalRuntime = webgpuAvailable ? "webgpu" : wasmAvailable ? "wasm" : "rules";
   return {

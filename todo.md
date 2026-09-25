@@ -551,3 +551,34 @@
 - [x] 4.1 Gráfico de tendência temporal (line chart) na tab Acurácia do AI Control Center — evolução semanal da taxa de acerto do Triage Agent
 - [x] 4.2 Filtro de deduplicação na lista de mapeamento da Importação — mostrar apenas campos únicos de destino sem repetir variantes
 - [x] 4.3 Toast de confirmação detalhado no sync ERP — quantidade de registros sincronizados, erros encontrados, duração
+
+## Dashboard Conversacional com IA Local
+
+### Fase 1: Experiência e contratos
+- [x] Dock conversacional recolhível no Dashboard
+- [x] Prompts sugeridos e foco visual dos cards citados
+- [x] Cards de subinsights e ações de desmembrar/copiar/ver defeitos/limpar foco
+- [x] Chips de IA local, capacidade do navegador e proteção de dados
+
+### Fase 2: Analytics local
+- [x] Motor determinístico executado em Web Worker
+- [x] Cache em memória isolado por snapshot, tenant e período
+- [x] Intenções: panorama, aging por fornecedor, SLA, acurácia, tendência, severidade, causa raiz e Pareto
+- [x] Agregados de aging, criticidade e severidade por fornecedor no backend tenant-scoped
+- [x] Resposta honesta e sugestões para perguntas fora do catálogo
+
+### Fase 3: Modelos locais
+- [x] Phi-3.5 quantizado via WebLLM em Web Worker/WebGPU
+- [x] Variante de contexto 1k com requisito aproximado de 2,5 GB de VRAM
+- [x] Classificador semântico multilíngue via Transformers.js/WASM
+- [x] Download explícito, progresso, cache IndexedDB e remoção do Phi-3
+- [x] Seleção persistente: Automático, Regras, Phi-3 WebGPU e Semântico WASM
+- [x] Fallback seguro para regras quando o modelo não está carregado ou falha
+
+### Fase 4: Visualização, explicabilidade e governança
+- [x] ChartSpec validado por Zod: bar, line, area, pie, kpi e table
+- [x] Renderer React seguro sem HTML/JSX gerado pelo modelo
+- [x] Evidências, fórmula do cálculo, confiança, latência, snapshot e filtros ativos
+- [x] Auditoria local limitada a 50 metadados, sem perguntas ou respostas
+- [x] Limpeza de sessão, foco, auditoria e cache de modelo
+- [x] Testes automatizados de intents, schemas, privacidade, modos e snapshots
