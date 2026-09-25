@@ -29,6 +29,7 @@ import { useLocation } from "wouter";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { getTriageAccuracyAlert } from "@/lib/accuracyAlert";
+import { LocalInsightDock } from "@/components/LocalInsightDock";
 
 /* Enterprise dark chart colors */
 const STATUS_COLORS = {
@@ -318,6 +319,7 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [focusedIds, setFocusedIds] = useState<string[]>([]);
 
   const statsInput = useMemo(() => {
     const input: { dateFrom?: string; dateTo?: string } = {};
@@ -477,7 +479,7 @@ export default function Dashboard() {
       {/* KPI Cards - Enterprise teal gradient */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Total Defects - Teal gradient */}
-        <div className={`kpi-card-teal transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
+        <div data-focus-id="total-defects" className={`kpi-card-teal transition-all duration-300 ${isFetching ? "opacity-60" : ""} ${focusedIds.includes("total-defects") ? "ring-2 ring-violet-400 shadow-[0_0_28px_rgba(139,92,246,0.32)]" : ""}`}>
           <div className={isFetching ? "animate-pulse" : ""}>
             <div className="flex items-center gap-2 mb-2">
               <Activity className="h-5 w-5" style={{ color: "rgba(255,255,255,0.8)" }} />
@@ -506,7 +508,7 @@ export default function Dashboard() {
         </div>
 
         {/* Critical */}
-        <div className={`kpi-card transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}
+        <div data-focus-id="critical-kpi" className={`kpi-card transition-all duration-300 ${isFetching ? "opacity-60" : ""} ${focusedIds.includes("critical-kpi") ? "ring-2 ring-violet-400 shadow-[0_0_28px_rgba(139,92,246,0.32)]" : ""}`}
           style={critical > 0 ? { borderColor: "rgba(239,68,68,0.3)" } : {}}>
           <div className={`flex items-start justify-between ${isFetching ? "animate-pulse" : ""}`}>
             <div>
@@ -529,7 +531,7 @@ export default function Dashboard() {
       {/* Row 1 - Status + Aging */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status Overview */}
-        <Card className={`chart-container transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
+        <Card data-focus-id="status-overview" className={`chart-container transition-all duration-300 ${isFetching ? "opacity-60" : ""} ${focusedIds.includes("status-overview") ? "ring-2 ring-violet-400 shadow-[0_0_28px_rgba(139,92,246,0.32)]" : ""}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="chart-title">{t('dashboard.statusOverview')}</h3>
@@ -569,7 +571,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Aging per Phase */}
-        <Card className={`chart-container transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
+        <Card data-focus-id="aging-phase" className={`chart-container transition-all duration-300 ${isFetching ? "opacity-60" : ""} ${focusedIds.includes("aging-phase") ? "ring-2 ring-violet-400 shadow-[0_0_28px_rgba(139,92,246,0.32)]" : ""}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="chart-title">{t('dashboard.agingPerPhase')}</h3>
@@ -620,7 +622,7 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        <Card className={`chart-container transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
+        <Card data-focus-id="top-suppliers" className={`chart-container transition-all duration-300 ${isFetching ? "opacity-60" : ""} ${focusedIds.includes("top-suppliers") ? "ring-2 ring-violet-400 shadow-[0_0_28px_rgba(139,92,246,0.32)]" : ""}`}>
           <div className="mb-4">
             <h3 className="chart-title">{t('dashboard.topSuppliers')}</h3>
             <p className="text-sm text-muted-foreground">{t('dashboard.topSuppliersDesc')}</p>
@@ -647,7 +649,7 @@ export default function Dashboard() {
 
       {/* Critical Cases */}
       {stats.criticalCasesList && stats.criticalCasesList.length > 0 && (
-        <Card className={`chart-container transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
+        <Card data-focus-id="critical-cases" className={`chart-container transition-all duration-300 ${isFetching ? "opacity-60" : ""} ${focusedIds.includes("critical-cases") ? "ring-2 ring-violet-400 shadow-[0_0_28px_rgba(139,92,246,0.32)]" : ""}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="chart-title flex items-center gap-2">
@@ -663,7 +665,7 @@ export default function Dashboard() {
 
       {/* Pareto RCA - Interactive */}
       {rcaData && rcaData.topCauses && rcaData.topCauses.length > 0 && (
-        <Card className={`chart-container transition-opacity duration-300 ${isFetching ? "opacity-60" : ""}`}>
+        <Card data-focus-id="pareto-rca" className={`chart-container transition-all duration-300 ${isFetching ? "opacity-60" : ""} ${focusedIds.includes("pareto-rca") ? "ring-2 ring-violet-400 shadow-[0_0_28px_rgba(139,92,246,0.32)]" : ""}`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="chart-title">{t('dashboard.paretoRca')}</h3>
@@ -721,6 +723,8 @@ export default function Dashboard() {
           </div>
         </Card>
       )}
+
+      <LocalInsightDock stats={stats} accuracyTrend={accuracyTrend} onFocus={setFocusedIds} />
     </div>
   );
 }
