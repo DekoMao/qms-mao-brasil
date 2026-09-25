@@ -342,6 +342,15 @@ export default function Dashboard() {
   }, [accuracyTrend]);
   const accuracyAlert = getTriageAccuracyAlert(latestAccuracy);
 
+  const handleInsightFocus = useCallback((ids: string[]) => {
+    setFocusedIds(ids);
+    if (ids[0]) {
+      window.setTimeout(() => {
+        document.querySelector(`[data-focus-id="${ids[0]}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 80);
+    }
+  }, []);
+
   if (isLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
@@ -393,15 +402,6 @@ export default function Dashboard() {
   const handleParetoClick = (cause: string) => {
     setLocation(`/defects?search=${encodeURIComponent(cause)}`);
   };
-
-  const handleInsightFocus = useCallback((ids: string[]) => {
-    setFocusedIds(ids);
-    if (ids[0]) {
-      window.setTimeout(() => {
-        document.querySelector(`[data-focus-id="${ids[0]}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 80);
-    }
-  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">
