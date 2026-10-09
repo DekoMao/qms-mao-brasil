@@ -1,0 +1,118 @@
+{
+  "capturedAt": "2026-10-09",
+  "sourceVersion": "0412dcd5",
+  "images": [
+    {
+      "file": "dashboard.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 174207,
+      "profileRedacted": true
+    },
+    {
+      "file": "dashboard-completo.png",
+      "width": 1440,
+      "height": 2023,
+      "bytes": 299749,
+      "profileRedacted": true
+    },
+    {
+      "file": "defeitos.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 195174,
+      "profileRedacted": true
+    },
+    {
+      "file": "novo-defeito.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 126263,
+      "profileRedacted": true
+    },
+    {
+      "file": "kanban.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 138913,
+      "profileRedacted": true
+    },
+    {
+      "file": "importacao.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 141200,
+      "profileRedacted": true
+    },
+    {
+      "file": "copq.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 93085,
+      "profileRedacted": true
+    },
+    {
+      "file": "scorecard.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 157132,
+      "profileRedacted": true
+    },
+    {
+      "file": "bi-embedded.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 86482,
+      "profileRedacted": true
+    },
+    {
+      "file": "ai-control-center.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 158124,
+      "profileRedacted": true
+    },
+    {
+      "file": "relatorios.png",
+      "width": 1440,
+      "height": 1796,
+      "bytes": 295574,
+      "profileRedacted": true
+    },
+    {
+      "file": "sla.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 140002,
+      "profileRedacted": true
+    },
+    {
+      "file": "documentos.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 96515,
+      "profileRedacted": true
+    },
+    {
+      "file": "predicao.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 83818,
+      "profileRedacted": true
+    },
+    {
+      "file": "workflows.png",
+      "width": 1440,
+      "height": 1000,
+      "bytes": 116118,
+      "profileRedacted": true
+    },
+    {
+      "file": "login.png",
+      "width": 893,
+      "height": 768,
+      "bytes": 302556,
+      "profileRedacted": false
+    }
+  ]
+}

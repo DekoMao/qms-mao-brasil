@@ -22,6 +22,7 @@ Sistema de Gestão da Qualidade para rastreamento e controle de defeitos de forn
 ## Índice
 
 - [Visão Geral](#visão-geral)
+- [Telas da Aplicação](#telas-da-aplicação)
 - [Funcionalidades](#funcionalidades)
 - [Arquitetura](#arquitetura)
 - [Stack Tecnológica](#stack-tecnológica)
@@ -52,6 +53,26 @@ O **QTrack System** é uma aplicação web full-stack projetada para equipes de 
 | **SLA Configurável** | Alertas automáticos baseados em prazos por etapa e severidade |
 | **Importação em Massa** | Upload de planilhas Excel para cadastro rápido de defeitos |
 | **Dashboards Analíticos** | Visualização de KPIs, tendências e aging de defeitos |
+
+---
+
+## Telas da Aplicação
+
+Capturas reais do **QTrack System**, realizadas em **09/10/2026**, com dados demonstrativos e informações do perfil ocultadas. Os arquivos PNG estão versionados em [`docs/screenshots/`](docs/screenshots/README.md), sem alterar o código da aplicação.
+
+### Dashboard operacional
+
+![Dashboard do QTrack System](docs/screenshots/dashboard.png)
+
+### Kanban e workflow 8D
+
+![Kanban de acompanhamento das etapas 8D](docs/screenshots/kanban.png)
+
+### AI Control Center
+
+![Painel de gerenciamento dos sete agentes de IA](docs/screenshots/ai-control-center.png)
+
+**[Ver a galeria completa com 16 capturas](docs/screenshots/README.md)** — login, Dashboard completo, lista e cadastro de defeitos, importação, COPQ, scorecard, BI Embedded, relatórios, SLA, documentos, predição e workflows. Os estados vazios de alguns módulos refletem a base usada na captura; não foram fabricados dados para as imagens.
 
 ---
 
