@@ -1,0 +1,93 @@
+1
+00:00:00,340 --> 00:00:03,420
+Prazos, defeitos e evidências espalhados?
+
+2
+00:00:03,900 --> 00:00:06,720
+Imagine enxergar a qualidade com mais clareza.
+
+3
+00:00:07,320 --> 00:00:11,120
+QMS MAO Brasil apresenta o QTrack System.
+
+4
+00:00:11,600 --> 00:00:15,340
+No painel, visualize status,
+aging e casos críticos pra
+
+5
+00:00:15,300 --> 00:00:16,680
+orientar suas prioridades.
+
+6
+00:00:17,300 --> 00:00:19,940
+Filtre a lista de defeitos e abra um caso.
+
+7
+00:00:20,380 --> 00:00:24,780
+Consulte o fornecedor, modelo,
+severidade e responsável,
+
+8
+00:00:25,060 --> 00:00:26,640
+reunidos no mesmo registro.
+
+9
+00:00:27,260 --> 00:00:31,460
+Acompanhe as etapas do 8D e
+consulte a área de evidências.
+
+10
+00:00:31,900 --> 00:00:35,700
+Informações e histórico ajudam
+a manter contexto para o
+
+11
+00:00:35,620 --> 00:00:36,760
+tratamento do problema.
+
+12
+00:00:38,160 --> 00:00:41,200
+No Kanban, visualize os casos por etapa.
+
+13
+00:00:41,640 --> 00:00:44,980
+Conecte a visão do processo
+às prioridades da equipe.
+
+14
+00:00:46,100 --> 00:00:48,720
+Importe planilhas com mapeamento de colunas.
+
+15
+00:00:49,500 --> 00:00:53,420
+Nos relatórios, filtre os dados e
+acesse as opções de exportação.
+
+16
+00:00:54,020 --> 00:00:58,400
+O centro de controle reúne
+agentes, decisões e guardrails.
+
+17
+00:00:58,920 --> 00:01:02,820
+Consulte a governança da automação,
+mantendo a supervisão humana
+
+18
+00:01:02,760 --> 00:01:03,380
+no processo.
+
+19
+00:01:03,960 --> 00:01:07,120
+Transforme informação em
+acompanhamento estruturado.
+
+20
+00:01:07,620 --> 00:01:11,900
+Conheça QMS MAO Brasil e explore o QTrack
+
+21
+00:01:11,900 --> 00:01:14,320
+System pra gestão da qualidade industrial.
+

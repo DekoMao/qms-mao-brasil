@@ -1,0 +1,23 @@
+{
+  "title": "QMS MAO Brasil apresenta QTrack System",
+  "url": "https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/QssSEEuNdliWmbkc.mp4",
+  "storage": "external",
+  "binaryCommittedToGit": false,
+  "producedAt": "2026-10-09",
+  "sourceArchive": "qms-mao-brasil_versão09102026.zip",
+  "durationSeconds": 75,
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "videoCodec": "H.264",
+  "audioCodec": "AAC-LC",
+  "audioSampleRate": 44100,
+  "audioChannels": 2,
+  "audioDefault": true,
+  "language": "pt-BR",
+  "bytes": 13491877,
+  "sha256": "e25cd16b4ebafcb3b917cadefd8ba16ae875ed556beb3b6448b778a2044e1dfd",
+  "subtitles": "legendas-pt-BR.srt",
+  "poster": "capa-apresentacao.png",
+  "personalProfileRedacted": true
+}

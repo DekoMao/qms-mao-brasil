@@ -22,6 +22,7 @@ Sistema de Gestão da Qualidade para rastreamento e controle de defeitos de forn
 ## Índice
 
 - [Visão Geral](#visão-geral)
+- [Vídeo de Apresentação](#vídeo-de-apresentação)
 - [Telas da Aplicação](#telas-da-aplicação)
 - [Funcionalidades](#funcionalidades)
 - [Arquitetura](#arquitetura)
@@ -53,6 +54,20 @@ O **QTrack System** é uma aplicação web full-stack projetada para equipes de 
 | **SLA Configurável** | Alertas automáticos baseados em prazos por etapa e severidade |
 | **Importação em Massa** | Upload de planilhas Excel para cadastro rápido de defeitos |
 | **Dashboards Analíticos** | Visualização de KPIs, tendências e aging de defeitos |
+
+---
+
+## Vídeo de Apresentação
+
+**QMS MAO Brasil apresenta o QTrack System** em uma demonstração de **75 segundos**, com interface real, narração PT-BR, legendas e trilha discreta. Vídeo Full HD 16:9, com dados pessoais ocultados e áudio AAC-LC marcado como padrão.
+
+[![Assistir ao vídeo de apresentação](docs/videos/capa-apresentacao.png)](https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/QssSEEuNdliWmbkc.mp4)
+
+**[Assistir ou baixar o MP4 com áudio](https://files.manuscdn.com/user_upload_by_module/session_file/310419663029478970/QssSEEuNdliWmbkc.mp4)** · **[Detalhes e legendas](docs/videos/README.md)**
+
+O vídeo está hospedado externamente devido ao limite de mídia da sincronização do projeto; o repositório versiona a capa, as legendas e os metadados, não o binário MP4.
+
+A gravação usa a versão do ZIP fornecido em 09/10/2026, não necessariamente a versão mais recente desta branch. Como o ZIP não contém um banco completo, foram usadas leituras da base demonstrativa vinculada ao projeto. Nenhum resultado de integração, importação ou decisão de IA foi simulado. Se a prévia estiver muda, ative o som ou baixe o MP4 para reprodução local.
 
 ---
 
